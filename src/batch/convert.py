@@ -43,10 +43,10 @@ def process_record(node):
 def convert_logic(data):
 #    pprint(data)
 #    mappings = {''}
+    ### this neeed some If IN logic + put in a config file
     if data['department'] == '671506AE-ED00-4DAA-B856-895A6169BB60|A0F0FCFC-BC3B-4696-8B6D-E7E411D55BAC':
         data['department'] = 'statcan'
-    
-    #pprint(data)
+    pprint(data)
       
 def report(errors):
     print "Record Error: %s" % errors
