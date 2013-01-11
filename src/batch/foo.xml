@@ -1,0 +1,17 @@
+<town>
+	<family>
+	    <person name="somebody" id="5" />
+	    <person age="45" />
+	    <person name="Grandma" age="62">
+	        <child age="35" id="10" name="Mom">
+	            <grandchild age="7 and 3/4" />
+	            <grandchild id="12345" />
+	        </child>
+	    </person>
+	    <something-completely-different />
+	</family>
+	<family>
+	    <person name="somebody" id="5" />
+	    <person age="45" />
+	</family>
+</town>
