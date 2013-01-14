@@ -36,8 +36,6 @@ def update(struct, name, entity='dataset'):
     body = json.dumps(struct)
     headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
     #url = u"http://localhost:5000/api/rest/" + entity   
-    print ">>>>>" + body
-    print ">>>>>" + str(name)
     url = "http://f7odweba1/data/api/rest/%s/%s" % (entity,str(name))
     print "-----" + url
     proxy = {
@@ -49,17 +47,19 @@ def update(struct, name, entity='dataset'):
     print r.headers
     print r.status_code
 
-def insert(body, entity='dataset'):
+def insert(struct, entity='dataset'):
     #that's a messed up bug! Double colons: https://github.com/kennethreitz/requests/issues/688
     headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
-    #body = json.dumps({u"name":"test223332211222211", u"title":"Test datasetddfdsddf 1111"})
+    body = json.dumps(struct)
     url = u"http://localhost:5000/api/rest/"+entity
-    
+    print body
+    '''
     proxy = {
                 "http:": "%s"  % os.environ['HTTP_PROXY'], 
                 "https:": "%s"  % os.environ['HTTP_PROXY']
-            }     
-    r = requests.post(url=url, data=body, headers=headers,proxy=proxy)
+            }   
+    '''  
+    r = requests.post(url=url, data=body, headers=headers)
   
-    print r.headers
+    #print r.headers
     print r.status_code

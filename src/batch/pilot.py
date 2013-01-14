@@ -14,7 +14,7 @@ def clean_data():
 
     parser = etree.XMLParser()
     parser.resolvers.add(FileResolver())
-    xml_input = etree.parse(open(os.path.normpath('../harvesters/testdata/pilot.xml')),parser)
+    xml_input = etree.parse(open(os.path.normpath('pilot.xml')),parser)
     xslt_root = etree.parse(open('clean-pilot.xsl'),parser)
     transform = etree.XSLT(xslt_root)
     result = transform(xml_input)

@@ -15,39 +15,62 @@ schema_set = set(ckan_id
             in schema_description.fields_by_ckan_id(include_existing=True)
             if field['existing'])
 """
-ELEMENT_LIST = ["uniqueformid","name","department","owner","title_en"]
 
+import mappings
+import ckan_api_client
+     
 def process_record(node):
 
     data = {}
     errors = {}
-    id = node.xpath("FORM[NAME='uniqueformid']/A/text()")[0]
- 
-    for name in ELEMENT_LIST:
+    
+    try: 
+        id = node.xpath("FORM[NAME='thisformid']/A/text()")[0]
+    except IndexError: 
+        pass
+    for ckan_name,pilot_name in mappings.ckan_pilot_common:
         try:
-            value = node.xpath("FORM[NAME='%s']/A/text()" % name)
-            data[name] = value[0]
-            
+            value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)
+            if pilot_name == 'department':
+                data[ckan_name] = ["statcan"]
+            else:
+                data[ckan_name] = value[0]
+                data['license'] = "Other (Open)"   
         except IndexError:
-            errors[name] = 'Empty'
+            errors[pilot_name] = 'Empty'
             pass
                   
         finally:
            pass
+       
     if errors:
-        errors['id'] = id
-        report(errors)
+        #report(errors)
+        pass
 
-    convert_logic(data)
+    convert(data)
+    
+x = 0
+def convert(data):
+    global x
+    x+=1
+    if x < 300:
+        #print  x,data
+        #for d in data
+        """eventualle make the client api event driven"""   
+        try:
+            #Rules:  name must be alphanumeric
+            #Name most be single word
+            # name is a logical name aka URI in RDF
+            #'name': [u'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_']}"
+            name = data['name'].lower()
+            name = name.split('-')[0]
+            data['name'] = "%s%s" % (data['groups'][0],name)
+            print data
+            ckan_api_client.insert(data)
+        except KeyError:
+            pass
+        
 
-def convert_logic(data):
-#    pprint(data)
-#    mappings = {''}
-    ### this neeed some If IN logic + put in a config file
-    if data['department'] == '671506AE-ED00-4DAA-B856-895A6169BB60|A0F0FCFC-BC3B-4696-8B6D-E7E411D55BAC':
-        data['department'] = 'statcan'
-    pprint(data)
-      
 def report(errors):
     print "Record Error: %s" % errors
    
@@ -61,4 +84,10 @@ def process_pilot_xml(xml_file):
 
               
 if __name__ == "__main__":
-    process_pilot_xml('pilot.xml')
+    process_pilot_xml('tables_20120815.xml')
+    #pprint(mappings.ckan_pilot_mapping)
+#    for ckan,pilot in mappings.ckan_pilot_common:
+#        print ckan,pilot
+#    
+    #pprint(mappings.ckan_package_fieldnames)
+    #print pilot_package_fields

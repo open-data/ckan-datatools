@@ -120,7 +120,6 @@ def update_departments(departments):
         
 def add_data(package_items):
     for pack in package_items:
-        print pack['name']
         update(pack,pack['name'],'package')
 
 
@@ -291,24 +290,16 @@ def metadata_sets():
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
-    
-class SchemaTypes:
-    FULL = 'full'
-    BAR = 'baaaaar'
-    
-    
+
 if __name__ == "__main__":
-    print SchemaTypes.FULL
-    print SchemaTypes.BAR
-    
-    #MyTypes = enum(FOO='I am FOO',BAR='I am Bar')
- 
+
     for s in schema_description.sections:
         pass
         pprint (s['name'])
 
 
-   # metadata_sets()
+    metadata_sets()
+    
 #    data = canada_test_package.keys()
 #    #print "---- Test Data Fields ---- " + str(len(test_data_fields))
 #    print sorted(s.decode('utf8') for s in test_data_fields)
