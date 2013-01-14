@@ -53,22 +53,22 @@ x = 0
 def convert(data):
     global x
     x+=1
-    if x < 300:
-        #print  x,data
-        #for d in data
-        """eventualle make the client api event driven"""   
-        try:
-            #Rules:  name must be alphanumeric
-            #Name most be single word
-            # name is a logical name aka URI in RDF
-            #'name': [u'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_']}"
-            name = data['name'].lower()
-            name = name.split('-')[0]
-            data['name'] = "%s%s" % (data['groups'][0],name)
-            print data
-            ckan_api_client.insert(data)
-        except KeyError:
-            pass
+    
+    #print  x,data
+    #for d in data
+    """eventually make the client api event driven"""   
+    try:
+        #Rules:  name must be alphanumeric
+        #Name most be single word
+        # name is a logical name aka URI in RDF
+        #'name': [u'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_']}"
+        name = data['name'].lower()
+        name = name.split('-')[0]
+        data['name'] = "%s%s" % (data['groups'][0],name)
+        print data
+        ckan_api_client.insert(data)
+    except KeyError:
+        pass
         
 
 def report(errors):

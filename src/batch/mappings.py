@@ -56,7 +56,7 @@ fields = [
 	 	  Field("package","tracking_summary", "", "", "", "", ""),
 		 
 		 
-#          Field("resource","type", "", "", "","",""),
+          Field("resource","url", "dataset_link_en_1", "", "","",""),
 #          Field("resource","", "", "", "","",  ""),
 #          Field("resource","", "", "", "","",  ""),
 #          Field("resource","", "", "", "", "", ""),
