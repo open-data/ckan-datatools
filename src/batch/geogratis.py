@@ -37,8 +37,9 @@ def gather_stage(harvest_job):
         ckan={}
         for product in rep.json['products']:
             ''' Do something with products here '''
-            ckan['name'] = 'nrcan-%s' % product['id'].split('-')[0]
+            ckan['name'] = '00nrcan-%s' % product['id'].split('-')[0]
             ckan['title'] = product['title']
+            ckan['groups'] =  ['nrcan']
             resources=[]
             for link in product['links']:
                 if link['rel'] == 'alternate':
