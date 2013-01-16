@@ -18,6 +18,7 @@ schema_set = set(ckan_id
 
 import mappings
 import ckan_api_client
+import sys
      
 def process_record(node):
 
@@ -28,6 +29,7 @@ def process_record(node):
         id = node.xpath("FORM[NAME='thisformid']/A/text()")[0]
     except IndexError: 
         pass
+
     for ckan_name,pilot_name in mappings.ckan_pilot_common:
         try:
             value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)
@@ -41,35 +43,54 @@ def process_record(node):
             pass
                   
         finally:
-           pass
-       
+            pass
+    # now do the same for resources
+    resource = {}
+    for ckan_name,pilot_name in mappings.common_resource_names:
+        try:
+            value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)
+        
+            if pilot_name == "dataset_format_1":
+                resource[ckan_name] = 'xls'
+            else:    
+                resource[ckan_name] = value[0]
+        except IndexError:
+            errors[pilot_name] = 'Empty' 
+                              
     if errors:
         #report(errors)
         pass
+    data['resources'] = [resource,]
+    #pprint(convert(data))
+    ckan_api_client.insert(convert(data))
+      
 
-    convert(data)
     
 x = 0
 def convert(data):
+
     global x
     x+=1
-    
+
     #print  x,data
-    #for d in data
     """eventually make the client api event driven"""   
     try:
+ 
         #Rules:  name must be alphanumeric
         #Name most be single word
         # name is a logical name aka URI in RDF
         #'name': [u'Url must be purely lowercase alphanumeric (ascii) characters and these symbols: -_']}"
         name = data['name'].lower()
         name = name.split('-')[0]
-        data['name'] = "%s%s" % (data['groups'][0],name)
-        print data
-        ckan_api_client.insert(data)
+        data['name'] = "%s-%s" % (data['groups'][0],name)
+ 
+        
+        
     except KeyError:
         pass
+    return data
         
+
 
 def report(errors):
     print "Record Error: %s" % errors

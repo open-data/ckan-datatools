@@ -30,7 +30,7 @@ fields = [
           #Field(Level.PACKAGE,"id", "uniqueformid", "File Identifier", Type.OPTIONAL, "", "25576558-e95b-4496-bcd2-60cc34251888"),
           Field("package","name", "thisformid", "uri", Type.REQUIRED , "", "my-report"),
           Field("package","title", "title_en", "", "","",  ""),
-          Field("package","version", 	"", "", "","",  ""),
+          Field("package","version", "", "", "","",  ""),
           Field("package","author", "", "", "","",  ""),
           Field("package","author_email", "contact_email", "", "", "", ""),
           Field("package","maintainer", "", "", "", "", ""),
@@ -47,7 +47,6 @@ fields = [
 	 	  Field("package","extras", "", "", "", "", ""),
 	 	  Field("package","ratings_average", "", "", "", "", ""),
 	 	  Field("package","ratings_count", "", "", "", "", ""),
-	 	  Field("package","resources**", "", "", "", "", ""),
 	 	  Field("package","ckan_url", "", "", "", "", ""),
 	 	  Field("package","relationships", "", "", "", "", ""),
 	 	  Field("package","metadata_modified", "", "", "", "", ""),
@@ -57,8 +56,8 @@ fields = [
 		 
 		 
           Field("resource","url", "dataset_link_en_1", "", "","",""),
-#          Field("resource","", "", "", "","",  ""),
-#          Field("resource","", "", "", "","",  ""),
+          Field("resource","name", "description_en", "", "","",  ""),
+          Field("resource","format", "dataset_format_1", "", "","",  ""),
 #          Field("resource","", "", "", "", "", ""),
 #          Field("extra","", "", "", "","", "",""),
 #          Field("extra","", "", "", "","", "",""),
@@ -67,6 +66,8 @@ fields = [
          ]
 
 # give me all the ckan names that exists for pilot names that are not empty
-ckan_pilot_common = { (f.ckan,f.pilot) for f in fields if f.pilot != '' }
+ckan_pilot_common = { (f.ckan,f.pilot) for f in fields if (f.pilot != '' and f.level == 'package')}
 
 ckan_package_fieldnames = { b.ckan for b in fields if b.level == 'package'}
+
+common_resource_names = { (f.ckan,f.pilot) for f in fields if f.level == 'resource' }
