@@ -23,7 +23,13 @@ def make_request(url):
 
     r = requests.get(url=url)
     return r.json
-    
+
+def add_extras_to_package():
+    try: resources.append({'foo':'my-foo-variable','url':link['href'],'format':link['enctype'].split('/')[1]})                 
+    pass  
+
+def add_extras_to_resources():
+    pass
 
 def gather_stage(harvest_job):
     
@@ -37,7 +43,8 @@ def gather_stage(harvest_job):
         ckan={}
         for product in rep.json['products']:
             ''' Do something with products here '''
-            ckan['name'] = '00nrcan-%s' % product['id'].split('-')[0]
+            #ckan['name'] = '003nrcan-%s' % product['id'].split('-')[0]
+            ckan['name'] = "package-with-extras-in-resource"
             ckan['title'] = product['title']
             ckan['groups'] =  ['nrcan']
             resources=[]
@@ -46,9 +53,8 @@ def gather_stage(harvest_job):
                     try: resources.append({'url':link['href'],'format':link['enctype'].split('/')[1]})
                     except KeyError: pass
             ckan['resources'] = resources
-            
-
             ckan_api_client.insert(ckan)
+            sys.exit()
             pass
         return False
         '''

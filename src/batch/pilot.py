@@ -14,20 +14,13 @@ def clean_data():
 
     parser = etree.XMLParser()
     parser.resolvers.add(FileResolver())
-    xml_input = etree.parse(open(os.path.normpath('pilot.xml')),parser)
-    xslt_root = etree.parse(open('clean-pilot.xsl'),parser)
+    xml_input = etree.parse(open(os.path.normpath('data/pilot.xml')),parser)
+    xslt_root = etree.parse(open('data/clean-pilot.xsl'),parser)
     transform = etree.XSLT(xslt_root)
     result = transform(xml_input)
     return result
 
-def external_list_approach():
-    lines = [line.strip() for line in open('fields.txt')]
-    return lines
       
-def read_config():
-    global parser
-    parser = SafeConfigParser()
-    parser.read('pilot-batch.config')
 
 def insert_records(records): 
     
@@ -37,7 +30,7 @@ def insert_records(records):
         for  ckan_name, pilot_name in parser.items('minimal_ckan_field_mappings'):
 
             try:
-                #since we don't have a name, we need just use the thisformid, but it needs to be lower case
+                #since we don't have a name, lowercase thisformid 
                 '''Temporary Hack'''
                 if pilot_name == 'thisformid':
                     package['name'] = record.find('thisformid').text[:8].lower()
@@ -49,12 +42,13 @@ def insert_records(records):
                 pass
             except:
                 if ckan_name == "groups":
-                    package['groups'] = ["david"]
+                    package['groups'] = ["statcan"]
                 else:     
                     package[ckan_name] = "dummy_"+ ckan_name
 
-        submit(package)
-        #pprint.pprint(body, width=200)
+        #submit(package)
+        pprint.pprint(body, width=200)
+        sys.exit()
 
 if __name__ == "__main__":
    
