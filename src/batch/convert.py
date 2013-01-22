@@ -22,7 +22,7 @@ def map_name(code):
 def strategy_catalog_type():
     return  "strategically_named_catalog_type"
 def strategy_dataset_link():
-    return  "strategically_named_catalog_type"
+    return  "strategically_named_dataset_link"
 def strategy_author():
     return  "Statistics Canada"
 
@@ -44,13 +44,21 @@ default_strategies = {'catalog_type': strategy_catalog_type,
                       'dataset_link_e_1':strategy_dataset_link,
                       'author':strategy_author} 
 
+def convert_name(thisformid):
+    
+    name = thisformid.lower().split('-')[0]
+    return "%s-%s" % ('statcan3322',name)
+    
+
+
 
 def process_record(node):
-
+    package_dict = {'extras': {}, 'resources': [], 'tags': []}
     data = {}
     errors = {}
+    extras ={}
+    extra_names = schema_description.extra_package_fields
     for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-
         try: # the simplest case, one to one mapping of values
             # temporary hack because name has not been mapped to thisformid in the schema
             
@@ -70,15 +78,17 @@ def process_record(node):
                 data[ckan_name] = "default_" + ckan_name
      
         finally: 
-            pass
-    pprint(data)
+            # move extras 
+            if ckan_name in extra_names:
+               extras[ckan_name] = data[ckan_name]
+               del data[ckan_name]
+               
+    data['extras'] = extras
+#    extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
+    #data['extras'] = extras
+    #pprint(data)
+    ckan_api_client.insert(data)
     sys.exit()
-
-def convert_name(thisformid):
-    
-    name = thisformid.lower().split('-')[0]
-    return "%s-%s" % ('statcan',name)
-    
 
 
 def report(errors):
@@ -95,9 +105,4 @@ def process_pilot_xml(xml_file):
               
 if __name__ == "__main__":
     process_pilot_xml('data/tables_20120815.xml')
-    #pprint(mappings.ckan_pilot_mapping)
-#    for ckan,pilot in mappings.ckan_pilot_common:
-#        print ckan,pilot
-#    
-    #pprint(mappings.ckan_package_fieldnames)
-    #print pilot_package_fields
+
