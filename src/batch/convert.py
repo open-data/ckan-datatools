@@ -47,7 +47,7 @@ default_strategies = {'catalog_type': strategy_catalog_type,
 def convert_name(thisformid):
     
     name = thisformid.lower().split('-')[0]
-    return "%s-%s" % ('statcan3322',name)
+    return "%s-%s" % ('statcan009',name)
     
 
 
@@ -57,7 +57,9 @@ def process_record(node):
     data = {}
     errors = {}
     extras ={}
-    extra_names = schema_description.extra_package_fields
+    resource = {}
+    resource_extras = {}
+    resources = []
     for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
         try: # the simplest case, one to one mapping of values
             # temporary hack because name has not been mapped to thisformid in the schema
@@ -78,15 +80,28 @@ def process_record(node):
                 data[ckan_name] = "default_" + ckan_name
      
         finally: 
-            # move extras 
-            if ckan_name in extra_names:
+            # reorganize dict for CKAN
+            if ckan_name in schema_description.extra_package_fields:
                extras[ckan_name] = data[ckan_name]
-               del data[ckan_name]
-               
+               del data[ckan_name]  
+            elif ckan_name in schema_description.all_resource_fields and ckan_name != 'name':  #FIXME
+                if ckan_name in schema_description.extra_resource_fields:
+                     resource_extras[ckan_name] = data[ckan_name]
+                else:
+                     resource[ckan_name] = data[ckan_name];
+                del data[ckan_name]
+    resource_extras['foo'] = 'bar'
+    resource['extras'] = resource_extras
+    resource['url'] ="http://www.tennis.com" 
+    resource['james'] = 'bond'        
+    print resource_extras 
+    resources.append(resource)         
     data['extras'] = extras
+    data['resources'] = resources
+
 #    extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
     #data['extras'] = extras
-    #pprint(data)
+    pprint(data)
     ckan_api_client.insert(data)
     sys.exit()
 
