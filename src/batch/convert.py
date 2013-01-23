@@ -11,6 +11,7 @@ from pprint import pprint
 import mappings
 import ckan_api_client
 import sys
+import random
 """
 
 """  
@@ -41,13 +42,13 @@ code_mapping_strategies = {'CD9CE9D4-1AA3-40DB-AF1F-37B392656033': map_subject,
                            } 
 
 default_strategies = {'catalog_type': strategy_catalog_type,
-                      'dataset_link_e_1':strategy_dataset_link,
+                      'url2':strategy_dataset_link,
                       'author':strategy_author} 
 
 def convert_name(thisformid):
     
     name = thisformid.lower().split('-')[0]
-    return "%s-%s" % ('statcan009',name)
+    return "%s-%s" % ('statcan',name)
     
 
 
@@ -60,6 +61,16 @@ def process_record(node):
     resource = {}
     resource_extras = {}
     resources = []
+    
+#    for f in schema_description.all_package_fields: print f
+#    print "---"
+#    for f in schema_description.all_resource_fields: print f
+#    print "---"
+#    for f in schema_description.extra_resource_fields: print f
+#    print "---"
+#    for f in schema_description.extra_package_fields: print f
+#    sys.exit()
+    
     for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
         try: # the simplest case, one to one mapping of values
             # temporary hack because name has not been mapped to thisformid in the schema
@@ -72,10 +83,12 @@ def process_record(node):
                 data[ckan_name] = value
 
         except IndexError: #same as elif pilot_name is None:
-            if ckan_name == 'name': 
-                data['name'] = convert_name(node.xpath("FORM['thisformid']/A/text()")[0])
+            if ckan_name == "name": 
+                data['name'] = "gen-" + str(round(random.random() * 10000000)).split('.')[0]
+                print 
             elif ckan_name in default_strategies:
                 data[ckan_name] = default_strategies[ckan_name]()
+
             else:
                 data[ckan_name] = "default_" + ckan_name
      
@@ -84,26 +97,30 @@ def process_record(node):
             if ckan_name in schema_description.extra_package_fields:
                extras[ckan_name] = data[ckan_name]
                del data[ckan_name]  
-            elif ckan_name in schema_description.all_resource_fields and ckan_name != 'name':  #FIXME
-                if ckan_name in schema_description.extra_resource_fields:
-                     resource_extras[ckan_name] = data[ckan_name]
-                else:
-                     resource[ckan_name] = data[ckan_name];
-                del data[ckan_name]
-    resource_extras['foo'] = 'bar'
-    resource['extras'] = resource_extras
-    resource['url'] ="http://www.tennis.com" 
-    resource['james'] = 'bond'        
-    print resource_extras 
+            # now populate packages
+            elif ckan_name == 'url':
+                resource['url'] = "http://www.statcan.gc.ca/cgi-bin/sum-som/fl/cstsaveascsv.cgi?filename=arts63a-fra.htm&amp;lan=fre"
+                #resource['url'] = node.xpath("FORM['dataset_link_en_1']/A/text()")[0]
+            
+            elif ckan_name in schema_description.all_resource_fields:
+                resource[ckan_name] = "default_package_value " + ckan_name
+                
+                #if ckan_name != 'name': del data[ckan_name]
+#            elif ckan_name in schema_description.all_resource_fields and ckan_name != 'name':  #FIXME
+#                print "Resource gets " + ckan_name;
+#                resource[ckan_name] = data[ckan_name];
+#                del data[ckan_name]               
+    
     resources.append(resource)         
     data['extras'] = extras
     data['resources'] = resources
-
+    data['groups'] = ["statcan"]
+   
 #    extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
-    #data['extras'] = extras
     pprint(data)
-    ckan_api_client.insert(data)
     sys.exit()
+    #ckan_api_client.insert(data)
+
 
 
 def report(errors):

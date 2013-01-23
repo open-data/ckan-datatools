@@ -292,13 +292,13 @@ def enum(*sequential, **named):
     return type('Enum', (), enums)
 
 if __name__ == "__main__":
-
-    for s in schema_description.sections:
-        pass
-        pprint (s['name'])
-
-
-    metadata_sets()
+    post_departments(departments)
+#    for s in schema_description.sections:
+#        pass
+#        pprint (s['name'])
+#
+#
+#    metadata_sets()
     
 #    data = canada_test_package.keys()
 #    #print "---- Test Data Fields ---- " + str(len(test_data_fields))
@@ -322,11 +322,11 @@ if __name__ == "__main__":
 #    pprint (sorted(set(test_data_fields) - (set(schema))))
 #    print sorted(set(data).difference(set(schema)))
 
-    for section in schema_description.sections:
-        print section
-#        for ckan_id, lang, f in schema_description.fields_by_ckan_id(include_existing=True):
-#            print f
-        
+#    for section in schema_description.sections:
+#        print section
+##        for ckan_id, lang, f in schema_description.fields_by_ckan_id(include_existing=True):
+##            print f
+#        
         
    
    
