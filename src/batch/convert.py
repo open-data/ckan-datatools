@@ -11,39 +11,7 @@ from pprint import pprint
 import mappings
 import ckan_api_client
 import sys
-import random
-"""
 
-"""  
-''' Pythonistic Strategy Pattern  :) '''
-def map_name(code):
-    ''' Combine statcan with id '''
-    return 'statcan' + code.lower().split('-')[0]
-    
-def strategy_catalog_type():
-    return  "strategically_named_catalog_type"
-def strategy_dataset_link():
-    return  "strategically_named_dataset_link"
-def strategy_author():
-    return  "Statistics Canada"
-
-def map_subject(code):
-    return "SUBJECT CODE "+ code
-
-def map_geographic_region_name(code):
-    return "GEOGRAPHIC REGION "+ code
-
-def map_author(code):
-    return  "stats-tab@statcan.gc.ca"
-
-code_mapping_strategies = {'CD9CE9D4-1AA3-40DB-AF1F-37B392656033': map_subject,
-                           '671506AE-ED00-4DAA-B856-895A6169BB60': map_author,
-                           'C3A1CE57-4E0F-43AF-82A1-9C634AD8E292': map_geographic_region_name,
-                           } 
-
-default_strategies = {'catalog_type': strategy_catalog_type,
-                      'url2':strategy_dataset_link,
-                      'author':strategy_author} 
 
 def convert_name(thisformid):
     
@@ -77,17 +45,17 @@ def process_record(node):
             
             value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)[0]
             pilot_code = value.split('|')
-            if pilot_code[0] in code_mapping_strategies:
-                data[ckan_name] = code_mapping_strategies[pilot_code[0]](pilot_code[1])
+            if pilot_code[0] in mappings.code_mapping_strategies:
+                data[ckan_name] = mappings.code_mapping_strategies[pilot_code[0]](pilot_code[1])
             else:
                 data[ckan_name] = value
 
         except IndexError: #same as elif pilot_name is None:
             if ckan_name == "name": 
-                data['name'] = "gen-" + str(round(random.random() * 10000000)).split('.')[0]
+                data['name'] = "gen-" + mappings.random_id()
                 print 
-            elif ckan_name in default_strategies:
-                data[ckan_name] = default_strategies[ckan_name]()
+            elif ckan_name in mappings.default_strategies:
+                data[ckan_name] = mappings.default_strategies[ckan_name]()
 
             else:
                 data[ckan_name] = "default_" + ckan_name
