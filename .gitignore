@@ -38,3 +38,13 @@ nosetests.xml
 .DS_Store
 
 *.xml
+
+.codeintel/config
+
+src/batch/data/tables_20120815.xml.zip
+
+src/batch/mappings.pyc
+
+src/batch/ckan_api_client.pyc
+
+*.pyc
