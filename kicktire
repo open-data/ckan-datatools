@@ -1,0 +1,10 @@
+#!/bin/bash
+
+read RESPONSE <<< $(curl -s http://localhost:5000/api/rest/package -d '{"name": "kicktire22"}' -H 'Authorization:tester')
+echo  $RESPONSE
+if [ $? -eq 0 ] ; then  
+	echo "dang"
+else
+	echo "ok";
+	
+fi

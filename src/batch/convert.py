@@ -52,7 +52,7 @@ def process_record(node):
 
         except IndexError: #same as elif pilot_name is None:
             if ckan_name == "name": 
-                data['name'] = "gen-" + mappings.random_id()
+                data['name'] = "statcan-" + mappings.random_id()
                 print 
             elif ckan_name in mappings.default_strategies:
                 data[ckan_name] = mappings.default_strategies[ckan_name]()
@@ -84,12 +84,14 @@ def process_record(node):
     data['resources'] = resources
     data['groups'] = ["statcan"]
    
-#    extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
-    pprint(data)
-    sys.exit()
-    #ckan_api_client.insert(data)
+#   extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
+    #pprint(data)
+    #sys.exit()
+    ckan_api_client.insert(data)
+    #sys.exit()
 
-
+def hello():
+    print "Hello"
 
 def report(errors):
     print "Record Error: %s" % errors
@@ -104,5 +106,6 @@ def process_pilot_xml(xml_file):
 
               
 if __name__ == "__main__":
+    
     process_pilot_xml('data/tables_20120815.xml')
 

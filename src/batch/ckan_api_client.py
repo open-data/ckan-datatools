@@ -51,8 +51,8 @@ def insert(struct, entity='dataset'):
     #that's a messed up bug! Double colons: https://github.com/kennethreitz/requests/issues/688
     headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
     body = json.dumps(struct)
-    url = u"http://localhost:5000/api/rest/"+entity
-    print body
+    url = u"http://localhost:5000/api/rest/package" #+entity
+    #print body
     '''
     proxy = {
                 "http:": "%s"  % os.environ['HTTP_PROXY'], 
@@ -60,6 +60,7 @@ def insert(struct, entity='dataset'):
             }   
     '''  
     r = requests.post(url=url, data=body, headers=headers)
-  
+    print r.url
+    
     #print r.headers
     print r.status_code
