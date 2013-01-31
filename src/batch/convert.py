@@ -11,33 +11,20 @@ from pprint import pprint
 import mappings
 import ckan_api_client
 import sys
-
+import simplejson as json
+import string
 
 def convert_name(thisformid):
     
     name = thisformid.lower().split('-')[0]
     return "%s-%s" % ('statcan',name)
     
-
-
-
 def process_record(node):
     package_dict = {'extras': {}, 'resources': [], 'tags': []}
     data = {}
-    errors = {}
-    extras ={}
-    resource = {}
-    resource_extras = {}
-    resources = []
-    
-#    for f in schema_description.all_package_fields: print f
-#    print "---"
-#    for f in schema_description.all_resource_fields: print f
-#    print "---"
-#    for f in schema_description.extra_resource_fields: print f
-#    print "---"
-#    for f in schema_description.extra_package_fields: print f
-#    sys.exit()
+    extras = {}
+    resource={}
+    resources=[]
     
     for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
         try: # the simplest case, one to one mapping of values
@@ -48,8 +35,10 @@ def process_record(node):
             if pilot_code[0] in mappings.code_mapping_strategies:
                 data[ckan_name] = mappings.code_mapping_strategies[pilot_code[0]](pilot_code[1])
             else:
-                data[ckan_name] = value
 
+                data[ckan_name] = value
+        except UnicodeDecodeError:
+            print "UNICODE ERROR"
         except IndexError: #same as elif pilot_name is None:
             if ckan_name == "name": 
                 data['name'] = "statcan-" + mappings.random_id()
@@ -85,13 +74,35 @@ def process_record(node):
     data['groups'] = ["statcan"]
    
 #   extras = {key:value for (key, value) in data if key in schema_description.extra_package_fields}
-    #pprint(data)
-    #sys.exit()
-    ckan_api_client.insert(data)
-    #sys.exit()
+    s = "some\x00string. with\x15 funny characters"
+    foo = filter(lambda x: x in string.printable, s)
+    print foo
+    valid_utf8 = True
+    try:
+        foo.decode('utf-8')
+    except UnicodeDecodeError:
+        valid_utf8 = False
+    print valid_utf8
+    whatisthis(data)
+    data2=json.dumps(data,encoding="utf-8")
 
-def hello():
-    print "Hello"
+    whatisthis(data2)
+    data3 = filter(lambda x: x in string.printable, s)
+    whatisthis(data3)
+    #data = json.dumps(data)
+    with open('/Users/peder/Desktop/data.json','w') as outfile:
+        json.dump(data,outfile)
+ 
+    sys.exit()
+    #ckan_api_client.insert(data)
+    #sys.exit()
+def whatisthis(s):
+    if isinstance(s, str):
+        return "ordinary string"
+    elif isinstance(s, unicode):
+        return "unicode string"
+    else:
+        return "not a string"
 
 def report(errors):
     print "Record Error: %s" % errors

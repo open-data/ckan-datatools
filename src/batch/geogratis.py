@@ -1,17 +1,17 @@
 # Inspired by https://github.com/okfn/ckanext-pdeu/blob/master/ckanext/pdeu/harvesters/digitaliser_dk.py
 
 from lxml import etree
-import requests
+import urllib2
 import os
 import json
 from pprint import pprint
 import ckan_api_client
+import sys
+from pprint import pprint
 
-API_ENDPOINT = "http://geogratis.gc.ca/api/en/nrcan-rncan/"
-JSON_CALL = "ess-sst?max-results=40&q=islands&alt=json"
-
-
-
+API_ENDPOINT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/"
+JSON_CALL = "ess-sst?max-results=100"
+#?start-index=934355&max-results=100
 def make_request(url):
     print url
     
@@ -25,24 +25,53 @@ def make_request(url):
     return r.json
 
 def add_extras_to_package():
-    try: resources.append({'foo':'my-foo-variable','url':link['href'],'format':link['enctype'].split('/')[1]})                 
-    pass  
+    #try: resources.append({'foo':'my-foo-variable','url':link['href'],'format':link['enctype'].split('/')[1]})                 
+    pass
 
 def add_extras_to_resources():
     pass
 
 def gather_stage(harvest_job):
     
-    firstResult = 0
-    maxResults = 80
-
+    startIndex = ''
+    maxResults = 5
+    firstCall = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json"
     ids = []
+    next=''
     while True:
-        req = API_ENDPOINT +  'ess-sst?max-results=%s&q=islands&alt=json' % (maxResults)
-        rep = requests.get(req)
+        #req=firstCall
+        req='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index=934355&max-results=100&alt=atom'
+        #req = API_ENDPOINT +  '?start-index=%s&max-results=%s&alt=json' % (startIndex,maxResults)
+        print req
+        response = urllib2.urlopen(req)
+        opener = urllib2.build_opener()
+        f = opener.open(req)
+        #print f.read()
+        
+        #json_response = json.loads(str(opener.open(req).read()),"utf-8")
+        #simplejson.load(f)
+        json_response = json.loads(str(f.read()),"utf-8")
+        links = json_response['links']
+        print links
+        print "goodbye"
+        sys.exit()
+        key = [i for key,value in links.items if value=='next' ][0]
+        print key
+        if any(l['rel'] == 'next' for l in links):
+            print "yep"
+            next = l['href']
+       
+        print next
+
+        #pprint(next)
+       
         ckan={}
-        for product in rep.json['products']:
-            ''' Do something with products here '''
+        for product in json_response.json['products']:
+            
+            print product['parameters']
+            # get the number 
+            '''
+            Do something with products here 
             #ckan['name'] = '003nrcan-%s' % product['id'].split('-')[0]
             ckan['name'] = "package-with-extras-in-resource"
             ckan['title'] = product['title']
@@ -57,7 +86,7 @@ def gather_stage(harvest_job):
             sys.exit()
             pass
         return False
-        '''
+   
         for handle in doc.findall(self.NS + "ResourceHandle"):
             link = handle.get('handleReference')
             id = sha1(link).hexdigest()
@@ -71,55 +100,6 @@ def gather_stage(harvest_job):
     '''
     pass
 
-
-def fetch_stage(self, harvest_object):
-        doc = etree.parse(harvest_object.content)
-        category = doc.findtext('//' + self.NS + 'ResourceCategoryHandle/' + self.NS + 'TitleText')
-        if category != "Datakilde":
-            return
-        package_dict = {'extras': {}, 'resources': [], 'tags': []}
-        package_dict['title'] = doc.findtext(self.NS + 'TitleText')
-        package_dict['notes'] = doc.findtext(self.NS + 'BodyText')
-        package_dict['author'] = doc.findtext(self.NS + \
-                'ResourceOwnerGroupHandle/' + self.NS + 'TitleText')
-        package_dict['extras']['harvest_dataset_url'] = harvest_object.content
-
-        package_dict['metadata_created'] = doc.findtext(self.NS + 'CreatedDateTime')
-        package_dict['metadata_modified'] = doc.find(self.NS + 'PublishedState').get('publishedDateTime')
-        
-        responsible = doc.findtext(self.NS + 'ResponsibleReference')
-        res_doc = etree.parse(responsible)
-        package_dict['maintainer'] = res_doc.findtext('//' + self.PSN + 'PersonGivenName') + \
-            " " + res_doc.findtext('//' + self.PSN + 'PersonSurnameName')
-
-        package_dict['extras']['categories'] = []
-        for tax_handle in doc.findall('//' + self.NS + 'TaxonomyNodeHandle'):
-            package_dict['extras']['categories'].append(tax_handle.findtext(self.NS + 'TitleText'))
-        
-        for tag_handle in doc.findall('//' + self.NS + 'TagHandle'):
-            package_dict['tags'].append(tag_handle.findtext(self.NS + 'LabelText'))
-        
-        ref_handle = doc.find('//' + self.NS + 'ReferenceHandle')
-        if ref_handle: 
-            ref_doc = etree.parse(ref_handle.get('handleReference'))
-            package_dict['url'] = ref_doc.getroot().get('url')
-
-        for artefact in doc.findall('//' + self.NS + 'ArtefactHandle'):
-            try:
-                art_doc = etree.parse(artefact.get('handleReference'))
-                package_dict['resources'].append({
-                    'url': art_doc.getroot().get('url'),
-                    'format': '',
-                    'description': artefact.findtext(self.NS + 'TitleText')
-                    })
-            except Exception, e:
-                log.warn(e)
-        
-        #from pprint import pprint
-        #pprint(package_dict)
-        harvest_object.content = json.dumps(package_dict)
-        harvest_object.save()
-        return True
     
 if __name__ == "__main__":
     gather_stage(API_ENDPOINT)
