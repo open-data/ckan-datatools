@@ -48,3 +48,5 @@ src/batch/mappings.pyc
 src/batch/ckan_api_client.pyc
 
 *.pyc
+
+record

@@ -50,7 +50,7 @@ def update(struct, name, entity='dataset'):
 def insert(struct, entity='dataset'):
     #that's a messed up bug! Double colons: https://github.com/kennethreitz/requests/issues/688
     headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
-    body = json.dumps(struct)
+    body = json.dumps(struct,sort_keys=True)
     url = u"http://localhost:5000/api/rest/package" #+entity
     #print body
     '''
