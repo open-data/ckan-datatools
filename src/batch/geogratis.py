@@ -9,68 +9,39 @@ import ckan_api_client
 import sys
 from pprint import pprint
 
-API_ENDPOINT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/"
-JSON_CALL = "ess-sst?max-results=100"
-#?start-index=934355&max-results=100
-def make_request(url):
-    print url
-    
-#    proxy = {
-#        "http:": "%s"  % os.environ['HTTP_PROXY'], 
-#        "https:": "%s"  % os.environ['HTTP_PROXY']
-#    }   
-    
+NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 
-    r = requests.get(url=url)
-    return r.json
 
-def add_extras_to_package():
-    #try: resources.append({'foo':'my-foo-variable','url':link['href'],'format':link['enctype'].split('/')[1]})                 
-    pass
-
-def add_extras_to_resources():
-    pass
-
-def gather_stage(harvest_job):
-    
-    startIndex = ''
-    maxResults = 5
-    firstCall = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json"
-    ids = []
-    next=''
+def gather_stage():
+    global NEXT
+    data = []
     while True:
-        #req=firstCall
-        req='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index=934355&max-results=100&alt=atom'
-        #req = API_ENDPOINT +  '?start-index=%s&max-results=%s&alt=json' % (startIndex,maxResults)
-        print req
+        req = urllib2.Request(NEXT)
+        print req.get_full_url()
+
         response = urllib2.urlopen(req)
+#        print response
+#        sys.exit()
         opener = urllib2.build_opener()
         f = opener.open(req)
-        #print f.read()
-        
-        #json_response = json.loads(str(opener.open(req).read()),"utf-8")
-        #simplejson.load(f)
         json_response = json.loads(str(f.read()),"utf-8")
+        
+        # Get the link to the next batch of links
         links = json_response['links']
-        print links
-        print "goodbye"
-        sys.exit()
-        key = [i for key,value in links.items if value=='next' ][0]
-        print key
-        if any(l['rel'] == 'next' for l in links):
-            print "yep"
-            next = l['href']
-       
-        print next
-
-        #pprint(next)
-       
+        for  link in links:
+            if link['rel']=='next': 
+                NEXT = link['href'] 
+                break
+        
         ckan={}
-        for product in json_response.json['products']:
-            
-            print product['parameters']
+        for product in json_response['products']:
+       
+            data.append({'id':product['id'],'title':product['title']})
+        
+        pprint(data)
+        '''
             # get the number 
-            '''
+            
             Do something with products here 
             #ckan['name'] = '003nrcan-%s' % product['id'].split('-')[0]
             ckan['name'] = "package-with-extras-in-resource"
@@ -102,4 +73,4 @@ def gather_stage(harvest_job):
 
     
 if __name__ == "__main__":
-    gather_stage(API_ENDPOINT)
+    gather_stage()
