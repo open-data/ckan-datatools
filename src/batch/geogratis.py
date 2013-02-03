@@ -8,23 +8,29 @@ from pprint import pprint
 import ckan_api_client
 import sys
 from pprint import pprint
+import time
 
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 
-
 def gather_stage():
+
+    file = open('/Users/peder/temp/nrcantest.txt','w')
+    global total_download
+    total_download = 0
     global NEXT
     data = []
+    opener = urllib2.build_opener()
     while True:
-        req = urllib2.Request(NEXT)
+        req = urllib2.Request(NEXT+'&alt=json')
         print req.get_full_url()
 
-        response = urllib2.urlopen(req)
-#        print response
-#        sys.exit()
-        opener = urllib2.build_opener()
         f = opener.open(req)
-        json_response = json.loads(str(f.read()),"utf-8")
+        response = f.read()
+        print len(response)
+        total_download += len(response) #To Convert bytes to megabytes: 1048576
+        file.write("------------- " + str(total_download) + " ---------------\n")
+    
+        json_response = json.loads(str(response),"utf-8")
         
         # Get the link to the next batch of links
         links = json_response['links']
@@ -32,16 +38,14 @@ def gather_stage():
             if link['rel']=='next': 
                 NEXT = link['href'] 
                 break
-        
-        ckan={}
-        for product in json_response['products']:
-       
-            data.append({'id':product['id'],'title':product['title']})
-        
-        pprint(data)
+
+        for product in json_response['products']:     
+            #data.append({'id':product['id'],'title':product['title']})  
+            file.write("%s    %s\n" % (product['id'],product['title']));  
+            
+        time.sleep(60)
         '''
             # get the number 
-            
             Do something with products here 
             #ckan['name'] = '003nrcan-%s' % product['id'].split('-')[0]
             ckan['name'] = "package-with-extras-in-resource"
