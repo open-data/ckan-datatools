@@ -9,26 +9,39 @@ import ckan_api_client
 import sys
 from pprint import pprint
 import time
+import socket 
 
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
-
+LAST_REQUEST =''
 def gather_stage():
-
-    file = open('/Users/peder/temp/nrcantest.txt','w')
     global total_download
-    total_download = 0
+    global LAST_REQUEST
     global NEXT
+    #if LAST!='':NEXT="http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50&start-index=%s" % LAST_REQUEST
+
+    total_download = 0
+
     data = []
     opener = urllib2.build_opener()
     while True:
-        req = urllib2.Request(NEXT+'&alt=json')
-        print req.get_full_url()
+        
+        #Content-Length is optional; use it if it's present, to cut down on bandwidth use,
+        try:
+            req = urllib2.Request(NEXT+'&alt=json')
+            f = opener.open(req,timeout=500)
+            #print req.has_header('Content-Length')
 
-        f = opener.open(req)
+        except urllib2.URLError:
+            #start again where we left off
+            # or I could just wait for 5 min, then try 
+            # f = opener.open(req,timeout=300) again
+            #gather_stage(LAST_REQUEST)
+            req = urllib2.Request(NEXT+'&alt=json')
+            f = opener.open(req,timeout=50)
+        except socket.timeout:
+            print "socket timeout"
+            
         response = f.read()
-        print len(response)
-        total_download += len(response) #To Convert bytes to megabytes: 1048576
-        file.write("------------- " + str(total_download) + " ---------------\n")
     
         json_response = json.loads(str(response),"utf-8")
         
@@ -37,13 +50,13 @@ def gather_stage():
         for  link in links:
             if link['rel']=='next': 
                 NEXT = link['href'] 
+                LAST_REQUEST=NEXT
                 break
 
         for product in json_response['products']:     
-            #data.append({'id':product['id'],'title':product['title']})  
-            file.write("%s    %s\n" % (product['id'],product['title']));  
-            
-        time.sleep(60)
+            file.write(product);  
+            file.write(",")
+            #pprint(product)
         '''
             # get the number 
             Do something with products here 
@@ -77,4 +90,8 @@ def gather_stage():
 
     
 if __name__ == "__main__":
+
+    file = open('/Users/peder/temp/nrcantest.txt','w')
+    file.write("[")
     gather_stage()
+    file.write("]")
