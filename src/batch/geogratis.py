@@ -10,6 +10,7 @@ import sys
 from pprint import pprint
 import time
 import socket 
+import requests
 
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
@@ -87,11 +88,48 @@ def gather_stage():
     return ids
     '''
     pass
-
+def test_single():   
+    json_data=open('data/nrcan-single.json')
+    data=json.load(json_data)
+    create_package(data)
     
+def create_package(data):
+    #package_dict = {'extras':{},'resources':[],'tags':[]}
+    package_dict={}
+    package_dict['author'] = data['author']
+    package_dict['author_email'] = 'geoginfo@NRCan.gc.ca'
+    #package_dict['id'] = data['id']
+    package_dict['maintainer_email'] = 'geoginfo@NRCan.gc.ca'
+    package_dict['name'] = "somename2" #data['id']
+    package_dict['notes'] = data['summary']
+    '''
+    package_dict['organization'] = 'Natural Resources Canada'
+ 
+    package_dict['owner_org'] = 'nrcan'
+
+    package_dict['title'] = data['title']
+    package_dict['url'] = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/' + data['id'] + '.html'
+    #Array fields
+    package_dict['extras'] = []
+    package_dict['groups'] = ['nrcan']
+    package_dict['resources'] = []
+    package_dict['tags'] = []
+    
+    '''
+    api_call(package_dict)
+    #ckan_api_client.insert(package_dict)
+    pass
+
+def api_call(payload):
+    pprint(json.dumps(payload))
+    headers = {'Authorization': 'tester'}
+    url = u"http://localhost:8080/api/action/package_create"
+    #payload = {'name': 'myoooonamyowauire'}
+    headers = {'Authorization': 'tester','content-type': 'application/json'}
+    r = requests.post(url, data=json.dumps(payload), headers=headers)
+    print r.status_code
+     
 if __name__ == "__main__":
 
-    file = open('/Users/peder/temp/nrcantest.txt','w')
-    file.write("[")
-    gather_stage()
-    file.write("]")
+    test_single()
+
