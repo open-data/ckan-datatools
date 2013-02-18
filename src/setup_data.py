@@ -1,9 +1,8 @@
-from ckan_api_client import submit, update
-from ckanext.canada.metadata_schema import schema_description
-from ckanext.canada.metadata_schema import MetadataSchema
-import json
-from pprint import pprint
-import itertools
+#from ckanext.canada.metadata_schema import schema_description
+#from ckanext.canada.metadata_schema import MetadataSchema
+#import json
+#from pprint import pprint
+#import itertools
 '''
 For entering new groups at /rest/group   
                 
@@ -290,9 +289,9 @@ def metadata_sets():
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
-
-if __name__ == "__main__":
-    post_departments(departments)
+#
+#if __name__ == "__main__":
+#    post_departments(departments)
 #    for s in schema_description.sections:
 #        pass
 #        pprint (s['name'])

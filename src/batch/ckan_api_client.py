@@ -1,6 +1,28 @@
 import json
 import requests
 import os
+import urllib2
+
+
+def api3_call(payload):
+   # An undocument trick is to create an empty proxy handler to force urllib2 not to use a proxy
+   proxy_handler = urllib2.ProxyHandler({})
+   opener = urllib2.build_opener(proxy_handler)
+   req = urllib2.Request('http://localhost:5000/dataset')
+   r = opener.open(req)
+   result = r.read()
+   print result
+   pprint(json.dumps(payload))
+   proxy = {
+       "http:":"http://jakoped:L00p2oo1@stcweb.statcan.ca:80",
+       "https:":"http://jakoped:L00p2oo1@stcweb.statcan.ca:80"
+   }
+   headers = {'Authorization': 'tester'}
+   url = u"http://127.0.0.1:5000/api/action/package_create"
+   #payload = {'name': 'myoooonamyowauire'}
+   headers = {'Authorization': 'tester','content-type': 'application/json'}
+   r = requests.post(url, data=json.dumps(payload), headers=headers)
+   print r.status_code
 
 def submit(package, entity='dataset'):
     body = json.dumps(package)
