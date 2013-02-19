@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read RESPONSE <<< $(curl -s http://localhost:5000/api/rest/package -d '{"name": "kicktire22"}' -H 'Authorization:tester')
+read RESPONSE <<< $(curl -s http://c200719:5100/api/action/organization_create -d '{"description": "Sample Departmental Description", "name": "agri", "title": "AgriFood Canada"}' -H 'Authorization:tester')
 echo  $RESPONSE
 if [ $? -eq 0 ] ; then  
 	echo "dang"

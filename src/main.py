@@ -5,6 +5,7 @@ from optparse import OptionParser
 import setup_data
 import urllib2
 import json
+from pprint import pprint 
 
 class DataImport:
     protocol = 'http://'
@@ -36,10 +37,16 @@ class DataImport:
        print url
        header = {'Authorization':'tester','Content-Type': 'application/json'}
        data=json.dumps(payload)
+       print data
        req = urllib2.Request(url, data, header)
-       r = opener.open(req)
-       result = r.read()
-       pprint(result)
+       try:
+           r = opener.open(req)
+           result = r.read()
+           pprint(result)
+       except urllib2.HTTPError as h:
+           print "some Error "
+           print h
+
 
 
 def cli(argv):
