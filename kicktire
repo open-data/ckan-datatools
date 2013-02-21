@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read RESPONSE <<< $(curl -s http://c200719:5100/api/action/organization_create -d '{"description": "Sample Departmental Description", "name": "agri", "title": "AgriFood Canada"}' -H 'Authorization:tester')
+read RESPONSE <<< $(curl --proxy localhost:8888 -s http://localhost:5000/api/action/package_delete -d '{"id": "e671d748-79d0-406d-b2fc-fd8a12204802"}' -H 'Authorization:tester')
 echo  $RESPONSE
 if [ $? -eq 0 ] ; then  
 	echo "dang"
