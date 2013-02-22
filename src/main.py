@@ -18,9 +18,10 @@ class DataImport:
     protocol = 'http://'
     def __init__(self,top_domain):
         self.top_domain = top_domain
-        self.api_call = "/api/action/"
+        self.api_base = "/api/action/"
         self.port = 5000
-        self.url =  self.protocol + self.top_domain + self.api_call
+        self.debug_proxy = 'http://localhost:8888'
+        self.url =  self.protocol + self.top_domain + self.api_base
         pass
     def test(self):
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
@@ -31,7 +32,16 @@ class DataImport:
         delete_package = {'id':'delete-me-package'}
         response = self.api3_call('package_delete',delete_package)
         print response
-
+        
+    def list_by_owner(self,owner):
+        response = self.api3_call('pacckage_list',{})
+        for item in response:
+            print item['name']
+    
+    def purge_by_owner(self,owner):
+        #package_list -d '{}'
+        pass
+   
     def pre_populate(self):
         ''' delegation method  '''
         self.create_organizations()
@@ -44,8 +54,8 @@ class DataImport:
             self.api3_call('organization_create',organization)
     
     def api3_call(self,call,payload): 
-       # If you are using a proxy for debugging JSON, you can set it here
-       proxy_handler = urllib2.ProxyHandler({'http': 'localhost:8888'})
+       ''' To use a proxy for debugging JSON,  set it here  '''
+       proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
        #An undocument trick is to create an empty proxy handler to force urllib2 not to use a proxy
        #proxy_handler = urllib2.ProxyHandler({})
        opener = urllib2.build_opener(proxy_handler)
@@ -53,40 +63,31 @@ class DataImport:
        print url
        header = {'Authorization':'tester','Content-Type': 'application/json'}
        data=json.dumps(payload)
+       print data
        req = urllib2.Request(url, data, header)
        try:
            r = opener.open(req)
            result = json.loads(r.read())
-           if result['success']: return result['id']
+           if result['success']: 
+               return result
+           elif result['false']:
+               print "*******  API ERROR  ********"
+               print result
+               
        except urllib2.HTTPError as h:
            print "some Error "
            print h
 
-def cli(argv):
-    ''' Command line interface entry point '''
-    help = '-c <command[test|load]>  -s <server:port> -p <proxy>'
-    try:
-        opts, args = getopt.getopt(argv, "hc:s:p", ["server=","proxy="])
-        print opts, args
-    except getopt.GetoptError as err:
-        print str(err) 
-        print help
-        ''' Unix programs generally use 2 for command line syntax errors '''
-        sys.exit(2)
-    
-    for opt, arg in opts:
-        if opt == '-h':
-            print help
-        elif opt == '-c':
-             if arg == 'test':
-                 print 'Creating single test record '
-                 DataImport(arg).test()
-
-        elif opt == 'data':
-             print 'trying data import with ' + arg
-             DataImport(arg).pre_populate()
             
+if __name__ == "__main__":
 
-if __name__ == "__main__": 
-    #cli(sys.argv[1:]) 
-    DataImport('localhost:5000').test()
+    import argparse
+    parser = argparse.ArgumentParser('Command line interface for GoC Open Data import tools.')
+    parser.add_argument("--server", nargs="?", help="server, eg localhost:5000")
+    parser.add_argument("p", help="proxy, eg for debugging etc.")
+    parser.add_argument("c", help="command [ list | load | purge ]")
+    parser.add_argument('--sum', dest='accumulate', action='store_const',
+                   const=sum, default=max,
+                   help='sum the integers (default: find the max)')
+    args = parser.parse_args()
+    
