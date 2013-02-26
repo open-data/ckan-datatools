@@ -16,8 +16,8 @@ class Resourse:
 
 class DataImport:
     protocol = 'http://'
-    def __init__(self,top_domain):
-        self.top_domain = top_domain
+    def __init__(self):
+        self.server = 'http://localhost:5000'
         self.api_base = "/api/action/"
         self.port = 5000
         self.debug_proxy = 'http://localhost:8888'
@@ -34,7 +34,7 @@ class DataImport:
         print response
         
     def list_by_owner(self,owner):
-        response = self.api3_call('pacckage_list',{})
+        response = self.api3_call('package_list',{})
         for item in response:
             print item['name']
     
@@ -82,12 +82,13 @@ class DataImport:
 if __name__ == "__main__":
 
     import argparse
-    parser = argparse.ArgumentParser('Command line interface for GoC Open Data import tools.')
-    parser.add_argument("--server", nargs="?", help="server, eg localhost:5000")
-    parser.add_argument("p", help="proxy, eg for debugging etc.")
-    parser.add_argument("c", help="command [ list | load | purge ]")
-    parser.add_argument('--sum', dest='accumulate', action='store_const',
-                   const=sum, default=max,
-                   help='sum the integers (default: find the max)')
+    parser = argparse.ArgumentParser('GoC Open Data import tools.')
+    group = parser.add_argument_group()
+    parser.add_argument("command", help="Perform and operation on data", choices=['list','purge'])
+    parser.add_argument("-o", "--owner", help="ID of data owner")
+    parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", default="localhost:5000")
+    parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity")
     args = parser.parse_args()
-    
+    if args.command == 'list':
+        DataImport().list_by_owner("tester")
