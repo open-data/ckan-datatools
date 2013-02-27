@@ -32,24 +32,24 @@ class DataManager:
         delete_package = {'id':'delete-me-package'}
         response = self.api3_call('package_delete',delete_package)
        
-        
-    def list_by_organization(self,org):
-
+    def _packages(self,org): 
+        packs = [] 
         if org != 'all':
-            response = self.api3_call('package_search',{'q': u'groups: "'+ org + '"'})  
+            response = self.api3_call('package_search',{'q': u'groups: "'+ org + '"'}) 
             for item in response['result']['results']:
-                print item['name']
+                packs.append(item['name'])
         else:
             response = self.api3_call('package_list',{}) 
             for item in response['result']:
-                print item
-            
-        
-    
-    def delete_by_owner(self,owner):
-        print 'Deleting packages belonging to' + owner
-        response = self.api3_call('package_list',{})
-        for item in response['result']:
+                packs.append(item)   
+        return packs
+                
+    def list_by_organization(self,org):
+        for item in self._packages(org):
+            print item
+
+    def delete_by_owner(self,org):
+      for item in self._packages(org):
             self.api3_call('package_delete', {'id':item})
 
     
@@ -122,6 +122,6 @@ if __name__ == "__main__":
     if args.action == 'list':
         DataManager(args.server).list_by_organization(args.organization)
     elif args.action == 'delete':
-        DataManager(args.server).delete_by_owner(args.owner)
+        DataManager(args.server).delete_by_owner(args.organization)
         
    
