@@ -14,7 +14,7 @@ class Resourse:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'resource' field values, including extras  '''
     pass
 
-class DataImport:
+class DataManager:
     protocol = 'http://'
     def __init__(self, server):
         self.server = 'http://' + server
@@ -27,24 +27,32 @@ class DataImport:
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
         test_package = {'name':'delete-me-package','title':'Test Package Title'}
         response = self.api3_call('package_create',test_package)
-        print response
+
         #this is a bit confusing: you can pass the 'name' to 'id' to delete the package
         delete_package = {'id':'delete-me-package'}
         response = self.api3_call('package_delete',delete_package)
-        print response
+       
         
-    def list_by_owner(self,owner):
-        print 'the owner is ' + owner
-        #package_list -d '{}'
-        response = self.api3_call('package_list',{})
-        for item in response:
-            print item['name']
+    def list_by_organization(self,org):
+
+        if org != 'all':
+            response = self.api3_call('package_search',{'q': u'groups: "'+ org + '"'})  
+            for item in response['result']['results']:
+                print item['name']
+        else:
+            response = self.api3_call('package_list',{}) 
+            for item in response['result']:
+                print item
+            
+        
     
-    def purge_by_owner(self,owner):
-        print 'the onwer is ' + owner
-        #package_list -d '{}'
-        pass
-   
+    def delete_by_owner(self,owner):
+        print 'Deleting packages belonging to' + owner
+        response = self.api3_call('package_list',{})
+        for item in response['result']:
+            self.api3_call('package_delete', {'id':item})
+
+    
     def pre_populate(self):
         ''' delegation method  '''
         self.create_organizations()
@@ -63,10 +71,9 @@ class DataImport:
        #proxy_handler = urllib2.ProxyHandler({})
        opener = urllib2.build_opener(proxy_handler)
        url = self.url+call 
-       print url
        header = {'Authorization':'tester','Content-Type': 'application/json'}
        data=json.dumps(payload)
-       print data
+      
        req = urllib2.Request(url, data, header)
        try:
            r = opener.open(req)
@@ -89,9 +96,10 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(help='commands')
     
     # Commands for reporting on existing data
-    report_parser = subparsers.add_parser('list', help='List Dataset Summary')
+    report_parser = subparsers.add_parser('ckan', help='List Dataset Summary')
+    report_parser.add_argument('action', action='store', help='Data entity type', choices=['list','delete'])
     report_parser.add_argument('entity', action='store', help='Data entity type', choices=['pack','org','user'])
-    report_parser.add_argument('owner', action='store', help='System data owner',default='tester')
+    report_parser.add_argument('organization', action='store', help='Organization',default='all')
 
     # Commands for creating new data
     create_parser = subparsers.add_parser('make', help='Create New Data')
@@ -100,14 +108,8 @@ if __name__ == "__main__":
                            help='Set permissions to prevent writing to the directory',
                            )
     
-    # Commands for deleting and purging datasets
-    delete_parser = subparsers.add_parser('del', help='Remove a directory')
-    delete_parser.add_argument('dirname', action='store', help='The directory to remove')
-    delete_parser.add_argument('--recursive', '-r', default=False, action='store_true',
-                           help='Remove the contents of the directory, too',
-                           )
-
-    parser.add_argument("owner", help="Perform and operation on data")
+   
+    parser.add_argument("-o", help="Perform and operation on data")
 
     parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", default="localhost:5000")
     parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None")
@@ -115,8 +117,11 @@ if __name__ == "__main__":
  
     args = parser.parse_args()
 
-    print args.server
 
-    if args.entity == 'pack':
-        DataImport(args.server).list_by_owner(args.owner)
+
+    if args.action == 'list':
+        DataManager(args.server).list_by_organization(args.organization)
+    elif args.action == 'delete':
+        DataManager(args.server).delete_by_owner(args.owner)
+        
    

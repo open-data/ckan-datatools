@@ -1,7 +1,7 @@
 CKAN Data Tools
 =========
 
-A command line interface provides access to a number of tools and services related to the Government of Canada Open Data project:
+A command line interface that provides access to a number of tools and services related to the Government of Canada Open Data project:
 
 * Transformation of various GoC dataset formats
 * Import data from existing GoC datasets
