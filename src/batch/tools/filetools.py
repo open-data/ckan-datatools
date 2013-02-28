@@ -1,6 +1,7 @@
 ## {{{ http://code.activestate.com/recipes/578095/ (r1)
 import os
 import sys
+import linecache
 
 def print_first_last_line(inputfile) :
     'gets the last line of a file without reading the entire file into memory'
@@ -14,11 +15,17 @@ def print_first_last_line(inputfile) :
     elif filesize :
         maxseekpoint = blocksize % filesize
         dat_file.seek(maxseekpoint)    
-    lines =  dat_file.readlines()    
+    lines =  dat_file.readlines() 
+    print len(lines)   
     if lines :
         last_line = lines[-1].strip()
     print "first line : ", headers
     print "last line : ", last_line
+
+    # Get any line in the file
+    #foo = linecache.getline(inputfile, 4)
+    #print foo
+    
 
 if __name__ == "__main__" :
     if len(sys.argv) >= 2:

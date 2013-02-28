@@ -59,7 +59,6 @@ class DataManager:
    
     def create_organizations(self):
         ''' Create Government Organizations in CKAN '''
-        print "creating organizations for " + self.top_domain
         for d in setup_data.departments:
             organization = {'name':d['name'],'title':d['title'], 'description':d['description']}
             self.api3_call('organization_create',organization)
@@ -88,37 +87,34 @@ class DataManager:
            print "some Error "
            print h
 
+
+
+def Hello(*foo):
+    print "Hello"
+    print foo
             
 if __name__ == "__main__":
 
     import argparse
-    parser = argparse.ArgumentParser('munge.py')
-    subparsers = parser.add_subparsers(help='commands')
-    
-    # Commands for reporting on existing data
-    report_parser = subparsers.add_parser('ckan', help='List Dataset Summary')
-    report_parser.add_argument('action', action='store', help='Data entity type', choices=['list','delete'])
-    report_parser.add_argument('entity', action='store', help='Data entity type', choices=['pack','org','user'])
-    report_parser.add_argument('organization', action='store', help='Organization',default='all')
-
-    # Commands for creating new data
-    create_parser = subparsers.add_parser('make', help='Create New Data')
-    create_parser.add_argument('dirname', action='store', help='New directory to create')
-    create_parser.add_argument('--read-only', default=False, action='store_true',
-                           help='Set permissions to prevent writing to the directory',
-                           )
-    
-   
-    parser.add_argument("-o", help="Perform and operation on data")
-
-    parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", default="localhost:5000")
-    parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity")
+    main_parser = argparse.ArgumentParser(add_help=False)
  
-    args = parser.parse_args()
+    main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
+
+    ckan_parser = argparse.ArgumentParser(parents=[main_parser])
+    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
+    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
+    ckan_parser.add_argument('entity', help='The Action you wish to perform on the data', action='store',choices=['orgs','groups','users'])
+    ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
+    ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None" , default=None, action='store', )
+   
+    args = ckan_parser.parse_args()
 
 
 
+    print args
+    if ('proxy') in args:
+        print "proxy"
+        sys.exit()
     if args.action == 'list':
         DataManager(args.server).list_by_organization(args.organization)
     elif args.action == 'delete':

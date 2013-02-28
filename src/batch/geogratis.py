@@ -1,5 +1,9 @@
 # Inspired by https://github.com/okfn/ckanext-pdeu/blob/master/ckanext/pdeu/harvesters/digitaliser_dk.py
 
+''' This module is used to read data from the Geogratis web services into two master data files, 
+    one in english and one in french.
+    Then tools are provided to generate reports on the data and import it into CKAN  etc. '''
+
 from lxml import etree
 import urllib2
 import os
@@ -11,7 +15,8 @@ from pprint import pprint
 import time
 import socket 
 import requests
-
+from itertools import *
+        
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
 def gather_stage():
@@ -128,8 +133,37 @@ def api_call(payload):
     headers = {'Authorization': 'tester','content-type': 'application/json'}
     r = requests.post(url, data=json.dumps(payload), headers=headers)
     print r.status_code
+    
+def report(fname1,fname2,outfile):
+    def findit(id):
+        with open(fname2, 'r') as inF:
+            for line in inF:
+                if id in line:
+                    return line
+
+    out = open(outfile, "w")
+    x =0
+    with open(fname1) as infile:
+        for i,line in enumerate(infile):    
+            fr = findit(json.loads(line)['id'])
+            tup = (i, json.loads(line), json.loads(fr))
+            out.write(str(tup) + "\n")
+            x+=1
+            if x > 2:break
+    
+
+        infile.close()
+        out.close()
+        inF.close()
+        '''
+        from itertools import izip
+        with open(fname1) as f1:
+            with open(fname2) as f2:
+                for (c1, c2) in izip(f1, car_names(f2)):
+                    print c1, c2 
+        '''      
      
 if __name__ == "__main__":
-
-    test_single()
+    report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
+    #test_single()
 
