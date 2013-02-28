@@ -6,6 +6,7 @@ import setup_data
 import urllib2
 import json
 from pprint import pprint 
+import argparse
 
 class Package:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
@@ -89,21 +90,22 @@ class DataManager:
 
 
 
-def Hello(*foo):
-    print "Hello"
-    print foo
+class CkanAction(argparse.Action):
+     def __call__(self, parser, namespace, values, option_string=None):
+         print('%r %r %r' % (namespace, values, option_string))
+
             
 if __name__ == "__main__":
 
-    import argparse
+
     main_parser = argparse.ArgumentParser(add_help=False)
  
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
 
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
-    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
+    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action=CkanAction,choices=['ckan','pilot','nrcan'])
     ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
-    ckan_parser.add_argument('entity', help='The Action you wish to perform on the data', action='store',choices=['orgs','groups','users'])
+    ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['orgs','groups','users'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None" , default=None, action='store', )
    
