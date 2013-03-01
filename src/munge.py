@@ -17,12 +17,11 @@ class Resourse:
 
 class DataManager:
     server = 'http://localhost:5000'
-    user = 'tester'
-    passwd = 'tester'
+    apikey = 'tester'
     debug_proxy = 'http://localhost:8888'
     
     def __init__(self, server):
-        self.server = 'http://' + server
+        self.server = server
         self.api_base = "/api/action/"
         self.port = 5000
         self.debug_proxy = 'http://localhost:8888'
@@ -74,10 +73,15 @@ class DataManager:
        #An undocument trick is to create an empty proxy handler to force urllib2 not to use a proxy
        #proxy_handler = urllib2.ProxyHandler({})
        opener = urllib2.build_opener(proxy_handler)
+       #proxy = urllib2.ProxyHandler({'http': 'http://jakoped:L00p2oo1@stcweb.statcan.ca:80'})
+       proxy = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+       auth = urllib2.HTTPBasicAuthHandler()
+       #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+       urllib2.install_opener(opener)
        url = self.url+call 
-       header = {'Authorization':self.passwd,'Content-Type': 'application/json'}
+       header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
        data=json.dumps(payload)
-      
+       print url
        req = urllib2.Request(url, data, header)
        try:
            r = opener.open(req)
@@ -91,32 +95,35 @@ class DataManager:
        except urllib2.HTTPError as h:
            print "some Error "
            print h
-
-
+       sys.exit()
+       
+    def get_proxy_opener(proxyurl, proxyuser, proxypass, proxyscheme="http"):
+        '''  Build an authenticated proxy handler '''
+        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr.add_password(None, proxyurl, proxyuser, proxypass)
+    
+        proxy_handler = urllib2.ProxyHandler({proxyscheme: proxyurl})
+        proxy_auth_handler = urllib2.ProxyBasicAuthHandler(password_mgr)
+    
+        return urllib2.build_opener(proxy_handler, proxy_auth_handler)
 
 
 if __name__ == "__main__":
-
-
     main_parser = argparse.ArgumentParser(add_help=False)
- 
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
-
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
     ckan_parser.add_argument('ckan', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
     ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['orgs','groups','users'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
-    ckan_parser.add_argument("-x","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
-    ckan_parser.add_argument("-u","--user", help="Username.  Default is tester", action='store', default="tester")
-    ckan_parser.add_argument("-p","--passwd", help="Password. Default is tester", action='store', default="tester",)
+    ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
+    ckan_parser.add_argument("-k","--apikey", help="API Key. Default is tester", action='store', default="tester",)
    
     args = ckan_parser.parse_args()
     print args
     DataManager.server = args.server
     DataManager.proxy = args.proxy
-    DataManager.user = args.user
-    DataManager.passwd = args.passwd
+    DataManager.apikey = args.apikey
 
     
     print args

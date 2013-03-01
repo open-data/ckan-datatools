@@ -1,10 +1,5 @@
 #!/bin/bash
-
-read RESPONSE <<< $(curl --proxy localhost:8888 -s http://localhost:5000/api/action/package_delete -d '{"id": "e671d748-79d0-406d-b2fc-fd8a12204802"}' -H 'Authorization:tester')
+#jakoped:L00p2oo1@stcweb.statcan.ca:80
+read RESPONSE <<< $(curl --proxy localhost:8888 -s http://data.statcan.gc.ca/data/api/action/package_list -d '{}')
 echo  $RESPONSE
-if [ $? -eq 0 ] ; then  
-	echo "dang"
-else
-	echo "ok";
-	
-fi
+
