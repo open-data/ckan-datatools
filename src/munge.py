@@ -16,14 +16,18 @@ class Resourse:
     pass
 
 class DataManager:
-    protocol = 'http://'
+    server = 'http://localhost:5000'
+    user = 'tester'
+    passwd = 'tester'
+    debug_proxy = 'http://localhost:8888'
+    
     def __init__(self, server):
         self.server = 'http://' + server
         self.api_base = "/api/action/"
         self.port = 5000
         self.debug_proxy = 'http://localhost:8888'
         self.url =  self.server + self.api_base
-        pass
+        
     def test(self):
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
         test_package = {'name':'delete-me-package','title':'Test Package Title'}
@@ -32,7 +36,7 @@ class DataManager:
         #this is a bit confusing: you can pass the 'name' to 'id' to delete the package
         delete_package = {'id':'delete-me-package'}
         response = self.api3_call('package_delete',delete_package)
-       
+      
     def _packages(self,org): 
         packs = [] 
         if org != 'all':
@@ -71,7 +75,7 @@ class DataManager:
        #proxy_handler = urllib2.ProxyHandler({})
        opener = urllib2.build_opener(proxy_handler)
        url = self.url+call 
-       header = {'Authorization':'tester','Content-Type': 'application/json'}
+       header = {'Authorization':self.passwd,'Content-Type': 'application/json'}
        data=json.dumps(payload)
       
        req = urllib2.Request(url, data, header)
@@ -90,11 +94,7 @@ class DataManager:
 
 
 
-class CkanAction(argparse.Action):
-     def __call__(self, parser, namespace, values, option_string=None):
-         print('%r %r %r' % (namespace, values, option_string))
 
-            
 if __name__ == "__main__":
 
 
@@ -103,22 +103,27 @@ if __name__ == "__main__":
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
 
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
-    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action=CkanAction,choices=['ckan','pilot','nrcan'])
+    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
     ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['orgs','groups','users'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
-    ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None" , default=None, action='store', )
+    ckan_parser.add_argument("-x","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
+    ckan_parser.add_argument("-u","--user", help="Username.  Default is tester", action='store', default="tester")
+    ckan_parser.add_argument("-p","--passwd", help="Password. Default is tester", action='store', default="tester",)
    
     args = ckan_parser.parse_args()
-
-
-
     print args
-    if ('proxy') in args:
-        print "proxy"
-        sys.exit()
+    DataManager.server = args.server
+    DataManager.proxy = args.proxy
+    DataManager.user = args.user
+    DataManager.passwd = args.passwd
+
+    
+    print args
     if args.action == 'list':
         DataManager(args.server).list_by_organization(args.organization)
+    elif args.action == 'init' and args.entity == 'orgs':
+        DataManager(args.server).create_organizations()
     elif args.action == 'delete':
         DataManager(args.server).delete_by_owner(args.organization)
         
