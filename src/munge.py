@@ -7,6 +7,7 @@ import urllib2
 import json
 from pprint import pprint 
 import argparse
+from ConfigParser import SafeConfigParser 
 
 class Package:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
@@ -55,8 +56,7 @@ class DataManager:
     def delete_by_owner(self,org):
       for item in self._packages(org):
             self.api3_call('package_delete', {'id':item})
-
-    
+   
     def pre_populate(self):
         ''' delegation method  '''
         self.create_organizations()
@@ -95,38 +95,114 @@ class DataManager:
        except urllib2.HTTPError as h:
            print "some Error "
            print h
-       sys.exit()
+
+class Report:
+    pass
+
+class NrcanReport(Report):
+    def __init__(self):
+        
+        pass
+ 
+    def generateLinks(self):
+        self.out = open("/Users/peder/dev/goc/nrcan-links.dat", "w")
+        #open the data file
+        
+        with open('/Users/peder/dev/goc/nrcan.jl', 'r') as inF:
+            for i,line in enumerate(inF):
+                links = json.loads(line)['links']
+                # Generator Expression to extract links
+                links = dict((x['hreflang'], x['href']) for x in links if 'hreflang' in x)  
+                en_link = str(links['en']).replace('.xml', ".json")   
+                fr_link = str(links['fr']).replace('.xml', ".json")  
+                self.out.write('%s, %s\n'  % (en_link,fr_link))
+        self.out.close()   
+          
+    def createJsonBulkData(self):
+        config = SafeConfigParser()
+        config.read('nrcan.config')
+        package_fields = config._sections['package']
+        print package_fields
+        sys.exit()
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan-links.dat', "r")
+        outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            links = str(line).strip("\n").split(', ')
+            req = urllib2.Request(links[0])  
+            
+            try: 
+                f = opener.open(req,timeout=50)
+            except socket.timeout:
+                print "socket timeout"
+            p = {'extras': {}, 'resources': [], 'tags': []}
+            response = f.read() 
+            n = json.loads(response)
+            
+              
+            sys.exit()
+            pass
+        
+class FieldMapper:
+    from ckanext.canada.metadata_schema import schema_description
+    schema = schema_description
+    def __init__(self):
        
-    def get_proxy_opener(proxyurl, proxyuser, proxypass, proxyscheme="http"):
-        '''  Build an authenticated proxy handler '''
-        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        password_mgr.add_password(None, proxyurl, proxyuser, proxypass)
+        pass
     
-        proxy_handler = urllib2.ProxyHandler({proxyscheme: proxyurl})
-        proxy_auth_handler = urllib2.ProxyBasicAuthHandler(password_mgr)
-    
-        return urllib2.build_opener(proxy_handler, proxy_auth_handler)
+    def makeConfig(self):
+        ''' When the metadata schema is regenerated, you may have to run this '''
+        
+        #out = open("nrcan.config", "w")
+        out.write('[package]\n')
+        fields_fr = []
+        for ckan_name,lang, field in self.schema.dataset_fields_by_ckan_id():
+            if lang == 'fra':
+                fields_fr.append(ckan_name)
+            else: 
+                out.write(ckan_name +"=\n")
+
+        out.write('\n[package_fr]\n')
+        for f in fields_fr:
+            out.write(f +"=\n")
+                
+        out.write('\n[resource]\n')
+        fields_fr =[]
+        for ckan_name, lang, field in self.schema.resource_fields_by_ckan_id():      
+            if lang == 'fra':
+                fields_fr.append(ckan_name)
+            else: 
+                out.write(ckan_name +"=\n")
+        out.write('\n[resource_fr]\n')
+        for f in fields_fr:
+            out.write(f +"=\n")
+            
 
 
 if __name__ == "__main__":
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
-    ckan_parser.add_argument('ckan', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
+    ckan_parser.add_argument('endpoint', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
     ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
-    ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['orgs','groups','users'])
+    ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
     ckan_parser.add_argument("-k","--apikey", help="API Key. Default is tester", action='store', default="tester",)
    
     args = ckan_parser.parse_args()
-    print args
+ 
     DataManager.server = args.server
     DataManager.proxy = args.proxy
     DataManager.apikey = args.apikey
 
-    
-    print args
+
+    if args.endpoint == 'nrcan':
+        if args.action == 'init':
+            FieldMapper().makeConfig();
+            #NrcanReport().generateLinks()
+        elif args.action == 'update':
+            NrcanReport().createJsonBulkData()
     if args.action == 'list':
         DataManager(args.server).list_by_organization(args.organization)
     elif args.action == 'init' and args.entity == 'orgs':

@@ -62,36 +62,7 @@ def gather_stage():
         for product in json_response['products']:     
             file.write(product);  
             file.write(",")
-            #pprint(product)
-        '''
-            # get the number 
-            Do something with products here 
-            #ckan['name'] = '003nrcan-%s' % product['id'].split('-')[0]
-            ckan['name'] = "package-with-extras-in-resource"
-            ckan['title'] = product['title']
-            ckan['groups'] =  ['nrcan']
-            resources=[]
-            for link in product['links']:
-                if link['rel'] == 'alternate':
-                    try: resources.append({'url':link['href'],'format':link['enctype'].split('/')[1]})
-                    except KeyError: pass
-            ckan['resources'] = resources
-            ckan_api_client.insert(ckan)
-            sys.exit()
-            pass
-        return False
-   
-        for handle in doc.findall(self.NS + "ResourceHandle"):
-            link = handle.get('handleReference')
-            id = sha1(link).hexdigest()
-            obj = HarvestObject(guid=id, job=harvest_job, content=link)
-            obj.save()
-            ids.append(obj.id)
-        firstResult += maxResults
-        if firstResult > int(doc.getroot().get('totalResults')):
-            break
-    return ids
-    '''
+
     pass
 def test_single():   
     json_data=open('data/nrcan-single.json')
@@ -129,12 +100,11 @@ def api_call(payload):
     pprint(json.dumps(payload))
     headers = {'Authorization': 'tester'}
     url = u"http://localhost:8080/api/action/package_create"
-    #payload = {'name': 'myoooonamyowauire'}
     headers = {'Authorization': 'tester','content-type': 'application/json'}
     r = requests.post(url, data=json.dumps(payload), headers=headers)
     print r.status_code
     
-def report(fname1,fname2,outfile):
+def crossReference(fname1,fname2,outfile):
     def findit(id):
         with open(fname2, 'r') as inF:
             for line in inF:
