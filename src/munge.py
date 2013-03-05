@@ -8,6 +8,10 @@ import json
 from pprint import pprint 
 import argparse
 from ConfigParser import SafeConfigParser 
+from sqlalchemy import *
+from datetime import datetime
+from ckanext.canada.metadata_schema import schema_description
+from jsonpath import jsonpath
 
 class Package:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
@@ -96,10 +100,10 @@ class DataManager:
            print "some Error "
            print h
 
-class Report:
+class Munge:
     pass
 
-class NrcanReport(Report):
+class NrcanMunge(Munge):
     def __init__(self):
         
         pass
@@ -118,34 +122,56 @@ class NrcanReport(Report):
                 self.out.write('%s, %s\n'  % (en_link,fr_link))
         self.out.close()   
           
-    def createJsonBulkData(self):
+    def create_ckan_data(self):
+        ''' Create NRCAN datasets in CKAN format and insert into database '''
         config = SafeConfigParser()
         config.read('nrcan.config')
-        package_fields = config._sections['package']
-        print package_fields
-        sys.exit()
         opener = urllib2.build_opener()
-        infile = open('/Users/peder/dev/goc/nrcan-links.dat', "r")
-        outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
         for line in infile:
             links = str(line).strip("\n").split(', ')
             req = urllib2.Request(links[0])  
-            
             try: 
-                f = opener.open(req,timeout=50)
+                f = opener.open(req,timeout=5)
             except socket.timeout:
                 print "socket timeout"
-            p = {'extras': {}, 'resources': [], 'tags': []}
+            package_dict = {'extras': {}, 'resources': [], 'tags': []}
             response = f.read() 
             n = json.loads(response)
+            # create english fields
+
+            for ckan, nrcan in config.items('package'):
+                if nrcan == "SELECT":
+                   print "SELECT"
+                   package_dict[ckan] = schema_description.dataset_field_by_id[ckan]['choices'][1]['key']
+                elif "$." in nrcan:
+                    print "Use JSON Path"
+                    print nrcan
+                    print jsonpath(n, nrcan)
+                elif nrcan:
+                    print n[nrcan]
+                    package_dict[ckan] = n[nrcan]
+                    
+                    
+            
+            pprint(package_dict)
             
               
             sys.exit()
             pass
+
+class Package:
+    pass
+class Resource:
+    pass
+    
+
         
 class FieldMapper:
-    from ckanext.canada.metadata_schema import schema_description
+
     schema = schema_description
+   
     def __init__(self):
        
         pass
@@ -178,7 +204,49 @@ class FieldMapper:
             out.write(f +"=\n")
             
 
+class NrcanDb:
+    
+    global db
+    def __init__(self):
+        pass
+    
+    
+    def setup(self): 
+        db = create_engine('sqlite:///../nrcan.db', echo=True)
+        print db
+  
+        metadata = MetaData(db)
+        print metadata
+        
+        nrcan_en = Table('nrcan_en', metadata,
+                Column('id', Integer, primary_key=True),
+                Column('uuid', String(40)),
+                Column('time', DateTime),
+                Column('json', String),
+        )
+        nrcan_en.create()  
+        pass
 
+    def test(self):
+        i = self.nrcan_en.insert()
+        i.execute({'uuid': '3036639a-3cae-5bd0-bcd2-8e62a1b7bc51', 'time': datetime.now(), 'json': '{somejason}'})  
+        s = self.nrcan_en.select()
+        rs = s.execute()
+        
+        row = rs.fetchone()
+        print 'Id:', row[0]
+        print 'uuid:', row['uuid']
+        print 'Time:', row.time
+        print 'json:', row['json']
+        
+        for row in rs:
+            print row.uuid, 'has json', row.json
+            
+    def insert(self,json):
+        i = self.nrcan_en.insert()       
+        i.execute({'uuid': json['id'], 'time': datetime.now(), 'json': json}) 
+         
+        
 if __name__ == "__main__":
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
@@ -199,8 +267,9 @@ if __name__ == "__main__":
 
     if args.endpoint == 'nrcan':
         if args.action == 'init':
-            FieldMapper().makeConfig();
-            #NrcanReport().generateLinks()
+            
+            #FieldMapper().makeConfig();
+            NrcanMunge().create_ckan_data();
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
     if args.action == 'list':
