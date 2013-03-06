@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-import sys, getopt
-from optparse import OptionParser
+import sys
 import setup_data
 import urllib2
 import json

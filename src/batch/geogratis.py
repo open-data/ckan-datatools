@@ -168,41 +168,42 @@ class NrcanMunge(Munge):
             outfile.write(str(data_en) + "|" + str(data_fr) + "\n")
             pass
         
-    def create_ckan_data(self):
-        ''' Create NRCAN datasets in CKAN format and insert into database '''
-        config = SafeConfigParser()
-        config.read('nrcan.config')
-        opener = urllib2.build_opener()
-        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
-        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
-        for line in infile:
-            links = str(line).strip("\n").split(', ')
-            req = urllib2.Request(links[0])  
-            try: 
-                f = opener.open(req,timeout=50)
-            except socket.timeout:
-                print "socket timeout"
-            package_dict = {'extras': {}, 'resources': [], 'tags': []}
-            response = f.read() 
-            n = json.loads(response)
-            # create english fields
 
-            for ckan, nrcan in config.items('package'):
-                if nrcan == "SELECT":
-                   print "SELECT"
-                   package_dict[ckan] = schema_description.dataset_field_by_id[ckan]['choices'][1]['key']
-                elif "$." in nrcan:
-                    print "Use JSON Path"
-                    print nrcan
-                    print jsonpath(n, nrcan)
-                elif nrcan:
-                    print n[nrcan]
-                    package_dict[ckan] = n[nrcan]
-
-            pprint(package_dict)
- 
-            sys.exit()
-            pass
+    def read_nrcan_data(self):
+           ''' Read links from enercan and save them into bilinguages dataset file or database '''
+           config = SafeConfigParser()
+           config.read('nrcan.config')
+           opener = urllib2.build_opener()
+           infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+           outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+           for line in infile:
+               links = str(line).strip("\n").split(', ')
+               req = urllib2.Request(links[0])  
+               try: 
+                   f = opener.open(req,timeout=50)
+               except socket.timeout:
+                   print "socket timeout"
+               package_dict = {'extras': {}, 'resources': [], 'tags': []}
+               response = f.read() 
+               n = json.loads(response)
+               # create english fields
+    
+               for ckan, nrcan in config.items('package'):
+                   if nrcan == "SELECT":
+                      print "SELECT"
+                      package_dict[ckan] = schema_description.dataset_field_by_id[ckan]['choices'][1]['key']
+                   elif "$." in nrcan:
+                       print "Use JSON Path"
+                       print nrcan
+                       print jsonpath(n, nrcan)
+                   elif nrcan:
+                       print n[nrcan]
+                       package_dict[ckan] = n[nrcan]
+    
+               pprint(package_dict)
+    
+               sys.exit()
+               pass
     
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
