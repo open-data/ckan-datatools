@@ -14,7 +14,6 @@ import sys
 from pprint import pprint
 import time
 import socket 
-import requests
 from itertools import *
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
@@ -62,39 +61,13 @@ def gather_stage():
         for product in json_response['products']:     
             file.write(product);  
             file.write(",")
-
     pass
+
 def test_single():   
     json_data=open('data/nrcan-single.json')
     data=json.load(json_data)
     create_package(data)
     
-def create_package(data):
-    #package_dict = {'extras':{},'resources':[],'tags':[]}
-    package_dict={}
-    package_dict['author'] = data['author']
-    package_dict['author_email'] = 'geoginfo@NRCan.gc.ca'
-    #package_dict['id'] = data['id']
-    package_dict['maintainer_email'] = 'geoginfo@NRCan.gc.ca'
-    package_dict['name'] = "somename2" #data['id']
-    package_dict['notes'] = data['summary']
-    '''
-    package_dict['organization'] = 'Natural Resources Canada'
- 
-    package_dict['owner_org'] = 'nrcan'
-
-    package_dict['title'] = data['title']
-    package_dict['url'] = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/' + data['id'] + '.html'
-    #Array fields
-    package_dict['extras'] = []
-    package_dict['groups'] = ['nrcan']
-    package_dict['resources'] = []
-    package_dict['tags'] = []
-    
-    '''
-    api_call(package_dict)
-    #ckan_api_client.insert(package_dict)
-    pass
 
 def api_call(payload):
     pprint(json.dumps(payload))
@@ -132,8 +105,116 @@ def crossReference(fname1,fname2,outfile):
                 for (c1, c2) in izip(f1, car_names(f2)):
                     print c1, c2 
         '''      
-     
+
+class NrcanMunge(Munge):
+    def __init__(self):
+        
+        pass
+ 
+    def mungeDatasets(self):
+        
+        with open('/Users/peder/dev/goc/nrcan.links', 'r') as inF:
+            for line in inF:
+                fr, en = str(line).strip().split(", ")
+                print fr, en
+                sys.exit()
+        self.out.close()   
+
+  
+    def create_ckan_data(self):
+        ''' Create NRCAN datasets in CKAN format and insert into database '''
+        config = SafeConfigParser()
+        config.read('nrcan.config')
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            links = str(line).strip("\n").split(', ')
+            req = urllib2.Request(links[0])  
+            try: 
+                f = opener.open(req,timeout=5)
+            except socket.timeout:
+                print "socket timeout"
+            
+            response = f.read() 
+            data = json.loads(response)
+            db = NrcanDb()         
+            db.insert(self, json.loads(data))              
+            sys.exit()
+            pass
+        
+    def save_nrcan_data(self):
+        ''' Grab NRCan Data and dump into a file '''
+
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            en, fr = str(line).strip().split(', ')
+            req = urllib2.Request(en)  
+            try: 
+                f = opener.open(req,timeout=500)
+            except socket.timeout:
+                print "en socket timeout"
+            response = f.read() 
+            data_en = json.loads(response)
+            req = urllib2.Request(fr)  
+            try: 
+                f = opener.open(req,timeout=500)
+            except socket.timeout:
+                print "fr socket timeout"
+            response = f.read() 
+            data_fr = json.loads(response)
+            outfile.write(str(data_en) + "|" + str(data_fr) + "\n")
+            pass
+        
+    def create_ckan_data(self):
+        ''' Create NRCAN datasets in CKAN format and insert into database '''
+        config = SafeConfigParser()
+        config.read('nrcan.config')
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            links = str(line).strip("\n").split(', ')
+            req = urllib2.Request(links[0])  
+            try: 
+                f = opener.open(req,timeout=50)
+            except socket.timeout:
+                print "socket timeout"
+            package_dict = {'extras': {}, 'resources': [], 'tags': []}
+            response = f.read() 
+            n = json.loads(response)
+            # create english fields
+
+            for ckan, nrcan in config.items('package'):
+                if nrcan == "SELECT":
+                   print "SELECT"
+                   package_dict[ckan] = schema_description.dataset_field_by_id[ckan]['choices'][1]['key']
+                elif "$." in nrcan:
+                    print "Use JSON Path"
+                    print nrcan
+                    print jsonpath(n, nrcan)
+                elif nrcan:
+                    print n[nrcan]
+                    package_dict[ckan] = n[nrcan]
+
+            pprint(package_dict)
+ 
+            sys.exit()
+            pass
+    
 if __name__ == "__main__":
-    report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
+    #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
+    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
+    ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
+      
+    args = parser.parse_args()
+    print args
+ 
+
+        
 

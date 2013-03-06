@@ -1,88 +1,65 @@
 import json
-import requests
-import os
 import urllib2
-
-
-def api3_call(payload):
-   # An undocument trick is to create an empty proxy handler to force urllib2 not to use a proxy
-   proxy_handler = urllib2.ProxyHandler({})
-   opener = urllib2.build_opener(proxy_handler)
-   req = urllib2.Request('http://localhost:5000/dataset')
-   r = opener.open(req)
-   result = r.read()
-   print result
-   pprint(json.dumps(payload))
-   proxy = {
-       "http:":"http://jakoped:L00p2oo1@stcweb.statcan.ca:80",
-       "https:":"http://jakoped:L00p2oo1@stcweb.statcan.ca:80"
-   }
-   headers = {'Authorization': 'tester'}
-   url = u"http://127.0.0.1:5000/api/action/package_create"
-   #payload = {'name': 'myoooonamyowauire'}
-   headers = {'Authorization': 'tester','content-type': 'application/json'}
-   r = requests.post(url, data=json.dumps(payload), headers=headers)
-   print r.status_code
-
-def submit(package, entity='dataset'):
-    body = json.dumps(package)
-    headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
-    #url = u"http://localhost:5000/api/rest/" + entity   
-    url = "http://f7odweba1/data/api/rest/" + entity
-    proxy = {
-        "http:": "%s"  % os.environ['HTTP_PROXY'], 
-        "https:": "%s"  % os.environ['HTTP_PROXY']
-    }   
     
-    '''
-        You may need to set a proxy with:
-   
-
-        
-        r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
-        
-        Can also pick it up from the config file.  Python requests library appears to have a bug 
-        reuiring proxy protocols to have a colon in it: "http:" -  that is not the name of a protocal, 
-        and mismatched the documentation
     
-    '''
-
-    r = requests.post(url=url, data=body, headers=headers)
-    print "-----------------"
-    print r.request
-    #print r.content
-    print r.status_code
-
-
-def update(struct, name, entity='dataset'):
-    body = json.dumps(struct)
-    headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
-    #url = u"http://localhost:5000/api/rest/" + entity   
-    url = "http://f7odweba1/data/api/rest/%s/%s" % (entity,str(name))
-    print "-----" + url
-    proxy = {
-            "http:": "%s"  % os.environ['HTTP_PROXY'], 
-            "https:": "%s"  % os.environ['HTTP_PROXY']
-        }     
-    r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
-  
-    print r.headers
-    print r.status_code
-
-def insert(struct, entity='dataset'):
-    #that's a messed up bug! Double colons: https://github.com/kennethreitz/requests/issues/688
-    headers = {'Authorization': 'tester','Content-type': 'application/json', 'Accept': 'text/plain'}
-    body = json.dumps(struct,sort_keys=True)
-    url = u"http://localhost:5000/api/rest/package" #+entity
-    #print body
-    '''
-    proxy = {
+def api3_call(self,call,payload): 
+       ''' To use a proxy for debugging JSON,  set it here
+       
+           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy
+           proxy_handler = urllib2.ProxyHandler({})
+           
+           
+           You may need to set a proxy with:
+           r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
+           
+           Examples:
+           
+           On statcan network B:
+           urllib2.ProxyHandler({'http': 'http://jakoped:mypass@stcweb.statcan.ca:80'})
+           
+           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy if you are 
+           entering datasets in localhost on Statcan network B
+           proxy_handler = urllib2.ProxyHandler({})
+           opener = urllib2.build_opener(proxy_handler)
+           
+           When using a debugging proxy like Charles to monitor JSON, you can set it with 
+           proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+           
+           
+           NOTE: You may also be able to pick up proxy information from you environment like:
+           
+            proxy = {
                 "http:": "%s"  % os.environ['HTTP_PROXY'], 
                 "https:": "%s"  % os.environ['HTTP_PROXY']
             }   
-    '''  
-    r = requests.post(url=url, data=body, headers=headers)
-    print r.url
+            
+        '''
+       proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
+       
+       opener = urllib2.build_opener(proxy_handler)
+       #proxy = 
+       proxy = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+       auth = urllib2.HTTPBasicAuthHandler()
+       #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+       urllib2.install_opener(opener)
+       url = self.url+call 
+       header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
+       data=json.dumps(payload)
+       print url
+       req = urllib2.Request(url, data, header)
+       try:
+           r = opener.open(req)
+           result = json.loads(r.read())
+           if result['success']: 
+               return result
+           elif result['false']:
+               print "*******  API ERROR  ********"
+               print result
+               
+       except urllib2.HTTPError as h:
+           print "some Error "
+           print h
+
+
     
-    #print r.headers
-    print r.status_code
+
