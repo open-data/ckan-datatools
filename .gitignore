@@ -1,3 +1,6 @@
+# SQLite Databases
+*.db
+
 #*.py[cod]
 *.pyc
 

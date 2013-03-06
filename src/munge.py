@@ -12,6 +12,7 @@ from sqlalchemy import *
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 from jsonpath import jsonpath
+import socket 
 
 class Package:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
@@ -108,20 +109,16 @@ class NrcanMunge(Munge):
         
         pass
  
-    def generateLinks(self):
-        self.out = open("/Users/peder/dev/goc/nrcan-links.dat", "w")
-        #open the data file
+    def mungeDatasets(self):
         
-        with open('/Users/peder/dev/goc/nrcan.jl', 'r') as inF:
-            for i,line in enumerate(inF):
-                links = json.loads(line)['links']
-                # Generator Expression to extract links
-                links = dict((x['hreflang'], x['href']) for x in links if 'hreflang' in x)  
-                en_link = str(links['en']).replace('.xml', ".json")   
-                fr_link = str(links['fr']).replace('.xml', ".json")  
-                self.out.write('%s, %s\n'  % (en_link,fr_link))
+        with open('/Users/peder/dev/goc/nrcan.links', 'r') as inF:
+            for line in inF:
+                fr, en = str(line).strip().split(", ")
+                print fr, en
+                sys.exit()
         self.out.close()   
-          
+
+  
     def create_ckan_data(self):
         ''' Create NRCAN datasets in CKAN format and insert into database '''
         config = SafeConfigParser()
@@ -134,6 +131,57 @@ class NrcanMunge(Munge):
             req = urllib2.Request(links[0])  
             try: 
                 f = opener.open(req,timeout=5)
+            except socket.timeout:
+                print "socket timeout"
+            
+            response = f.read() 
+            data = json.loads(response)
+            db = NrcanDb()
+            
+            db.insert(self, json.loads(data))
+            
+            
+              
+            sys.exit()
+            pass
+        
+    def save_nrcan_data(self):
+        ''' Grab NRCan Data and dump into a file '''
+
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            en, fr = str(line).strip().split(', ')
+            req = urllib2.Request(en)  
+            try: 
+                f = opener.open(req,timeout=500)
+            except socket.timeout:
+                print "en socket timeout"
+            response = f.read() 
+            data_en = json.loads(response)
+            req = urllib2.Request(fr)  
+            try: 
+                f = opener.open(req,timeout=500)
+            except socket.timeout:
+                print "fr socket timeout"
+            response = f.read() 
+            data_fr = json.loads(response)
+            outfile.write(str(data_en) + "|" + str(data_fr) + "\n")
+            pass
+        
+    def create_ckan_data(self):
+        ''' Create NRCAN datasets in CKAN format and insert into database '''
+        config = SafeConfigParser()
+        config.read('nrcan.config')
+        opener = urllib2.build_opener()
+        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
+        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        for line in infile:
+            links = str(line).strip("\n").split(', ')
+            req = urllib2.Request(links[0])  
+            try: 
+                f = opener.open(req,timeout=50)
             except socket.timeout:
                 print "socket timeout"
             package_dict = {'extras': {}, 'resources': [], 'tags': []}
@@ -205,18 +253,25 @@ class FieldMapper:
             
 
 class NrcanDb:
+  
+    db = create_engine('sqlite:///nrcan.db')
+    metadata = MetaData(db)
     
-    global db
     def __init__(self):
         pass
     
     
     def setup(self): 
-        db = create_engine('sqlite:///../nrcan.db', echo=True)
-        print db
-  
-        metadata = MetaData(db)
-        print metadata
+        ''' A list of products was originally created by running queries in geogratis.py to create 171,909 links to metadata 
+            The french list of products has 171,920 and so is out of sync
+        '''
+        product_links_en = Table('products_links_en', metadata,
+                Column('id', Integer, primary_key=True),
+                Column('uuid', String(40)),
+                Column('link', String),
+                Column('json', String),
+        )
+        #product_links_en.create()  
         
         nrcan_en = Table('nrcan_en', metadata,
                 Column('id', Integer, primary_key=True),
@@ -225,14 +280,42 @@ class NrcanDb:
                 Column('json', String),
         )
         nrcan_en.create()  
+    
+        nrcan_fr = Table('nrcan_en', metadata,
+                Column('id', Integer, primary_key=True),
+                Column('uuid', String(40)),
+                Column('time', DateTime),
+                Column('json', String),
+                Column('en_id', String),
+        )
+        nrcan_en.create()  
         pass
 
     def test(self):
+        
+        self.db.echo = True  
+        nrcan_en = Table('nrcan_en', self.metadata, autoload=True)
+        s = nrcan_en.select()
+        rs = s.execute()
+        for row in rs:
+                print row
+        
+        def run(stmt):
+            rs = stmt.execute()
+            for row in rs:
+                print row
+        '''
+        # Most WHERE clauses can be constructed via normal comparisons
+        s = users.select(users.c.name == 'John')
+        run(s)
+        s = users.select(users.c.age < 40)
+        run(s)
+        
         i = self.nrcan_en.insert()
         i.execute({'uuid': '3036639a-3cae-5bd0-bcd2-8e62a1b7bc51', 'time': datetime.now(), 'json': '{somejason}'})  
         s = self.nrcan_en.select()
         rs = s.execute()
-        
+    
         row = rs.fetchone()
         print 'Id:', row[0]
         print 'uuid:', row['uuid']
@@ -241,10 +324,30 @@ class NrcanDb:
         
         for row in rs:
             print row.uuid, 'has json', row.json
-            
-    def insert(self,json):
-        i = self.nrcan_en.insert()       
+        '''   
+    def insert_en(self,json):
+        self.db.echo = True  
+        nrcan_en = Table('nrcan_en', self.metadata, autoload=True)
+        i = nrcan_en.insert()       
         i.execute({'uuid': json['id'], 'time': datetime.now(), 'json': json}) 
+        
+        row = rs.fetchone()
+        print row
+        
+    def insert_fr(self,json):
+        self.db.echo = True  
+        nrcan_en = Table('nrcan_en', self.metadata, autoload=True)
+        i = nrcan_fr.insert()       
+        i.execute({'uuid': json['id'], 'time': datetime.now(), 'json': json, 'en_id':1}) 
+        
+        row = rs.fetchone()
+        print row   
+        sys.exit(0)  
+    def delete(self):
+        s = self.nrcan_en.select()
+        rs = s.execute()
+        
+        row = rs.fetchone()
          
         
 if __name__ == "__main__":
@@ -267,9 +370,10 @@ if __name__ == "__main__":
 
     if args.endpoint == 'nrcan':
         if args.action == 'init':
-            
+            NrcanMunge().save_nrcan_data()
             #FieldMapper().makeConfig();
-            NrcanMunge().create_ckan_data();
+            #NrcanMunge().create_ckan_data();
+            #NrcanDb().test()
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
     if args.action == 'list':
