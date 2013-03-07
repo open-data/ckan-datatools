@@ -18,7 +18,7 @@ from itertools import *
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
-def gather_stage():
+def gather_products():
     global total_download
     global LAST_REQUEST
     global NEXT
@@ -30,7 +30,7 @@ def gather_stage():
     opener = urllib2.build_opener()
     while True:
         
-        #Content-Length is optional; use it if it's present, to cut down on bandwidth use,
+        
         try:
             req = urllib2.Request(NEXT+'&alt=json')
             f = opener.open(req,timeout=500)
@@ -126,6 +126,7 @@ class NrcanMunge(Munge):
         config = SafeConfigParser()
         config.read('nrcan.config')
         opener = urllib2.build_opener()
+        change links file to point to NAP
         infile = open('/Users/peder/dev/goc/nrcan.links', "r")
         #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
         for line in infile:

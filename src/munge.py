@@ -13,6 +13,7 @@ from ckanext.canada.metadata_schema import schema_description
 from jsonpath import jsonpath
 import socket 
 
+
 class Package:
     ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
     pass
@@ -34,12 +35,14 @@ class DataManager:
         
     def test(self):
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
-        test_package = {'name':'delete-me-package','title':'Test Package Title'}
-        response = self.api3_call('package_create',test_package)
-
+        test_package =  eval(open("single.jl", "read").next())
+        pprint(test_package)
+      
+        response = api3_call('package_create',test_package)
+        #pprint(response)
         #this is a bit confusing: you can pass the 'name' to 'id' to delete the package
-        delete_package = {'id':'delete-me-package'}
-        response = self.api3_call('package_delete',delete_package)
+#        delete_package = {'id':'delete-me-package'}
+#        response = self.api3_call('package_delete',delete_package)
       
     def _packages(self,org): 
         packs = [] 
@@ -70,21 +73,7 @@ class DataManager:
         for d in setup_data.departments:
             organization = {'name':d['name'],'title':d['title'], 'description':d['description']}
             self.api3_call('organization_create',organization)
-
-
-
-
-class Munge:
-    pass
-
-
-class Package:
-    pass
-class Resource:
-    pass
-    
-
-        
+   
 class FieldMapper:
 
     schema = schema_description
@@ -217,6 +206,66 @@ class NrcanDb:
         rs = s.execute()
         
         row = rs.fetchone()
+
+def api3_call(call,payload): 
+       ''' To use a proxy for debugging JSON,  set it here
+       
+           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy
+           proxy_handler = urllib2.ProxyHandler({})
+           
+           
+           You may need to set a proxy with:
+           r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
+           
+           Examples:
+           
+           On statcan network B:
+           urllib2.ProxyHandler({'http': 'http://jakoped:mypass@stcweb.statcan.ca:80'})
+           
+           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy if you are 
+           entering datasets in localhost on Statcan network B
+           proxy_handler = urllib2.ProxyHandler({})
+           opener = urllib2.build_opener(proxy_handler)
+           
+           When using a debugging proxy like Charles to monitor JSON, you can set it with 
+           proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+           
+           
+           NOTE: You may also be able to pick up proxy information from you environment like:
+           
+            proxy = {
+                "http:": "%s"  % os.environ['HTTP_PROXY'], 
+                "https:": "%s"  % os.environ['HTTP_PROXY']
+            }   
+            
+        '''
+    
+       url = "http://localhost:5000/api/action/"
+       #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
+       #payload = {'name':'testname'}
+       
+       proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+       opener = urllib2.build_opener(proxy_handler)
+       auth = urllib2.HTTPBasicAuthHandler()
+       #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+       urllib2.install_opener(opener)
+       url = url+call 
+       header = {'Authorization':'tester','Content-Type': 'application/json'}
+       data=json.dumps(payload)
+       print url
+       req = urllib2.Request(url, data, header)
+       try:
+           r = opener.open(req)
+           result = json.loads(r.read())
+           if result['success']: 
+               return result
+           elif result['false']:
+               print "*******  API ERROR  ********"
+               print result
+               
+       except urllib2.HTTPError as h:
+           print "some Error "
+           print h
          
         
 if __name__ == "__main__":
@@ -224,7 +273,7 @@ if __name__ == "__main__":
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
     ckan_parser.add_argument('endpoint', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
-    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
+    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report','test'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
@@ -245,11 +294,10 @@ if __name__ == "__main__":
             #NrcanDb().test()
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
-    if args.action == 'list':
-        DataManager(args.server).list_by_organization(args.organization)
-    elif args.action == 'init' and args.entity == 'orgs':
-        DataManager(args.server).create_organizations()
-    elif args.action == 'delete':
-        DataManager(args.server).delete_by_owner(args.organization)
+    elif args.endpoint == 'ckan':
+        if args.action == 'test' and args.entity == 'pack':
+            DataManager(args.server).test()
+        elif args.action == 'delete':
+            DataManager(args.server).delete_by_owner(args.organization)
         
    

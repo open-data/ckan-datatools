@@ -9,11 +9,89 @@ from ckanext.canada.metadata_schema import schema_description
 from lxml import etree
 from pprint import pprint
 import mappings
-import ckan_api_client
+
 import sys
 import simplejson as json
 import string
 
+
+
+class Transform:
+    
+    ''' A 3 pass method for turning pilot xml into CKAN json  
+        each file takes a file and produces a new file.
+    '''
+    def structure(self):
+        ''' Step 1:  Create CKAN Structure  '''
+        self.out = open("data/pilot-pass1.jl", "w")
+        for event, element in etree.iterparse("data/tables_20120815.xml", events=("start","end")):
+            
+            if event == "start" and  element.tag == "record":
+                
+                self._process_node(element)
+                
+            element.clear()
+            del element # for extra insurance  
+            
+        self.out.close()
+        pass
+    
+    def replace(self):
+        ''' Step 2:  Replace keys with values from metadata_schema choices  '''
+        pass1_in = open("data/pilot-pass1.jl", "r")
+        for line in pass1_in:
+       
+            j = json.loads(line)
+
+            pprint(j)
+            sys.exit()
+        pass
+
+    def defaults(self):
+        ''' Step 3: Fill empty fields with defaults '''
+        pass   
+    
+    def _process_node(self,node):
+        
+        package_dict = {'extras': {}, 'resources': [], 'tags': []}
+        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+            try: # the simplest case, one to one mapping of values
+            # temporary hack because name has not been mapped to thisformid in the schema
+
+                value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)[0]
+                package_dict[ckan_name] = value
+            except IndexError:  #when None, eg. same as elif pilot_name is None:
+               package_dict[ckan_name] = ''
+            
+            # now do resources, use my own logic as 
+
+            resource_fields = {'url':'dataset_link_en_1',
+                               'size': 'dataset_size_en_1',
+                               'format':'dataset_format_1'}
+            resources = []
+            resource_dict = {}
+            
+            resource_dict['name'] = ''
+            resource_dict['name_fr'] = ''
+            resource_dict['language'] = ''
+            resource_dict['last_modified'] = ''
+         
+
+            for key,value  in resource_fields.items():
+                try:
+                    resource_dict[key]  = node.xpath("FORM[NAME='%s']/A/text()" % value)[0]
+                    
+                except IndexError:
+                    resource_dict[key] = ''
+                    
+            resources.append(resource_dict)
+            
+            package_dict['resources'] = resources
+            
+            # now do tags
+            
+        self.out.write(json.dumps(package_dict) + "\n")
+        
 def convert_name(thisformid):
     
     name = thisformid.lower().split('-')[0]
@@ -114,9 +192,9 @@ def process_pilot_xml(xml_file):
             process_record(element)
         element.clear()
         del element # for extra insurance  
-
-              
+             
 if __name__ == "__main__":
-    
-    process_pilot_xml('data/tables_20120815.xml')
+    #Transform().structure()   
+    Transform().replace()
+    #process_pilot_xml('data/tables_20120815.xml')
 
