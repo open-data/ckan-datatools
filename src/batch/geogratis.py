@@ -9,12 +9,12 @@ import urllib2
 import os
 import json
 from pprint import pprint
-import ckan_api_client
 import sys
 from pprint import pprint
 import time
 import socket 
 from itertools import *
+import argparse
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
@@ -106,7 +106,7 @@ def crossReference(fname1,fname2,outfile):
                     print c1, c2 
         '''      
 
-class NrcanMunge(Munge):
+class NrcanMunge():
     def __init__(self):
         
         pass
@@ -126,7 +126,7 @@ class NrcanMunge(Munge):
         config = SafeConfigParser()
         config.read('nrcan.config')
         opener = urllib2.build_opener()
-        change links file to point to NAP
+        
         infile = open('/Users/peder/dev/goc/nrcan.links', "r")
         #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
         for line in infile:
@@ -148,25 +148,26 @@ class NrcanMunge(Munge):
         ''' Grab NRCan Data and dump into a file '''
 
         opener = urllib2.build_opener()
-        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
-        outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+        infile = open(os.path.normpath('/temp/nrcan.links'), "r")
+        outfile = open(os.path.normpath('/temp/nrcan.dat'), "w")
         for line in infile:
+            print line
             en, fr = str(line).strip().split(', ')
             req = urllib2.Request(en)  
             try: 
                 f = opener.open(req,timeout=500)
             except socket.timeout:
                 print "en socket timeout"
-            response = f.read() 
-            data_en = json.loads(response)
+            data_en = f.read() 
+            
             req = urllib2.Request(fr)  
             try: 
                 f = opener.open(req,timeout=500)
             except socket.timeout:
                 print "fr socket timeout"
-            response = f.read() 
-            data_fr = json.loads(response)
-            outfile.write(str(data_en) + "|" + str(data_fr) + "\n")
+            data_fr = f.read() 
+           
+            outfile.write(str(data_en) + "|||" + str(data_fr) + "\n")
             pass
         
 
@@ -175,8 +176,8 @@ class NrcanMunge(Munge):
            config = SafeConfigParser()
            config.read('nrcan.config')
            opener = urllib2.build_opener()
-           infile = open('/Users/peder/dev/goc/nrcan.links', "r")
-           outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
+           infile = open(os.normpath('/temp/nrcan.links', "r"))
+           outfile = open(os.normpath('/temp/nrcan.dat', "w"))
            for line in infile:
                links = str(line).strip("\n").split(', ')
                req = urllib2.Request(links[0])  
@@ -209,13 +210,16 @@ class NrcanMunge(Munge):
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
+    NrcanMunge().save_nrcan_data()
+    '''
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
-    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
-    ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
+    parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
+    parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
       
     args = parser.parse_args()
     print args
+    '''
  
 
         
