@@ -12,6 +12,7 @@ from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 from jsonpath import jsonpath
 import socket 
+import os
 
 
 class Package:
@@ -73,7 +74,12 @@ class DataManager:
         for d in setup_data.departments:
             organization = {'name':d['name'],'title':d['title'], 'description':d['description']}
             self.api3_call('organization_create',organization)
-   
+            
+    def load_data(self):
+        infile = open(os.path.normpath('batch/data/pilot-pass1.jl'))
+        for line in infile:
+            response = api3_call('package_create',json.loads(line))
+            
 class FieldMapper:
 
     schema = schema_description
@@ -273,7 +279,7 @@ if __name__ == "__main__":
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
     ckan_parser.add_argument('endpoint', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
-    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report','test'])
+    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','load','list','update','report','test'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
@@ -297,6 +303,8 @@ if __name__ == "__main__":
     elif args.endpoint == 'ckan':
         if args.action == 'test' and args.entity == 'pack':
             DataManager(args.server).test()
+        elif args.action == 'load' and args.entity == 'pack':
+            DataManager(args.server).load_data()
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
         

@@ -55,3 +55,5 @@ src/batch/ckan_api_client.pyc
 record
 
 record
+
+*.jl
