@@ -182,39 +182,41 @@ class NrcanMunge():
             else:
                 print "SKIP", en
             
-    def save_nrcan_data(self):
-        ''' Grab NRCan Data and dump into a file '''
+    def save_nap_files(self):
         opener = urllib2.build_opener()
+        infile = open(os.path.normpath('/temp/nrcan2.links'), "r")
+        ''' Grab NRCan .nap xml files and dump into a file '''
         
         
-        outfile = open(os.path.normpath('/temp/nrcan3.dat'), "w")
-        do = False
+        
+        
+        
+        do = True
         for line in infile:
             en, fr = str(line).strip().split(', ')
-            print en 
-            if do: 
+            if do:
+                logfile = open(os.path.normpath('/temp/nrcan-nap.log'), "a")
                 req = urllib2.Request(en)  
                 try: 
                     f = opener.open(req,timeout=500)
+                    data_en = f.read()
+                    print en
+                    
+                    filename = en.split('/')[-1]
+                    print filename 
+                    napfile = open(os.path.normpath('/temp/nap/%s' % filename), "w")
+                    napfile.write(data_en)
+                    napfile.close()
+                    logfile.write(filename + ", OK\n")
                 except socket.timeout:
-                    print "en socket timeout"
-                data_en = f.read() 
+                    logfile.write(filename + ", Socket timeout\n")
                 
-                req = urllib2.Request(fr)  
-                try: 
-                    f = opener.open(req,timeout=500)
-                except socket.timeout:
-                    print "fr socket timeout"
-                data_fr = f.read() 
+                except: 
+                    logfile.write(filename + ", " + str(sys.exc_info()[0]) + "\n")
            
-                outfile.write(str(data_en) + "|||" + str(data_fr) + "\n")
-            else:
+                logfile.close()
                 
-                if en == "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/56bb6177-1364-4fe3-8515-16d94dcef79f.nap":
-                   do = True
-                else:
-                    line.strip()
-            pass
+        
         
             
     def read_nrcan_data(self):
@@ -256,7 +258,7 @@ class NrcanMunge():
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
-    NrcanMunge().count_lines()
+    NrcanMunge().save_nap_files()
     '''
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
