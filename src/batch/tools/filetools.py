@@ -3,6 +3,7 @@ import os
 import sys
 import linecache
 
+   
 def print_first_last_line(inputfile) :
     'gets the last line of a file without reading the entire file into memory'
     filesize = os.path.getsize(inputfile)

@@ -15,6 +15,8 @@ import time
 import socket 
 from itertools import *
 import argparse
+from lxml import etree
+import fileinput
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
@@ -143,34 +145,78 @@ class NrcanMunge():
             db.insert(self, json.loads(data))              
             sys.exit()
             pass
+    def strip_whitespace(self):
+        filename_in = os.path.normpath('/temp/nrcan.dat')
+        filename_out = os.path.normpath('/temp/nrcan-strip2.dat')
+        outfile =  open(filename_out, "a");
+        with open(filename_in) as infile:
+            for line in infile:
+                if not line.rstrip():
+                    continue
+                else:
+                   outfile.write(line.rstrip())
+                   
+                   
+    def count_lines(self):
+        c=0
+        path = os.path.normpath('/temp/nrcan-strip.dat')
+        with open(path, "r") as infile:
         
+           for line in infile:
+               c+=1
+               if c > 43098700:
+                   print line
+        print c
+            
+    def write_new_links(self): 
+        infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
+        links = open(os.path.normpath('/temp/nrcan3.links'), "w")
+        start = False
+        for line in infile:
+            en, fr = str(line).strip().split(', ')
+            if start:
+                print "WRITE", en
+                links.write(line)
+            elif en == "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/56bb6177-1364-4fe3-8515-16d94dcef79f.nap":
+                start = True
+            else:
+                print "SKIP", en
+            
     def save_nrcan_data(self):
         ''' Grab NRCan Data and dump into a file '''
-
         opener = urllib2.build_opener()
-        infile = open(os.path.normpath('/temp/nrcan.links'), "r")
-        outfile = open(os.path.normpath('/temp/nrcan.dat'), "w")
+        
+        
+        outfile = open(os.path.normpath('/temp/nrcan3.dat'), "w")
+        do = False
         for line in infile:
-            print line
             en, fr = str(line).strip().split(', ')
-            req = urllib2.Request(en)  
-            try: 
-                f = opener.open(req,timeout=500)
-            except socket.timeout:
-                print "en socket timeout"
-            data_en = f.read() 
-            
-            req = urllib2.Request(fr)  
-            try: 
-                f = opener.open(req,timeout=500)
-            except socket.timeout:
-                print "fr socket timeout"
-            data_fr = f.read() 
+            print en 
+            if do: 
+                req = urllib2.Request(en)  
+                try: 
+                    f = opener.open(req,timeout=500)
+                except socket.timeout:
+                    print "en socket timeout"
+                data_en = f.read() 
+                
+                req = urllib2.Request(fr)  
+                try: 
+                    f = opener.open(req,timeout=500)
+                except socket.timeout:
+                    print "fr socket timeout"
+                data_fr = f.read() 
            
-            outfile.write(str(data_en) + "|||" + str(data_fr) + "\n")
+                outfile.write(str(data_en) + "|||" + str(data_fr) + "\n")
+            else:
+                
+                if en == "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/56bb6177-1364-4fe3-8515-16d94dcef79f.nap":
+                   do = True
+                else:
+                    line.strip()
             pass
         
-
+            
     def read_nrcan_data(self):
            ''' Read links from enercan and save them into bilinguages dataset file or database '''
            config = SafeConfigParser()
@@ -210,7 +256,7 @@ class NrcanMunge():
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
-    NrcanMunge().save_nrcan_data()
+    NrcanMunge().count_lines()
     '''
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
