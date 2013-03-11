@@ -1,25 +1,23 @@
-# Inspired by https://github.com/okfn/ckanext-pdeu/blob/master/ckanext/pdeu/harvesters/digitaliser_dk.py
-
-''' This module is used to read data from the Geogratis web services into two master data files, 
-    one in english and one in french.
-    Then tools are provided to generate reports on the data and import it into CKAN  etc. '''
-
-from lxml import etree
-import urllib2
 import os
-import json
-from pprint import pprint
 import sys
-from pprint import pprint
+import json
 import time
 import socket 
-from itertools import *
+import urllib2
 import argparse
+from pprint import pprint
 from lxml import etree
-import fileinput
+from itertools import *
+
+''' 
+    This module is used to read data from the Geogratis web services into two master data files, 
+    one in english and one in french.
+    Then tools are provided to generate reports on the data and import it into CKAN  etc. 
+'''
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
+
 def gather_products():
     global total_download
     global LAST_REQUEST
@@ -31,8 +29,7 @@ def gather_products():
     data = []
     opener = urllib2.build_opener()
     while True:
-        
-        
+ 
         try:
             req = urllib2.Request(NEXT+'&alt=json')
             f = opener.open(req,timeout=500)
@@ -145,28 +142,7 @@ class NrcanMunge():
             db.insert(self, json.loads(data))              
             sys.exit()
             pass
-    def strip_whitespace(self):
-        filename_in = os.path.normpath('/temp/nrcan.dat')
-        filename_out = os.path.normpath('/temp/nrcan-strip2.dat')
-        outfile =  open(filename_out, "a");
-        with open(filename_in) as infile:
-            for line in infile:
-                if not line.rstrip():
-                    continue
-                else:
-                   outfile.write(line.rstrip())
-                   
-                   
-    def count_lines(self):
-        c=0
-        path = os.path.normpath('/temp/nrcan-strip.dat')
-        with open(path, "r") as infile:
         
-           for line in infile:
-               c+=1
-               if c > 43098700:
-                   print line
-        print c
             
     def write_new_links(self): 
         infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
@@ -184,13 +160,8 @@ class NrcanMunge():
             
     def save_nap_files(self):
         opener = urllib2.build_opener()
-        infile = open(os.path.normpath('/temp/nrcan2.links'), "r")
-        ''' Grab NRCan .nap xml files and dump into a file '''
-        
-        
-        
-        
-        
+        infile = open(os.path.normpath('/temp/nrcan.links'), "r")
+        ''' Grab NRCan .nap xml files and dump into as files into a folder '''
         do = True
         for line in infile:
             en, fr = str(line).strip().split(', ')
@@ -215,10 +186,8 @@ class NrcanMunge():
                     logfile.write(filename + ", " + str(sys.exc_info()[0]) + "\n")
            
                 logfile.close()
-                
-        
-        
-            
+                sys.exit()
+           
     def read_nrcan_data(self):
            ''' Read links from enercan and save them into bilinguages dataset file or database '''
            config = SafeConfigParser()
