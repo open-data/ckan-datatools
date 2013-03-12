@@ -1,31 +1,24 @@
-#!/usr/bin/python
-
 import sys
-import setup_data
-import urllib2
+import os
 import json
+import setup_data
+import socket 
+import urllib2
+from jsonpath import jsonpath
 from pprint import pprint 
 import argparse
 from ConfigParser import SafeConfigParser 
-from sqlalchemy import *
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
-from jsonpath import jsonpath
-import socket 
-import os
-
 
 class Package:
-    ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values, including extras  '''
+    ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values '''
     pass
 class Resourse:
-    ''' Takes json from any GOC source and maps it to CKAN 2.0 'resource' field values, including extras  '''
+    ''' Takes json from any GOC source and maps it to CKAN 2.0 'resource' field values '''
     pass
 
 class DataManager:
-    server = 'http://localhost:5000'
-    apikey = 'tester'
-    debug_proxy = 'http://localhost:8888'
     
     def __init__(self, server):
         self.server = server
@@ -60,6 +53,9 @@ class DataManager:
     def list_by_organization(self,org):
         for item in self._packages(org):
             print item
+            
+    def set_organizations(self):
+        pass
 
     def delete_by_owner(self,org):
       for item in self._packages(org):
@@ -82,10 +78,8 @@ class DataManager:
             
 class FieldMapper:
 
-    schema = schema_description
-   
+    schema = schema_description  
     def __init__(self):
-       
         pass
     
     def makeConfig(self):
@@ -116,44 +110,7 @@ class FieldMapper:
             out.write(f +"=\n")
             
 
-class NrcanDb:
-  
-    db = create_engine('sqlite:///nrcan.db')
-    metadata = MetaData(db)
-    
-    def __init__(self):
-        pass
-    
-    
-    def setup(self): 
-        ''' A list of products was originally created by running queries in geogratis.py to create 171,909 links to metadata 
-            The french list of products has 171,920 and so is out of sync
-        '''
-        product_links_en = Table('products_links_en', metadata,
-                Column('id', Integer, primary_key=True),
-                Column('uuid', String(40)),
-                Column('link', String),
-                Column('json', String),
-        )
-        #product_links_en.create()  
-        
-        nrcan_en = Table('nrcan_en', metadata,
-                Column('id', Integer, primary_key=True),
-                Column('uuid', String(40)),
-                Column('time', DateTime),
-                Column('json', String),
-        )
-        nrcan_en.create()  
-    
-        nrcan_fr = Table('nrcan_en', metadata,
-                Column('id', Integer, primary_key=True),
-                Column('uuid', String(40)),
-                Column('time', DateTime),
-                Column('json', String),
-                Column('en_id', String),
-        )
-        nrcan_en.create()  
-        pass
+
 
     def test(self):
         
@@ -168,27 +125,7 @@ class NrcanDb:
             rs = stmt.execute()
             for row in rs:
                 print row
-        '''
-        # Most WHERE clauses can be constructed via normal comparisons
-        s = users.select(users.c.name == 'John')
-        run(s)
-        s = users.select(users.c.age < 40)
-        run(s)
-        
-        i = self.nrcan_en.insert()
-        i.execute({'uuid': '3036639a-3cae-5bd0-bcd2-8e62a1b7bc51', 'time': datetime.now(), 'json': '{somejason}'})  
-        s = self.nrcan_en.select()
-        rs = s.execute()
-    
-        row = rs.fetchone()
-        print 'Id:', row[0]
-        print 'uuid:', row['uuid']
-        print 'Time:', row.time
-        print 'json:', row['json']
-        
-        for row in rs:
-            print row.uuid, 'has json', row.json
-        '''   
+
     def insert_en(self,json):
         self.db.echo = True  
         nrcan_en = Table('nrcan_en', self.metadata, autoload=True)
@@ -213,65 +150,63 @@ class NrcanDb:
         
         row = rs.fetchone()
 
-def api3_call(call,payload): 
-       ''' To use a proxy for debugging JSON,  set it here
-       
-           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy
-           proxy_handler = urllib2.ProxyHandler({})
-           
-           
-           You may need to set a proxy with:
-           r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
-           
-           Examples:
-           
-           On statcan network B:
-           urllib2.ProxyHandler({'http': 'http://jakoped:mypass@stcweb.statcan.ca:80'})
-           
-           NOTE: Create an empty proxy handler to force urllib2 not to use a proxy if you are 
-           entering datasets in localhost on Statcan network B
-           proxy_handler = urllib2.ProxyHandler({})
-           opener = urllib2.build_opener(proxy_handler)
-           
-           When using a debugging proxy like Charles to monitor JSON, you can set it with 
-           proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
-           
-           
-           NOTE: You may also be able to pick up proxy information from you environment like:
-           
-            proxy = {
-                "http:": "%s"  % os.environ['HTTP_PROXY'], 
-                "https:": "%s"  % os.environ['HTTP_PROXY']
-            }   
-            
-        '''
+class CkanClient:
+    server = 'http://localhost:5000'
+    apikey = 'tester'
+    debug_proxy = 'http://localhost:8888'
     
-       url = "http://localhost:5000/api/action/"
-       #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
-       #payload = {'name':'testname'}
-       
-       proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
-       opener = urllib2.build_opener(proxy_handler)
-       auth = urllib2.HTTPBasicAuthHandler()
-       #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-       urllib2.install_opener(opener)
-       url = url+call 
-       header = {'Authorization':'tester','Content-Type': 'application/json'}
-       data=json.dumps(payload)
-       print url
-       req = urllib2.Request(url, data, header)
-       try:
-           r = opener.open(req)
-           result = json.loads(r.read())
-           if result['success']: 
-               return result
-           elif result['false']:
-               print "*******  API ERROR  ********"
-               print result
+    def __init__(self):
+        pass
+    
+    def api3_call(call,payload): 
+           ''' 
+               You may need to set a proxy with:
+               r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
+    
+               Example:  On statcan network B:
+               urllib2.ProxyHandler({'http': 'http://jakoped:mypass@stcweb.statcan.ca:80'})
+    
+               When using a debugging proxy like Charles to monitor JSON, you can set it with 
+               proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
                
-       except urllib2.HTTPError as h:
-           print "some Error "
-           print h
+                You may also be able to pick up proxy information from you environment like:
+               
+                proxy = {
+                    "http:": "%s"  % os.environ['HTTP_PROXY'], 
+                    "https:": "%s"  % os.environ['HTTP_PROXY']
+                }  
+                
+                Urllib2 trick: Create an empty proxy handler to force urllib2 not to use a proxy when 
+                testing on localhost on statcan desktops: proxy_handler = urllib2.ProxyHandler({}) 
+                
+            '''
+        
+           url = "http://localhost:5000/api/action/"
+           #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
+           #payload = {'name':'testname'}
+           
+           proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+           opener = urllib2.build_opener(proxy_handler)
+           auth = urllib2.HTTPBasicAuthHandler()
+           #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+           urllib2.install_opener(opener)
+           url = url+call 
+           header = {'Authorization':'tester','Content-Type': 'application/json'}
+           data=json.dumps(payload)
+           print url
+           req = urllib2.Request(url, data, header)
+           try:
+               r = opener.open(req)
+               result = json.loads(r.read())
+               if result['success']: 
+                   return result
+               elif result['false']:
+                   print "*******  API ERROR  ********"
+                   print result
+                   
+           except urllib2.HTTPError as h:
+               print "some Error "
+               print h
          
         
 if __name__ == "__main__":
