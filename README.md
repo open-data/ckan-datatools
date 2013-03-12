@@ -23,4 +23,14 @@ $python munge.py ckan delete pack agriculture
 
 Complete documentation can be obtained with $python munge.py -h
 
+Create Organizations:
+
+(ckan-2.0) C:\ckan-datatools\src>python datatools.py ckan init org -s=http://data.statcan.gc.ca/data -k=yourapikey -p=http://127.0.0.1:8888
+
+Load data from a CKAN .jl file:
+
+File must contain valid ckan 2.0 packages.
+
+(ckan-2.0) C:\Users\jakoped\source\ckan-datatools\src>python datatools.py ckan load pack -s=http://data.statcan.gc.ca/data -k=yourkey -p=http://proxyuser:proxypass@stcweb.statcan.ca:80 -j=c:\temp\pilot-complete.jl
+
 

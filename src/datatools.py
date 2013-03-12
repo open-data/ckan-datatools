@@ -20,8 +20,8 @@ class Resourse:
 
 class DataManager:
     
-    def __init__(self, server,apikey):
-        self.ckan_client = CkanClient(server,apikey)
+    def __init__(self, server,apikey,proxy):
+        self.ckan_client = CkanClient(server,apikey,proxy)
         
     def test(self):
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
@@ -71,7 +71,7 @@ class DataManager:
                 response = self.ckan_client.api3_call('organization_create',organization)
             except KeyError:
                 print "MISSING ID or some other key" 
-            sys.exit()  
+           
             
     def load_data(self,jlfile):
         infile = open(os.path.normpath(jlfile))
@@ -110,12 +110,8 @@ class FieldMapper:
         out.write('\n[resource_fr]\n')
         for f in fields_fr:
             out.write(f +"=\n")
-            
 
-
-
-    def test(self):
-        
+    def test(self):      
         self.db.echo = True  
         nrcan_en = Table('nrcan_en', self.metadata, autoload=True)
         s = nrcan_en.select()
@@ -149,7 +145,6 @@ class FieldMapper:
     def delete(self):
         s = self.nrcan_en.select()
         rs = s.execute()
-        
         row = rs.fetchone()
 
 class CkanClient:
@@ -195,7 +190,7 @@ class CkanClient:
            #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
            urllib2.install_opener(opener)
            url = url+call 
-           header = {'Authorization':'tester','Content-Type': 'application/json'}
+           header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
            data=json.dumps(payload)
            print url
            req = urllib2.Request(url, data, header)
@@ -242,9 +237,9 @@ if __name__ == "__main__":
             NrcanReport().createJsonBulkData()
     elif args.endpoint == 'ckan':
         if args.action == 'init' and args.entity == 'org':
-            DataManager(args.server,args.apikey).create_organizations()
+            DataManager(args.server,args.apikey,args.proxy).create_organizations()
         elif args.action == 'load' and args.entity == 'pack':
-            DataManager(args.server,args.apikey).load_data(args.jsondata)
+            DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata)
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
         
