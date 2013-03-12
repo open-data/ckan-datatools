@@ -20,19 +20,15 @@ class Resourse:
 
 class DataManager:
     
-    def __init__(self, server):
-        self.server = server
-        self.api_base = "/api/action/"
-        self.port = 5000
-        self.debug_proxy = 'http://localhost:8888'
-        self.url =  self.server + self.api_base
+    def __init__(self, server,apikey):
+        self.ckan_client = CkanClient(server,apikey)
         
     def test(self):
         ''' Creates a test package in CKAN, retrieves it to verify that it was entered, and then deletes it '''
         test_package =  eval(open("single.jl", "read").next())
         pprint(test_package)
       
-        response = api3_call('package_create',test_package)
+        response = self.ckan_client.api3_call('package_create',test_package)
         #pprint(response)
         #this is a bit confusing: you can pass the 'name' to 'id' to delete the package
 #        delete_package = {'id':'delete-me-package'}
@@ -59,7 +55,7 @@ class DataManager:
 
     def delete_by_owner(self,org):
       for item in self._packages(org):
-            self.api3_call('package_delete', {'id':item})
+            selfckan_client.api3_call('package_delete', {'id':item})
    
     def pre_populate(self):
         ''' delegation method  '''
@@ -71,10 +67,10 @@ class DataManager:
             organization = {'name':d['name'],'title':d['title'], 'description':d['description']}
             self.api3_call('organization_create',organization)
             
-    def load_data(self):
-        infile = open(os.path.normpath('batch/data/pilot-pass1.jl'))
+    def load_data(self,jlfile):
+        infile = open(os.path.normpath(jlfile))
         for line in infile:
-            response = api3_call('package_create',json.loads(line))
+            response = self.ckan_client.api3_call('package_create',json.loads(line))
             
 class FieldMapper:
 
@@ -153,10 +149,13 @@ class FieldMapper:
 class CkanClient:
     server = 'http://localhost:5000'
     apikey = 'tester'
-    debug_proxy = 'http://localhost:8888'
+    proxy = 'http://localhost:8888'
     
-    def __init__(self):
+    def __init__(self, server,apikey,proxy='http://localhost:8888'):
         pass
+        self.server = server
+        self.apikey = apikey
+        self.proxy = proxy
     
     def api3_call(call,payload): 
            ''' 
@@ -181,11 +180,11 @@ class CkanClient:
                 
             '''
         
-           url = "http://localhost:5000/api/action/"
+           url = server + "/api/action/"
            #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
            #payload = {'name':'testname'}
            
-           proxy_handler = urllib2.ProxyHandler({'http': 'http://localhost:8888'})
+           proxy_handler = urllib2.ProxyHandler({'http': proxy})
            opener = urllib2.build_opener(proxy_handler)
            auth = urllib2.HTTPBasicAuthHandler()
            #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
@@ -219,7 +218,8 @@ if __name__ == "__main__":
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
     ckan_parser.add_argument("-k","--apikey", help="API Key. Default is tester", action='store', default="tester",)
-   
+    ckan_parser.add_argument("-j","--jsondata", help="Path to .jl CKAN data file", action='store',)
+    
     args = ckan_parser.parse_args()
  
     DataManager.server = args.server
