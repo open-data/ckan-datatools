@@ -63,9 +63,15 @@ class DataManager:
    
     def create_organizations(self):
         ''' Create Government Organizations in CKAN '''
-        for d in setup_data.departments:
-            organization = {'name':d['name'],'title':d['title'], 'description':d['description']}
-            self.api3_call('organization_create',organization)
+        for data in schema_description.dataset_field_by_id['author']['choices']:
+            
+            try:
+                organization = {'name':str(data['id']).lower(),'title':data['id'], 'description':data['key']}
+                organization['id']="sometestid"
+                response = self.ckan_client.api3_call('organization_create',organization)
+            except KeyError:
+                print "MISSING ID or some other key" 
+            sys.exit()  
             
     def load_data(self,jlfile):
         infile = open(os.path.normpath(jlfile))
@@ -152,12 +158,11 @@ class CkanClient:
     proxy = 'http://localhost:8888'
     
     def __init__(self, server,apikey,proxy='http://localhost:8888'):
-        pass
         self.server = server
         self.apikey = apikey
         self.proxy = proxy
     
-    def api3_call(call,payload): 
+    def api3_call(self,call,payload): 
            ''' 
                You may need to set a proxy with:
                r = requests.post(url=url, data=body, headers=headers,proxies=proxy)
@@ -180,11 +185,11 @@ class CkanClient:
                 
             '''
         
-           url = server + "/api/action/"
+           url = self.server + "/api/action/"
            #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
            #payload = {'name':'testname'}
            
-           proxy_handler = urllib2.ProxyHandler({'http': proxy})
+           proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
            opener = urllib2.build_opener(proxy_handler)
            auth = urllib2.HTTPBasicAuthHandler()
            #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
@@ -236,10 +241,10 @@ if __name__ == "__main__":
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
     elif args.endpoint == 'ckan':
-        if args.action == 'test' and args.entity == 'pack':
-            DataManager(args.server).test()
+        if args.action == 'init' and args.entity == 'org':
+            DataManager(args.server,args.apikey).create_organizations()
         elif args.action == 'load' and args.entity == 'pack':
-            DataManager(args.server).load_data()
+            DataManager(args.server,args.apikey).load_data(args.jsondata)
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
         
