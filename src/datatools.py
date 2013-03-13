@@ -204,10 +204,8 @@ class CkanClient:
                    print result
                    
            except urllib2.HTTPError as h:
-               print "some Error "
-               print h
-         
-        
+               print "HTTP Error: ", h
+  
 if __name__ == "__main__":
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
@@ -230,9 +228,6 @@ if __name__ == "__main__":
     if args.endpoint == 'nrcan':
         if args.action == 'init':
             NrcanMunge().save_nrcan_data()
-            #FieldMapper().makeConfig();
-            #NrcanMunge().create_ckan_data();
-            #NrcanDb().test()
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
     elif args.endpoint == 'ckan':
