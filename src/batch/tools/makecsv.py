@@ -59,24 +59,12 @@ def make_headers(file):
         dw.writeheader()
 
 
-#    output.writerow(headers)
-
-#    print ckan_name
-#    ckan_names.append(ckan_name)
-#    print ckan_names
-#    output.writerow(ckan_names)
-
 def write_newfile(infile):
     ''' read the headers from a dump file '''
     with open(infile,'rb') as fin, open(outfile,'w+') as fout:  # multiple context expressions
         dr = csv.DictReader(fin, delimiter='\t')
         fieldnames=dr.fieldnames
-        
-        print fieldnames
-       
-      
         dw = csv.DictWriter(fout, delimiter='\t', fieldnames=fieldnames) 
-        print dw 
         #dw.writerow(dict((fn,fn) for fn in dr.fieldnames))
 
 if __name__ == "__main__":

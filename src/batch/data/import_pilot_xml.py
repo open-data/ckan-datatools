@@ -63,9 +63,7 @@ def process_record(node):
     data['resources'] = [resource,]
     #pprint(convert(data))
     ckan_api_client.insert(convert(data))
-      
 
-    
 x = 0
 def convert(data):
 
@@ -83,14 +81,10 @@ def convert(data):
         name = data['name'].lower()
         name = name.split('-')[0]
         data['name'] = "%s-%s" % (data['groups'][0],name)
- 
-        
-        
+
     except KeyError:
         pass
     return data
-        
-
 
 def report(errors):
     print "Record Error: %s" % errors
@@ -102,13 +96,7 @@ def process_pilot_xml(xml_file):
             process_record(element)
         element.clear()
         del element # for extra insurance  
-
-              
+                    
 if __name__ == "__main__":
     process_pilot_xml('tables_20120815.xml')
-    #pprint(mappings.ckan_pilot_mapping)
-#    for ckan,pilot in mappings.ckan_pilot_common:
-#        print ckan,pilot
-#    
-    #pprint(mappings.ckan_package_fieldnames)
-    #print pilot_package_fields
+

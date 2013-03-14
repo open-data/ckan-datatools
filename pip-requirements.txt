@@ -1,2 +1,3 @@
 # Install these requirements with pip install -r pip-requirements.txt. 
 jsonpath
+geojson

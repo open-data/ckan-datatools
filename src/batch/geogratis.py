@@ -5,9 +5,12 @@ import time
 import socket 
 import urllib2
 import argparse
+from ConfigParser import SafeConfigParser 
 from pprint import pprint
 from lxml import etree
-from itertools import *
+import geojson
+#from itertools import *
+from ckanext.canada.metadata_schema import schema_description
 
 ''' 
     This module is used to read data from the Geogratis web services into two master data files, 
@@ -46,7 +49,6 @@ def gather_products():
             print "socket timeout"
             
         response = f.read()
-    
         json_response = json.loads(str(response),"utf-8")
         
         # Get the link to the next batch of links
@@ -93,7 +95,6 @@ def crossReference(fname1,fname2,outfile):
             x+=1
             if x > 2:break
     
-
         infile.close()
         out.close()
         inF.close()
@@ -106,8 +107,7 @@ def crossReference(fname1,fname2,outfile):
         '''      
 
 class NrcanMunge():
-    def __init__(self):
-        
+    def __init__(self):        
         pass
  
     def mungeDatasets(self):
@@ -119,31 +119,93 @@ class NrcanMunge():
                 sys.exit()
         self.out.close()   
 
+
+    def ola(context, a):
+        return "Ola %s" % a
+    def loadsofargs(context, *args):
+        return "Got %d arguments." % len(args)
   
     def create_ckan_data(self):
-        ''' Create NRCAN datasets in CKAN format and insert into database '''
+        ''' Create ckan ready .jl datasets from .nap XML files  
+
+        '''
         config = SafeConfigParser()
         config.read('nrcan.config')
-        opener = urllib2.build_opener()
+        presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
+        nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco'}
+        for (path, dirs, files) in os.walk("/Users/peder/dev/goc/nap/en/"):
+            for file in files:
+                 
+                package_dict = {'resources': [], 'tags':[]}
         
-        infile = open('/Users/peder/dev/goc/nrcan.links', "r")
-        #outfile = open('/Users/peder/dev/goc/nrcan.dat', "w")
-        for line in infile:
-            links = str(line).strip("\n").split(', ')
-            req = urllib2.Request(links[0])  
-            try: 
-                f = opener.open(req,timeout=5)
-            except socket.timeout:
-                print "socket timeout"
+                def charstring(key):
+                    return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
+                
+                def georegions():
+                    #  replace with list comprehension
+                    compass = ['westBoundLongitude','eastBoundLongitude','southBoundLatitude','northBoundLatitude']
+                    regions = []
+                    for c in compass:
+                        
+                        regions.append(doc.xpath('//gmd:%s/gco:Decimal' % c,namespaces=nspace)[0].text)
+                        
+                    return regions
+                
+                f = open(os.path.join(path,file),"r")
+                doc = etree.parse(f)
+                #citation = doc.xpath('//gmd:CI_Citation/*',namespaces=nspace)
+                
+                package_dict['language'] =''
+                package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
+                package_dict['department_number'] =''
+                package_dict['author_email'] =''
+                package_dict['title'] = charstring('title')
+                package_dict['name'] = file.split(".")[0]
+                package_dict['notes']=charstring('abstract')
+                #catalog_type=LOOKUP
+                package_dict['digital_object_identifier']= ''
+                package_dict['topic_category'] = doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text
+                package_dict['subject']=''
+                #tags=MULTI /gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:descriptiveKeywords
+                package_dict['license_id']=''
+                package_dict['data_series_name']=doc.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
+                package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
             
-            response = f.read() 
-            data = json.loads(response)
-            db = NrcanDb()         
-            db.insert(self, json.loads(data))              
-            sys.exit()
-            pass
+                #maintenance_and_update_frequency=LOOKUP
+                
+                doc.xpath('//gmd:westBoundLongitude/gco:Decimal',namespaces=nspace)
+            
+                package_dict['temporal_element']=doc.xpath('//gmd:EX_Extent/gmd:temporalElement',namespaces=nspace)
+                package_dict['geographic_region']=" ".join(georegions())
+                package_dict['url']=('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
+                package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
+                #ackage_dict['spatial_representation_type']=  spatial represnentation type number
+                package_dict['spatial']=geojson.dumps(geojson.Point(georegions()))
+                pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split('#')[1].split("_")[1]
+                package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
+                package_dict['presentation_form']= presentationCodes[int(pCode)]
+                #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
+                package_dict['browse_graphic_url']=''
+                
+                pprint (package_dict) 
+                
+                
+                ''' Franco  '''
+                
+                
+                
+                ''' Resources ''' 
+                
+                
+                ''' Franco Resources '''
+                
+                
+
+                
+                sys.exit()       
         
-            
+         
     def write_new_links(self): 
         infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
         links = open(os.path.normpath('/temp/nrcan3.links'), "w")
@@ -227,7 +289,7 @@ class NrcanMunge():
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
-    NrcanMunge().save_nap_files()
+    NrcanMunge().create_ckan_data()
     '''
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
