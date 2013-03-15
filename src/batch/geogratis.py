@@ -132,7 +132,9 @@ class NrcanMunge():
         config = SafeConfigParser()
         config.read('nrcan.config')
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
-        nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco'}
+        maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
+        
+        nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
         for (path, dirs, files) in os.walk("/Users/peder/dev/goc/nap/en/"):
             for file in files:
                  
@@ -141,6 +143,7 @@ class NrcanMunge():
                 def charstring(key):
                     return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                 
+               
                 def georegions():
                     #  replace with list comprehension
                     compass = ['westBoundLongitude','eastBoundLongitude','southBoundLatitude','northBoundLatitude']
@@ -153,57 +156,85 @@ class NrcanMunge():
                 
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
-                #citation = doc.xpath('//gmd:CI_Citation/*',namespaces=nspace)
+                
+                fr = open("/Users/peder/dev/goc/nap/fr/"+ file, "r")
+                doc_fr = etree.parse(fr)
+                
+                def charstring_fr(key):
+                    return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                 
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] =''
                 package_dict['author_email'] =''
                 package_dict['title'] = charstring('title')
+                package_dict['title_fra'] = charstring_fr('title')
                 package_dict['name'] = file.split(".")[0]
                 package_dict['notes']=charstring('abstract')
-                #catalog_type=LOOKUP
+                package_dict['notes_fra']=charstring_fr('abstract')
+                package_dict['catalog_type']="Geo Data | G\u00e9o"
                 package_dict['digital_object_identifier']= ''
                 package_dict['topic_category'] = doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text
                 package_dict['subject']=''
-                #tags=MULTI /gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:descriptiveKeywords
+                
+                #item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices']
+                keywords = doc.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
+                #print keywords
+                package_dict['tags']=[k.text for k in keywords]
                 package_dict['license_id']=''
                 package_dict['data_series_name']=doc.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
+                package_dict['data_series_name_fra']=doc_fr.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
-            
-                #maintenance_and_update_frequency=LOOKUP
+                package_dict['data_series_issue_identification_fra']=doc_fr.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
+                #documentation_url_fra=
+                try:
+                    frequencyCode = doc.xpath('//gmd:MD_MaintenanceFrequencyCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
+                    package_dict['maintenance_and_update_frequency']=maintenanceFrequencyCodes[int(frequencyCode)]
+                except IndexError:
+                    package_dict['maintenance_and_update_frequency']=''
+                    pass
                 
-                doc.xpath('//gmd:westBoundLongitude/gco:Decimal',namespaces=nspace)
-            
-                package_dict['temporal_element']=doc.xpath('//gmd:EX_Extent/gmd:temporalElement',namespaces=nspace)
+                
+                time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
+                #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
+                
+                try:
+
+                    package_dict['temporal_element']= '%s/%s' % (time[0].text,time[1].text)
+         
+                except IndexError:
+                    package_dict['temporal_element']=''
+   
                 package_dict['geographic_region']=" ".join(georegions())
                 package_dict['url']=('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                package_dict['url_fra']=('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
+                package_dict['endpoint_url_fr']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
                 #ackage_dict['spatial_representation_type']=  spatial represnentation type number
                 package_dict['spatial']=geojson.dumps(geojson.Point(georegions()))
-                pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split('#')[1].split("_")[1]
+                pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
                 package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=''
-                
-                pprint (package_dict) 
-                
-                
-                ''' Franco  '''
-                
-                
+           
+
+                '''
+                package_dict['data_series_name_fra']=
+                package_dict['data_series_issue_identification_fra']=
+                package_dict['documentation_url_fra']=
+                package_dict['related_document_url_fra']=
+                package_dict['url_fra']=
+                package_dict['endpoint_url_fra']=
+                '''
                 
                 ''' Resources ''' 
                 
                 
                 ''' Franco Resources '''
-                
-                
-
-                
-                sys.exit()       
+                pprint (package_dict)  
+               
         
          
     def write_new_links(self): 
