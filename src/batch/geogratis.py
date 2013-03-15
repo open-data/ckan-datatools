@@ -157,7 +157,8 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try5.jl'), "a")
+        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-1.jl'), "a")
+        log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
@@ -175,7 +176,7 @@ class NrcanMunge():
                     fr = open(os.path.normpath("/temp/nap/fr/"+ file), "r")
                     doc_fr = etree.parse(fr)
                 except IOError:
-                    print "File Error"
+                    log.write("IOError " + str(file))
                     continue
 
         
@@ -197,8 +198,8 @@ class NrcanMunge():
                     cleaned =  u''.join(re.findall(u'[\w\-.]+ ?', x, re.UNICODE)).rstrip()  
                     if " > " in cleaned:
                         return 
-                    elif "Science Keywords" in cleaned:
-                        return
+                    #elif len(cleaned) > 90:
+                    #    return
                     elif "CONTINENT" in cleaned:
                         return
                     else:
@@ -235,7 +236,7 @@ class NrcanMunge():
                 tags = []
                 en_tags = [t.text for t in keywords]
                 fr_tags = [t.text for t in keywords_fr]
-                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en)]
+                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and len(clean_tag(en))  < 90 and len(clean_tag(fr)) < 90]
 
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
