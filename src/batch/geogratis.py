@@ -1,4 +1,12 @@
+#-*- coding:UTF-8 -*-
+''' 
+    This module is used to read data from the Geogratis web services into two master data files, 
+    one in english and one in french.
+    Then tools are provided to generate reports on the data and import it into CKAN  etc. 
+'''
+
 import os
+import re
 import sys
 import json
 import time
@@ -12,11 +20,7 @@ import geojson
 #from itertools import *
 from ckanext.canada.metadata_schema import schema_description
 
-''' 
-    This module is used to read data from the Geogratis web services into two master data files, 
-    one in english and one in french.
-    Then tools are provided to generate reports on the data and import it into CKAN  etc. 
-'''
+
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
@@ -118,7 +122,31 @@ class NrcanMunge():
                 print fr, en
                 sys.exit()
         self.out.close()   
-
+        
+    def camel_to_label(self, ccname):
+        """
+        Convert a camelcase name with irregularities from our proposed xml file
+        to a field label with spaces
+    
+        >>> camel_to_label(u'relatedDocumentsURL')
+        u'Related Documents URL'
+        >>> camel_to_label(u'URLdocumentsConnexes')
+        u'URL Documents Connexes'
+        >>> camel_to_label(u'URIJeuDonnées')
+        u'URI Jue Données'
+        """
+        
+        special = (u'URL', u'URI')
+        for s in special:
+            if s in ccname:
+                return (u' '+s+u' ').join(
+                    camel_to_label(w) for w in ccname.split(s)).strip()
+        out = list(ccname[:1])
+        for a, b in zip(ccname, ccname[1:]):
+            if a.islower() and b.isupper():
+                out.append(u' ')
+            out.append(b)
+        return u''.join(out).title()
 
     def ola(context, a):
         return "Ola %s" % a
@@ -132,6 +160,7 @@ class NrcanMunge():
         jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try1.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
+        topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
         
         nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
         for (path, dirs, files) in os.walk(os.path.normpath("/temp/nap/en/")):
@@ -164,7 +193,9 @@ class NrcanMunge():
                         
                     return regions
                         
-                    
+                def clean_tag(x):
+                    cleaned =  u''.join(re.findall(u'[\w\-.]+ ?', x, re.UNICODE)).rstrip()  
+                    return cleaned.replace(">","-")
                     
                 
                 def charstring_fr(key):
@@ -182,16 +213,28 @@ class NrcanMunge():
                 package_dict['notes_fra']=charstring_fr('abstract')
                 package_dict['catalog_type']="Geo Data | G\u00e9o"
                 package_dict['digital_object_identifier']= ''
-                package_dict['topic_category'] = doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text
+                topic_name_en = self.camel_to_label(doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text)
+                package_dict['topic_category'] = topicKeys[topic_name_en]
                 package_dict['subject']=''
                 
                 #item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices']
                 keywords = doc.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
+                keywords_fr = doc_fr.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
                 #print keywords
-                package_dict['tags']=[k.text for k in keywords]
+                tags = []
+                en_tags = [t.text for t in keywords]
+                fr_tags = [t.text for t in keywords_fr]
+                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags)]
+              
+                
+                package_dict['tags'] = tags
                 package_dict['license_id']=''
-                package_dict['data_series_name']=doc.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
-                package_dict['data_series_name_fra']=doc_fr.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
+                package_dict['data_series_name']=''
+                try:
+                    package_dict['data_series_name']=doc.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
+                    package_dict['data_series_name_fra']=doc_fr.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
+                except IndexError:
+                    pass
                 package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['data_series_issue_identification_fra']=doc_fr.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 #documentation_url_fra=
@@ -201,13 +244,11 @@ class NrcanMunge():
                 except IndexError:
                     package_dict['maintenance_and_update_frequency']=''
                     pass
-                
-                
+
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
-                
+               
                 try:
-
                     package_dict['temporal_element']= '%s/%s' % (time[0].text,time[1].text)
          
                 except IndexError:
@@ -220,13 +261,17 @@ class NrcanMunge():
                 package_dict['endpoint_url_fr']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
                 #ackage_dict['spatial_representation_type']=  spatial represnentation type number
-                package_dict['spatial']=geojson.dumps(geojson.Point(georegions()))
-                pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
-                package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
+                package_dict['spatial']=''#geojson.dumps(geojson.Point(georegions()))
+
+                try:
+                    pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
+                    package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
+                except IndexError:
+                    package_dict['spatial_representation_type'] =''
+                
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=''
-           
 
                 '''
                 package_dict['data_series_name_fra']=
@@ -246,10 +291,14 @@ class NrcanMunge():
                     resources.append(resource)
                 package_dict['resources'] = resources
                 ''' Franco Resources '''
+            
+                #print package_dict['name']
+                f1 = open(os.path.normpath("/temp/nrcan-try1s.jl"), "w")
                 
-                print package_dict['name']
-    
-                jlfile.write(json.dumps(package_dict) + "\n")  
+                
+                f1.write(json.dumps(package_dict) + "\n") 
+                sys.exit()
+                #jlfile.write(json.dumps(package_dict) + "\n")  
                
         
          

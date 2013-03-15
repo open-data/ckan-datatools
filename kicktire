@@ -1,5 +1,5 @@
 #!/bin/bash
 #jakoped:L00p2oo1@stcweb.statcan.ca:80
-read RESPONSE <<< $(curl --proxy jakoped:L00p2oo1@stcweb.statcan.ca:80 -s http://data.statcan.gc.ca/data/api/action/organization_show -d '{"id": "cra"}')
+read RESPONSE <<< $(curl --proxy http://localhost:8888 -s http://data.statcan.gc.ca/data/api/action/package_show -d '{"name": "kicktire"}' -H:'Authorization:2c99efd8-c70b-4502-957d-1defa5fad895')
 echo  $RESPONSE
 
