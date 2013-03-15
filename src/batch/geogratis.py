@@ -157,7 +157,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try4.jl'), "a")
+        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try5.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
@@ -198,6 +198,8 @@ class NrcanMunge():
                     if " > " in cleaned:
                         return 
                     elif "Science Keywords" in cleaned:
+                        return
+                    elif "CONTINENT" in cleaned:
                         return
                     else:
                         return cleaned
