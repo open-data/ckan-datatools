@@ -157,7 +157,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try1.jl'), "a")
+        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try4.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
@@ -195,7 +195,12 @@ class NrcanMunge():
                         
                 def clean_tag(x):
                     cleaned =  u''.join(re.findall(u'[\w\-.]+ ?', x, re.UNICODE)).rstrip()  
-                    return cleaned.replace(">","-")
+                    if " > " in cleaned:
+                        return 
+                    elif "Science Keywords" in cleaned:
+                        return
+                    else:
+                        return cleaned
                     
                 
                 def charstring_fr(key):
@@ -214,7 +219,11 @@ class NrcanMunge():
                 package_dict['catalog_type']="Geo Data | G\u00e9o"
                 package_dict['digital_object_identifier']= ''
                 topic_name_en = self.camel_to_label(doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text)
-                package_dict['topic_category'] = topicKeys[topic_name_en]
+                try:
+                    package_dict['topic_category'] = topicKeys[topic_name_en]
+                except KeyError:
+                    package_dict['topic_category'] =''
+                    
                 package_dict['subject']=''
                 
                 #item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices']
@@ -224,9 +233,8 @@ class NrcanMunge():
                 tags = []
                 en_tags = [t.text for t in keywords]
                 fr_tags = [t.text for t in keywords_fr]
-                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags)]
-              
-                
+                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en)]
+
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
                 package_dict['data_series_name']=''
@@ -293,12 +301,12 @@ class NrcanMunge():
                 ''' Franco Resources '''
             
                 #print package_dict['name']
-                f1 = open(os.path.normpath("/temp/nrcan-try1s.jl"), "w")
+                #f1 = open(os.path.normpath("/temp/nrcan-try1s.jl"), "w")
                 
                 
-                f1.write(json.dumps(package_dict) + "\n") 
-                sys.exit()
-                #jlfile.write(json.dumps(package_dict) + "\n")  
+                #f1.write(json.dumps(package_dict) + "\n") 
+ 
+                jlfile.write(json.dumps(package_dict) + "\n")  
                
         
          
