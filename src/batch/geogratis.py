@@ -236,7 +236,7 @@ class NrcanMunge():
                 tags = []
                 en_tags = [t.text for t in keywords]
                 fr_tags = [t.text for t in keywords_fr]
-                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and len(clean_tag(en))  < 90 and len(clean_tag(fr)) < 90]
+                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and (len(clean_tag(en)) + len(clean_tag(fr))) < 96]
 
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
