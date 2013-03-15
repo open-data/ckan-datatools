@@ -129,16 +129,26 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        config = SafeConfigParser()
-        config.read('nrcan.config')
+        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-try1.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         
         nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
-        for (path, dirs, files) in os.walk("/Users/peder/dev/goc/nap/en/"):
+        for (path, dirs, files) in os.walk(os.path.normpath("/temp/nap/en/")):
             for file in files:
                  
                 package_dict = {'resources': [], 'tags':[]}
+                
+                f = open(os.path.join(path,file),"r")
+                doc = etree.parse(f)
+                   
+                try:
+                    fr = open(os.path.normpath("/temp/nap/fr/"+ file), "r")
+                    doc_fr = etree.parse(fr)
+                except IOError:
+                    print "File Error"
+                    continue
+
         
                 def charstring(key):
                     return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
@@ -153,15 +163,13 @@ class NrcanMunge():
                         regions.append(doc.xpath('//gmd:%s/gco:Decimal' % c,namespaces=nspace)[0].text)
                         
                     return regions
-                
-                f = open(os.path.join(path,file),"r")
-                doc = etree.parse(f)
-                
-                fr = open("/Users/peder/dev/goc/nap/fr/"+ file, "r")
-                doc_fr = etree.parse(fr)
+                        
+                    
+                    
                 
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
+                    pass
                 
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
@@ -239,7 +247,9 @@ class NrcanMunge():
                 package_dict['resources'] = resources
                 ''' Franco Resources '''
                 
-                pprint (package_dict)  
+                print package_dict['name']
+    
+                jlfile.write(json.dumps(package_dict) + "\n")  
                
         
          
@@ -283,7 +293,8 @@ class NrcanMunge():
                 
                 except: 
                     logfile.write(filename + ", " + str(sys.exc_info()[0]) + "\n")
-           
+               
+               
                 logfile.close()
                 sys.exit()
            
