@@ -230,9 +230,15 @@ class NrcanMunge():
                 '''
                 
                 ''' Resources ''' 
-                
-                
+                fileurl=doc.xpath('/gmd:MD_Metadata/gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL',namespaces=nspace)
+                resources = []
+                for f in fileurl:
+                    #print f.tag, f.text
+                    resource={'url':f.text}
+                    resources.append(resource)
+                package_dict['resources'] = resources
                 ''' Franco Resources '''
+                
                 pprint (package_dict)  
                
         
