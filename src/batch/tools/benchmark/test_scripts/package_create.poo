@@ -1,0 +1,14 @@
+import uuid
+
+class Transaction(object):
+	def __init__(self):
+						    
+	def run(self):
+		
+		payload=json.dumps({'name':uuid.uuid1()}
+		req = urllib2.Request(url='http://localhost:5000/api/action/package_create', data=payload)
+			req.add_header('Content-Type', 'text/xml')
+			resp = urllib2.urlopen(req)
+			content = resp.read()
+												        
+		assert ('Example JSON  Response' in content), 'Failed Content Verification'
