@@ -27,6 +27,15 @@ def print_first_last_line(inputfile) :
     #foo = linecache.getline(inputfile, 4)
     #print foo
     
+def remove_lines(filename, number_of_lines):
+    lines = 0
+    f = open("/temp/LOAD/nrcan-1-stripped.jl","w")
+    for line in open(filename):
+        lines += 1
+        if lines < 37000:
+            pass
+        else:
+            f.write(line)    
 
 if __name__ == "__main__" :
     if len(sys.argv) >= 2:
