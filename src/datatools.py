@@ -181,7 +181,7 @@ class CkanClient:
                 
            '''
 
-           print time.time()
+           start = time.time()
            url = self.server + "/api/action/"
            #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
            #payload = {'name':'testname'}
@@ -204,6 +204,9 @@ class CkanClient:
                result = json.loads(r.read())
                if result['success']: 
                    
+                   end = time.time()
+                   print end - start
+           
                    return result
                elif result['false']:
                    print "*******  API ERROR  ********"
