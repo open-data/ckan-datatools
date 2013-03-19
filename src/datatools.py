@@ -12,13 +12,13 @@ from ConfigParser import SafeConfigParser
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 
-class Package:
-    ''' Takes json from any GOC source and maps it to CKAN 2.0 'package' field values '''
-    pass
-class Resourse:
-    ''' Takes json from any GOC source and maps it to CKAN 2.0 'resource' field values '''
-    pass
-
+def packageCount():
+    req = "http://data.statcan.gc.ca/data/api/action/package_list"
+    r = urllib2.urlopen(req)
+    resp = json.loads(r.read())
+    
+    print len(resp['result'])
+        
 class DataManager:
     
     def __init__(self, server,apikey,proxy):
@@ -236,6 +236,8 @@ if __name__ == "__main__":
             NrcanMunge().save_nrcan_data()
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
+        elif args.action == 'report':
+            packageCount()
     elif args.endpoint == 'ckan':
         if args.action == 'init' and args.entity == 'org':
             DataManager(args.server,args.apikey,args.proxy).create_organizations()
