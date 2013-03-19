@@ -12,9 +12,13 @@ from ConfigParser import SafeConfigParser
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 
-def packageCount():
-    req = "http://data.statcan.gc.ca/data/api/action/package_list"
-    r = urllib2.urlopen(req)
+def packageCount(ckansite):
+    print "Package count from ", ckansite, ":    "
+    header = '{}'
+    req = ckansite + "/api/action/package_list"
+    
+    print req
+    r = urllib2.urlopen(req, header)
     resp = json.loads(r.read())
     
     print len(resp['result'])
@@ -153,7 +157,7 @@ class CkanClient:
     apikey = 'tester'
     proxy = 'http://localhost:8888'
     
-    def __init__(self, server,apikey,proxy='http://localhost:8888'):
+    def __init__(self, server,apikey,proxy=None):
         self.server = server
         self.apikey = apikey
         self.proxy = proxy
@@ -180,27 +184,23 @@ class CkanClient:
                 testing on localhost on statcan desktops: proxy_handler = urllib2.ProxyHandler({}) 
                 
            '''
-
-           print time.time()
            url = self.server + "/api/action/"
-           #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
-           #payload = {'name':'testname'}
-
-           
-           #proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
-           #opener = urllib2.build_opener(proxy_handler)
-           #auth = urllib2.HTTPBasicAuthHandler()
-           #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-           #urllib2.install_opener(opener)
+           test_payload = {'name':'testname'}
+           if self.proxy:
+               proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
+               opener = urllib2.build_opener(proxy_handler)
+               opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+               urllib2.install_opener(opener)
            url = url+call 
            header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
            data=json.dumps(payload)
-           #print url
            req = urllib2.Request(url, data, header)
            try:
-               r = urllib2.urlopen(req)
-               
-               #r = opener.open(req)
+               if self.proxy:
+                   r = opener.open(req)
+               else:
+                   r = urllib2.urlopen(req)
+                   
                result = json.loads(r.read())
                if result['success']: 
                    
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
         elif args.action == 'report':
-            packageCount()
+            packageCount(args.server)
     elif args.endpoint == 'ckan':
         if args.action == 'init' and args.entity == 'org':
             DataManager(args.server,args.apikey,args.proxy).create_organizations()

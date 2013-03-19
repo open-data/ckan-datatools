@@ -33,4 +33,10 @@ File must contain valid ckan 2.0 packages.
 
 (ckan-2.0) C:\Users\jakoped\source\ckan-datatools\src>python datatools.py ckan load pack -s=http://data.statcan.gc.ca/data -k=yourkey -p=http://proxyuser:proxypass@stcweb.statcan.ca:80 -j=c:\temp\pilot-complete.jl
 
+Reporting
+=======
+
+Find out how many packages are in various CKAN servers:
+
+$python datatools.py ckan report pack -s=http://data.gov.uk
 
