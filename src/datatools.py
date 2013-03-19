@@ -74,9 +74,12 @@ class DataManager:
                 print "MISSING ID or some other key" 
            
             
-    def load_data(self,jlfile):
+    def load_data(self, jlfile, skip_lines=0):
         infile = open(os.path.normpath(jlfile))
-        for line in infile:
+        for num, line in enumerate(infile):
+            if num < skip_lines:
+                continue
+            print "line %d:" % num,
             response = self.ckan_client.api3_call('package_create',json.loads(line))
             
 class FieldMapper:
@@ -226,6 +229,7 @@ if __name__ == "__main__":
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
     ckan_parser.add_argument("-k","--apikey", help="API Key. Default is tester", action='store', default="tester",)
     ckan_parser.add_argument("-j","--jsondata", help="Path to .jl CKAN data file", action='store',)
+    ckan_parser.add_argument("-n","--skiplines", help="Lines of jsondata to skip", action='store', default="0",)
     
     args = ckan_parser.parse_args()
  
@@ -245,7 +249,7 @@ if __name__ == "__main__":
         if args.action == 'init' and args.entity == 'org':
             DataManager(args.server,args.apikey,args.proxy).create_organizations()
         elif args.action == 'load' and args.entity == 'pack':
-            DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata)
+            DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata, int(args.skiplines))
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
         
