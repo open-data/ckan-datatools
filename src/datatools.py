@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import setup_data
+import time
 import socket 
 import urllib2
 from jsonpath import jsonpath
@@ -178,32 +179,38 @@ class CkanClient:
                 Urllib2 trick: Create an empty proxy handler to force urllib2 not to use a proxy when 
                 testing on localhost on statcan desktops: proxy_handler = urllib2.ProxyHandler({}) 
                 
-            '''
-        
+           '''
+
+           print time.time()
            url = self.server + "/api/action/"
            #proxy_handler = urllib2.ProxyHandler({'http': self.debug_proxy})
            #payload = {'name':'testname'}
+
            
-           proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
-           opener = urllib2.build_opener(proxy_handler)
+           #proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
+           #opener = urllib2.build_opener(proxy_handler)
            #auth = urllib2.HTTPBasicAuthHandler()
            #opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-           urllib2.install_opener(opener)
+           #urllib2.install_opener(opener)
            url = url+call 
            header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
            data=json.dumps(payload)
+           #print url
            req = urllib2.Request(url, data, header)
            try:
-               r = opener.open(req)
+               r = urllib2.urlopen(req)
+               
+               #r = opener.open(req)
                result = json.loads(r.read())
                if result['success']: 
+                   
                    return result
                elif result['false']:
                    print "*******  API ERROR  ********"
                    print result
                    
            except urllib2.HTTPError as h:
-               print "HTTP Error: ", h
+               print  h
   
 if __name__ == "__main__":
     main_parser = argparse.ArgumentParser(add_help=False)
