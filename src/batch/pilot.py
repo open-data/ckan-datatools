@@ -8,7 +8,6 @@ This module is used for converting various items from in the pilot XML
 from ckanext.canada.metadata_schema import schema_description
 from lxml import etree
 from pprint import pprint
-import mappings
 import random
 
 import sys
@@ -37,12 +36,21 @@ class PilotReport:
     
     # create instance of PilotData
     data = PilotData("/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml");
+    report = open("/Users/peder/dev/OpenData/Pilot/pilot-report.txt", "a")
+    
     def number_of_records(self):
         counter = 0
-        for x in self.data.elements():
+        for doc in self.data.elements():
             counter +=1
-            print counter, "\r",
-        print counter
+            self.report.write(str(counter)+"\n")
+    
+    def unique_fields(self):
+        counter = 0
+        unique_form_id = 0
+        
+        for doc in self.data.elements():
+            
+            self.report.write(str(counter)+"\n")    
 
         
 class Transform:

@@ -23,8 +23,8 @@ def stuff():
     '''
 
     word = "Hello"
-    new = {item: word.count(item) for item in set(word)}
-    print new
+#    new = {item: word.count(item) for item in set(word)}
+#    print new
     
     def foo(w): 
         return "Becomes " + w + "o" 

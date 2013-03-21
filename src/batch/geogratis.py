@@ -25,6 +25,28 @@ from ckanext.canada.metadata_schema import schema_description
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
 
+
+class NapReport:
+    nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
+    filedir="/Users/peder/dev/goc/nap/en/"
+    def __init__(self):
+        self._read()
+    def _read(self):
+        
+         for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
+            for file in files:
+
+                try:
+                    
+                    f = open(os.path.normpath(path + "/" + file), "r")
+                    print f
+                    doc = etree.parse(f)
+                    print doc
+                    foo =  doc.xpath('//gmd:MD_KeywordTypeCode[@codeListValue="http://www.fgdc.gov/nap/metadata/register/registerItems.html#RI_528"]',namespaces=self.nspace)
+
+                except:
+                    raise
+
 def gather_products():
     global total_download
     global LAST_REQUEST
@@ -132,8 +154,8 @@ class NrcanMunge():
         u'Related Documents URL'
         >>> camel_to_label(u'URLdocumentsConnexes')
         u'URL Documents Connexes'
-        >>> camel_to_label(u'URIJeuDonnées')
-        u'URI Jue Données'
+        >>> camel_to_label(u'URIJeuDonnï¿½es')
+        u'URI Jue Donnï¿½es'
         """
         
         special = (u'URL', u'URI')
@@ -397,7 +419,9 @@ class NrcanMunge():
 if __name__ == "__main__":
     #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
     #test_single()
-    NrcanMunge().create_ckan_data()
+    #NrcanMunge().create_ckan_data()
+    NapReport()
+    
     '''
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')

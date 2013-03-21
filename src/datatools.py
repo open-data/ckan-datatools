@@ -198,7 +198,7 @@ class CkanClient:
            url = url+call 
            header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
            data=json.dumps(payload)
-           req = urllib2.Request(url, data, header)
+            
            try:
                if self.proxy:
                    r = opener.open(req)
@@ -244,11 +244,12 @@ if __name__ == "__main__":
             NrcanMunge().save_nrcan_data()
         elif args.action == 'update':
             NrcanReport().createJsonBulkData()
-        elif args.action == 'report':
-            packageCount(args.server)
+        
     elif args.endpoint == 'ckan':
         if args.action == 'init' and args.entity == 'org':
             DataManager(args.server,args.apikey,args.proxy).create_organizations()
+        elif args.action == 'report':
+            packageCount(args.server)
         elif args.action == 'load' and args.entity == 'pack':
             DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata, int(args.skiplines))
         elif args.action == 'delete':
