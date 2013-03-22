@@ -17,6 +17,9 @@ from ConfigParser import SafeConfigParser
 from pprint import pprint
 from lxml import etree
 import geojson
+from excepts  import NestedKeyword, EmptyFieldException
+from collections import Counter
+
 #from itertools import *
 from ckanext.canada.metadata_schema import schema_description
 
@@ -31,21 +34,50 @@ class NapReport:
     filedir="/Users/peder/dev/goc/nap/en/"
     def __init__(self):
         self._read()
-    def _read(self):
         
+    def _read(self):
+         cnt = Counter()
          for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
             for file in files:
-
+            
+                f = open(os.path.normpath(path + "/" + file), "r")
+                doc = etree.parse(f)
                 try:
+                    for k in keywords_by_code(doc,"RI_525",self.nspace):
+                        cnt[k]+=1
+                    for k in keywords_by_code(doc,"RI_528",self.nspace):
+                        cnt[k]+=1
                     
-                    f = open(os.path.normpath(path + "/" + file), "r")
-                    print f
-                    doc = etree.parse(f)
-                    print doc
-                    foo =  doc.xpath('//gmd:MD_KeywordTypeCode[@codeListValue="http://www.fgdc.gov/nap/metadata/register/registerItems.html#RI_528"]',namespaces=self.nspace)
+                except NestedKeyword as n:
+                    print "THERE IS A NESTED KEYWORD SO LOG IT "
+                    print n.args
+                    continue
+                except IndexError:
+                    print "Codes RI_525 or RI_525 not present"
+                except EmptyFieldException:
+                    print "No Tags"
+                
+                pprint(cnt.items())
+                
+         pass
+                
 
-                except:
-                    raise
+def keywords_by_code(doc,code_value,nspace):
+    ''' pass xml and code value, get back a list of keywords  '''
+    keywords = []
+    elems = doc.xpath('//gmd:MD_KeywordTypeCode[@codeListValue="%s"]/../../gmd:keyword/gco:CharacterString' % code_value,namespaces=nspace)
+    try:
+        for e in elems:
+        
+            if " > " in e.text: 
+                keywords.append(e.text.split(" > ")[-1].title())
+            else:
+                keywords.append(e.text)
+        if len(elems) == 0:  raise EmptyFieldException 
+    except NestedKeyword as n:
+       print n.args[0]
+      
+    return keywords
 
 def gather_products():
     global total_download

@@ -14,10 +14,9 @@ import sys
 import simplejson as json
 import string
 
-class PilotData():
+class PilotXmlReader():
     '''  Loads a large XML file and turns various useful generators '''
     def __init__(self,xml_file):
-        pass
         self.xml_file = xml_file
     
     def _iter_open(self):
@@ -35,7 +34,7 @@ class PilotData():
 class PilotReport:
     
     # create instance of PilotData
-    data = PilotData("/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml");
+    data = PilotXmlReader("/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml");
     report = open("/Users/peder/dev/OpenData/Pilot/pilot-report.txt", "a")
     
     def number_of_records(self):
@@ -54,26 +53,6 @@ class PilotReport:
 
         
 class Transform:
-    
-    ''' A 3 pass method for turning pilot xml into CKAN json  
-        each file takes a file and produces a new file.
-    '''
-    def structure(self):
-        counter =0 
-        ''' Step 1:  Create CKAN Structure  '''
-        #self.out = open("/Users/peder/dev/OpenData/ckan-json/pilot-complete.jl", "w")
-        for event, element in etree.iterparse("/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml", events=("start","end")):
-            
-            if event == "start" and  element.tag == "RECORD":
-                counter+=1
-                print counter
-                #self._process_node(element)
-                
-            element.clear()
-            del element # for extra insurance  
-            
-        #self.out.close()
-        pass
 
     def _process_node(self,node):
         #print node.xpath("FORM[NAME='thisformid']/A/text()")
@@ -139,30 +118,14 @@ class Transform:
                 package_dict['resources'] = resources 
 
         self.out.write(json.dumps(package_dict) + "\n")
-        
 
-def whatisthis(s):
-    if isinstance(s, str):
-        return "ordinary string"
-    elif isinstance(s, unicode):
-        return "unicode string"
-    else:
-        return "not a string"
-
-def report(errors):
-    print "Record Error: %s" % errors
-   
-def process_pilot_xml(xml_file):
-    # by using the default 'end' event, you start at the _bottom_ of the tree
-    for event, element in etree.iterparse(xml_file, events=("start","end")):
-        if event == "start" and  element.tag == "record":
-            process_record(element)
-        element.clear()
-        del element # for extra insurance  
-             
+           
 if __name__ == "__main__":
-    PilotReport().number_of_records();
+ 
+    ''' 
+    #PilotReport().number_of_records();
     #Transform().structure()   
     #Transform().replace()
     #process_pilot_xml('data/tables_20120815.xml')
 
+    '''
