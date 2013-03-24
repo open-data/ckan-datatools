@@ -10,5 +10,8 @@ class FieldException(Exception):
 class NestedKeyword(Exception):
     pass
 
-class EmptyFieldException(Exception):
+class CodedKeyword(Exception):
+    pass
+
+class EmptyKeyword(Exception):
     pass

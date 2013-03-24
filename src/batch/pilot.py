@@ -9,44 +9,67 @@ from ckanext.canada.metadata_schema import schema_description
 from lxml import etree
 from pprint import pprint
 import random
-
+from datetime import  datetime
 import sys
 import simplejson as json
 import string
+from common import XmlStreamReader
+import logging
+from guess_language import guess_language
 
-class PilotXmlReader():
-    '''  Loads a large XML file and turns various useful generators '''
-    def __init__(self,xml_file):
-        self.xml_file = xml_file
-    
-    def _iter_open(self):
-        # by using the default 'end' event, you start at the _bottom_ of the tree
-        i = 0
-        for event, element in etree.iterparse(self.xml_file, events=("start","end")):
-            i += 1
-            if event == "start" and  element.tag == "RECORD":
-                yield element
-            element.clear()
-            del element # for extra insurance  
-    def elements(self):   
-        return self._iter_open()
+# add filemode="w" to overwrite
+logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
+pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"     
+
+class PilotXmlStreamReader(XmlStreamReader):
+    ''' 
+        Sometimes inheritance IS usuful ;)
+        Combines stream of english and french records into one RECORD  
+        because we are streaming, we cannot use:
+        zip(data.elements()[0::2], data.elements()[1::2])
+        TODO: Consider using fast_iter:
+        http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
+        FIXME: Need to skip every other one for this to work with i%2, 
+        and can no longer clear element in parent
+    '''
+    def combined_elements(self):
+        for i,element in enumerate(self._iter_open()):
+            if element.getprevious() is not None:
+                if i%2==0:continue
+                yield (element.getprevious(),element)
             
+            
+
 class PilotReport:
     
-    # create instance of PilotData
-    data = PilotXmlReader("/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml");
-    report = open("/Users/peder/dev/OpenData/Pilot/pilot-report.txt", "a")
-    
+    def __init__(self,datafile,report=False):
+        # create instance of PilotData
+        self.data = PilotXmlStreamReader("RECORD",datafile)
+
     def number_of_records(self):
-        counter = 0
-        for doc in self.data.elements():
-            counter +=1
-            self.report.write(str(counter)+"\n")
-    
+        for i,nodes in enumerate(self.data.combined_elements()):
+            (node,node_fr) = nodes
+            #etree.dump(node, pretty_print=True)
+            if i > 10: sys.exit()
+            print "EN", node.xpath("DC.TITLE/text()")
+            print "FR", node_fr.xpath("DC.TITLE/text()")
+            print "---------------------"
+            try:
+                title, = nodes[0].xpath("DC.TITLE/text()")
+                title_fr=  nodes[1].xpath("DC.TITLE/text()")
+                #print i, title, title_fr
+                #print i,title_en, title #guessLanguageName(title)
+                if i > 10:
+                    sys.exit()
+            except Exception as e:
+                print e
+                #logging.error(e)
+            #Replace with Logging framework. self.report.write(str(counter)+"\n")
+        self.previous_node = node
+        
     def unique_fields(self):
         counter = 0
-        unique_form_id = 0
-        
+        unique_form_id = 0        
         for doc in self.data.elements():
             
             self.report.write(str(counter)+"\n")    
@@ -55,11 +78,8 @@ class PilotReport:
 class Transform:
 
     def _process_node(self,node):
-        #print node.xpath("FORM[NAME='thisformid']/A/text()")
-        #print etree.tostring(node, with_tail=True)
         
         package_dict = {'resources': [], 'tags':[]}
-        
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
             
             
@@ -121,9 +141,9 @@ class Transform:
 
            
 if __name__ == "__main__":
- 
+    PilotReport(pilot_file).number_of_records()
     ''' 
-    #PilotReport().number_of_records();
+    #PilotReport().number_of_records()
     #Transform().structure()   
     #Transform().replace()
     #process_pilot_xml('data/tables_20120815.xml')

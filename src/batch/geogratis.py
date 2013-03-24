@@ -11,14 +11,16 @@ import sys
 import json
 import time
 import socket 
+import warnings
 import urllib2
 import argparse
 from ConfigParser import SafeConfigParser 
 from pprint import pprint
 from lxml import etree
 import geojson
-from excepts  import NestedKeyword, EmptyFieldException
+from excepts  import NestedKeyword, CodedKeyword, EmptyKeyword
 from collections import Counter
+from common import get_valid_input
 
 #from itertools import *
 from ckanext.canada.metadata_schema import schema_description
@@ -31,33 +33,34 @@ LAST_REQUEST =''
 
 class NapReport:
     nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
-    filedir="/Users/peder/dev/goc/nap/en/"
-    def __init__(self):
+
+    def __init__(self,filedir):
+        self.filedir = filedir
         self._read()
-        
+
     def _read(self):
          cnt = Counter()
          for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
-            for file in files:
-            
+            for num, file in enumerate(files):
+                #print num+1, file
                 f = open(os.path.normpath(path + "/" + file), "r")
                 doc = etree.parse(f)
                 try:
                     for k in keywords_by_code(doc,"RI_525",self.nspace):
                         cnt[k]+=1
-                    for k in keywords_by_code(doc,"RI_528",self.nspace):
-                        cnt[k]+=1
+#                    for k in keywords_by_code(doc,"RI_528",self.nspace):
+#                        cnt[k]+=1
                     
                 except NestedKeyword as n:
                     print "THERE IS A NESTED KEYWORD SO LOG IT "
-                    print n.args
+                    print "Args ", n.args
                     continue
                 except IndexError:
                     print "Codes RI_525 or RI_525 not present"
-                except EmptyFieldException:
+                except EmptyKeyword:
                     print "No Tags"
                 
-                pprint(cnt.items())
+         pprint(cnt.items())
                 
          pass
                 
@@ -68,15 +71,16 @@ def keywords_by_code(doc,code_value,nspace):
     elems = doc.xpath('//gmd:MD_KeywordTypeCode[@codeListValue="%s"]/../../gmd:keyword/gco:CharacterString' % code_value,namespaces=nspace)
     try:
         for e in elems:
-        
             if " > " in e.text: 
                 keywords.append(e.text.split(" > ")[-1].title())
+            elif re.match("^[A-Z0-9]", e.text): #^[A-Z0-9]{3}(?:List)?$
+                pass
             else:
                 keywords.append(e.text)
-        if len(elems) == 0:  raise EmptyFieldException 
-    except NestedKeyword as n:
-       print n.args[0]
-      
+        if len(elems) == 0:  
+            raise EmptyKeyword 
+    except Exception as e:
+          print e  
     return keywords
 
 def gather_products():
@@ -84,9 +88,7 @@ def gather_products():
     global LAST_REQUEST
     global NEXT
     #if LAST!='':NEXT="http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50&start-index=%s" % LAST_REQUEST
-
     total_download = 0
-
     data = []
     opener = urllib2.build_opener()
     while True:
@@ -449,20 +451,19 @@ class NrcanMunge():
                pass
     
 if __name__ == "__main__":
-    #report("/Users/peder/dev/goc/nrcan.jl","/Users/peder/dev/goc/nrcan2-fr.jl","/Users/peder/dev/goc/nrcan-combined.txt")
-    #test_single()
-    #NrcanMunge().create_ckan_data()
-    NapReport()
-    
+
+    print get_valid_input("What do you want to do?", ("report","build"))
     '''
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
-    parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','list','update','report'])
-    parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
-      
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['make', 'report'])
+    parser.add_argument("-p", "--path", help="file or dir", action='store_true')
+
     args = parser.parse_args()
-    print args
+    
+    if args.action == 'report':
+       NapReport(args.path)
     '''
+
  
 
         

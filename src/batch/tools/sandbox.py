@@ -56,12 +56,7 @@ class PilotData(RawData):
     
     cli_init=staticmethod(cli_init)
         
-def get_valid_input(input_string, valid_options):
-    input_string += " ({}) ".format(", ".join(valid_options))
-    response = input(input_string)
-    while response.lower() not in valid_options:
-        response = input(input_string)
-    return response    
+  
 
 class Package:
     def __init__(self,detail):
@@ -69,12 +64,12 @@ class Package:
         self.detail = detail
         
 class Resource:
-    
+    pass
 
 class Report:
     type_map = {
-            ("raw","package"):RawPackage,
-            ("raw","resource"):RawResource 
+            ("raw","package"):Package,
+            ("raw","resource"):Resource 
                 }
     def __init__(self):
         self.packages_list = []
@@ -116,7 +111,7 @@ test_data = [
 def stuff():
     ''' 
     Really simple list comprehension example:
-    '''
+    
 
     word = "Hello"
 #    new = {item: word.count(item) for item in set(word)}
@@ -127,13 +122,13 @@ def stuff():
       
     new = {item: foo(item) for item in set(word)}
     print new
-
+    '''
     '''
     That set comprehension sure is short in comparison to the set up required! If we'd 
     used a list comprehension, of course, Terry Pratchett would have been listed twice. 
     As it is, the nature of sets removes the duplicates and we end up with:
     '''
-    
+    '''
     test_data1 = { b.name for b in test_data if b.genre == 'fantasy' }
 
     print test_data1
@@ -141,7 +136,7 @@ def stuff():
     test_data_double = [ b.name for b in test_data if b.genre == 'fantasy' ]
      
     print test_data_double
-    
+    '''
     """
     We can introduce a colon to create a dictionary comprehension. This converts a 
     sequence into a dictionary using key : value pairs. For example, it may be useful to 
@@ -149,10 +144,11 @@ def stuff():
     dictionary comprehension to map titles to book objects:
     
     """
+    '''
     test_data_lookup = { b.name: b.name for b in test_data if b.genre == 'fantasy' }
     
     print test_data_lookup
-    
+    '''
     ''' Now do the same with (), and it becomes a generator without creating a new object in memory '''
     
     test_data_generator = (b.name for b in test_data if b.genre == 'fantasy' )
