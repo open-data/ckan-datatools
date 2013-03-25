@@ -189,7 +189,7 @@ class CkanClient:
            '''
            start = time.time()
            url = self.server + "/api/action/"
-           test_payload = {'name':'testname'}
+           
            if self.proxy:
                proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
                opener = urllib2.build_opener(proxy_handler)
@@ -198,7 +198,7 @@ class CkanClient:
            url = url+call 
            header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
            data=json.dumps(payload)
-            
+           req = urllib2.Request(url, data, headers=header)
            try:
                if self.proxy:
                    r = opener.open(req)
