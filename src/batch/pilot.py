@@ -143,14 +143,13 @@ class Transform:
                     package_dict[ckan_name] = value
             except IndexError:  #when None, eg. same as elif pilot_name is None:
                package_dict[ckan_name] = ''
-               print "INDEX ERROR ", ckan_name, pilot_name
+               #print "INDEX ERROR ", ckan_name, pilot_name
                pass
             except KeyError:
                 print "KEY ERROR" 
                 pass
             except Error as e:
                 print e
-        
         self.outfile.write(json.dumps(package_dict) + "\n")
            
 if __name__ == "__main__":

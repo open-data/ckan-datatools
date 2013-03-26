@@ -193,7 +193,6 @@ class CkanClient:
            if self.proxy:
                proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
                opener = urllib2.build_opener(proxy_handler)
-               opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
                urllib2.install_opener(opener)
            url = url+call 
            header = {'Authorization':self.apikey,'Content-Type': 'application/json'}
