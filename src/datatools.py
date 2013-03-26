@@ -72,7 +72,6 @@ class DataManager:
             
             try:
                 organization = {'name':str(data['id']).lower(),'title':data['id'], 'description':data['key']}
-                organization['id']="sometestid"
                 response = self.ckan_client.api3_call('organization_create',organization)
             except KeyError:
                 print "MISSING ID or some other key" 
