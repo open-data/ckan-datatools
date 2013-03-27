@@ -20,49 +20,14 @@ from lxml import etree
 import geojson
 from excepts  import NestedKeyword, CodedKeyword, EmptyKeyword
 from collections import Counter
+import common
 from common import get_valid_input
-
-#from itertools import *
 from ckanext.canada.metadata_schema import schema_description
 
 
         
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
-
-
-class NapReport:
-    nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
-
-    def __init__(self,filedir):
-        self.filedir = filedir
-        self._read()
-
-    def _read(self):
-         cnt = Counter()
-         for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
-            for num, file in enumerate(files):
-                #print num+1, file
-                f = open(os.path.normpath(path + "/" + file), "r")
-                doc = etree.parse(f)
-                try:
-                    for k in keywords_by_code(doc,"RI_525",self.nspace):
-                        cnt[k]+=1
-#                    for k in keywords_by_code(doc,"RI_528",self.nspace):
-#                        cnt[k]+=1
-                    
-                except NestedKeyword as n:
-                    print "THERE IS A NESTED KEYWORD SO LOG IT "
-                    print "Args ", n.args
-                    continue
-                except IndexError:
-                    print "Codes RI_525 or RI_525 not present"
-                except EmptyKeyword:
-                    print "No Tags"
-                
-         pprint(cnt.items())
-                
-         pass
                 
 
 def keywords_by_code(doc,code_value,nspace):
@@ -213,13 +178,13 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/temp/LOAD/nrcan-1.jl'), "a")
-        log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
+        #jlfile = open(os.path.normpath('/temp/LOAD/nrcan-2.jl'), "a")
+        #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
         
-        nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
+        nspace = common.nrcan_namespaces
         for (path, dirs, files) in os.walk(os.path.normpath("/temp/nap/en/")):
             for file in files:
                  
@@ -350,12 +315,26 @@ class NrcanMunge():
                 '''
                 
                 ''' Resources ''' 
-                fileurl=doc.xpath('/gmd:MD_Metadata/gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL',namespaces=nspace)
                 resources = []
-                for f in fileurl:
-                    #print f.tag, f.text
-                    resource={'url':f.text}
-                    resources.append(resource)
+                resour=doc.xpath('//gmd:CI_OnlineResource',namespaces=nspace)
+                # search only this resource tree to avoid repetition
+                for r in resour:
+                    try:
+                        url = r.find('gmd:linkage/gmd:URL', nspace).text
+                        format = r.find('gmd:name/gco:CharacterString', nspace).text
+                        for schema_format in  common.formats:
+                            if  format == schema_format:
+                                resource={'url':url,'format':format}
+                                print resource
+                                sys.exit()
+                            resources.append(resource)    
+                        
+                    except:
+                        pass
+                    
+                
+             
+                   
                 package_dict['resources'] = resources
                 ''' Franco Resources '''
             
@@ -452,16 +431,9 @@ class NrcanMunge():
     
 if __name__ == "__main__":
 
-    print get_valid_input("What do you want to do?", ("report","build"))
+    NrcanMunge().create_ckan_data()
     '''
-    parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['make', 'report'])
-    parser.add_argument("-p", "--path", help="file or dir", action='store_true')
-
-    args = parser.parse_args()
-    
-    if args.action == 'report':
-       NapReport(args.path)
+   
     '''
 
  

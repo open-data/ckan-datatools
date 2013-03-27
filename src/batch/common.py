@@ -1,4 +1,9 @@
 from lxml import etree
+from ckanext.canada.metadata_schema import schema_description
+from pprint import pprint
+nrcan_namespaces = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
+formats = [c['key'] for c in schema_description.resource_field_by_id['format']['choices']]
+
 
 class XmlStreamReader():
     '''  Loads a large XML file as a stream and returns various 

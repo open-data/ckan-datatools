@@ -17,8 +17,7 @@ from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
-pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml" 
-pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml" 
+pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"  
 output_file =  "/Users/peder/dev/OpenData/Pilot/march_25.jl"
 
 class PilotXmlStreamReader(XmlStreamReader):
