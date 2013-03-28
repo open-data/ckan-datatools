@@ -32,7 +32,7 @@ class NapReport:
         print "Number of files ", total
     
     def resource_formats(self):
-        report = open(os.path.normpath('/temp/reports/filetypes.txt'), 'w')
+        #report = open(os.path.normpath('/temp/reports/filetypes.txt'), 'w')
         total = 0
         format_types=[]
         cnt = Counter()
@@ -55,15 +55,15 @@ class NapReport:
                     except:
                         pass
                 
-                for r in doc.iter("{http://www.isotc211.org/2005/gmd}linkage"):
-                    
-                    line = (n, r.tag)
-                    print line
-                    #report.write(str(line) + "\n")
-               # report.write("-----\n")   
+#                for r in doc.iter("{http://www.isotc211.org/2005/gmd}linkage"):
+#                    
+#                    line = (n, r.tag)
+#                    print line
+#                    #report.write(str(line) + "\n")
+#               # report.write("-----\n")   
                 
                 
-                if n > 100: break
+                if (n % 100) == 0: print n 
                 #print "\n--------------------\n"
             for t in format_types:
                 cnt[t] +=1
@@ -127,7 +127,7 @@ class NapReport:
 
 
 if __name__ == "__main__":
-    NapReport(os.path.normpath("C:\Users\jakoped\dev\OpenData\opendata"))       
+    NapReport(os.path.normpath("/Users/peder/dev/goc/nap/en"))       
     '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])
