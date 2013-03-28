@@ -34,48 +34,56 @@ class NapReport:
     def resource_formats(self):
         #report = open(os.path.normpath('/temp/reports/filetypes.txt'), 'w')
         total = 0
-        format_types=[]
-        cnt = Counter()
+        all_format_types=[]
+        known_format_types=[]
+        unknown_format_types=[]
+
+        all_cnt  = Counter()
+        known_cnt  = Counter()
+        unknown_cnt = Counter()
+        
         for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
             for n, file in enumerate(files):
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
                 fmt = doc.find('//gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
-                format_types.append(fmt)
-                
+                all_format_types.append(fmt)
+
+
                 resources=doc.xpath('//gmd:CI_OnlineResource',namespaces=nspace)
-                # search only this resource tree to avoid repetition
-           
-                
+
                 for r in resources:
+              
                     try:
-                        if format in common.formats:
-                            print n,r.find('gmd:name/gco:CharacterString', nspace).text, r.find('gmd:linkage/gmd:URL', nspace).text
+                        if in_schema_formats(fmt): 
+                            known_format_types.append(fmt)
+                            #print n,r.find('gmd:name/gco:CharacterString', nspace).text, r.find('gmd:linkage/gmd:URL', nspace).text
                             #"/gmd:MD_Metadata/gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString"
+                            pass
+                        else:
+                            unknown_format_types.append(fmt)
+                            pass
+                            
                     except:
+                        
                         pass
-                
-#                for r in doc.iter("{http://www.isotc211.org/2005/gmd}linkage"):
-#                    
-#                    line = (n, r.tag)
-#                    print line
-#                    #report.write(str(line) + "\n")
-#               # report.write("-----\n")   
-                
+
                 
                 if (n % 100) == 0: print n 
-                #print "\n--------------------\n"
-            for t in format_types:
-                cnt[t] +=1
-            pprint(cnt.items())
-            
-            print "TOTAL ", sum(cnt.values())
-             
-                    
+                #if n > 1000: break
+          
+            for a in all_format_types:
+                all_cnt[a] +=1
+            for k in known_format_types:
+                known_cnt[k] +=1
+            for u in unknown_format_types:
+                unknown_cnt[u] +=1
                 
-                #print etree.dump(fileurl[0], pretty_print=True)
-
-                #cnt[file] += 1
+            counter_to_markdown_table("All Geogratis Formats", all_cnt)
+            counter_to_markdown_table("Known Schema Formats", known_cnt)
+            counter_to_markdown_table("Uknown Geogratis Formats", unknown_cnt)
+            
+            print "TOTAL ", sum(all_cnt.values() + known_cnt.values() + unknown_cnt.values())
                 
         
     def pathtype(path):
@@ -124,10 +132,23 @@ class NapReport:
                 
          pass
 
-
+def counter_to_markdown_table(header,counter):
+    table = "|%s        |   Number   |\n|:-------------|-----------:|\n" % header
+    for item in counter.items():
+        row ="|%s|%s|\n" % (item[0], item[1])
+        table+=row
+        
+    print table
+    
+    
 
 if __name__ == "__main__":
-    NapReport(os.path.normpath("/Users/peder/dev/goc/nap/en"))       
+    pprint (common.schema_file_formats)
+    fmt=''
+    for f in common.schema_file_formats:
+      fmt += f+", "
+    print fmt
+    #NapReport(os.path.normpath("/Users/peder/dev/goc/nap/en"))       
     '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])

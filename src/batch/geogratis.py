@@ -418,9 +418,13 @@ class NrcanMunge():
                pass
     
 if __name__ == "__main__":
+    
+    extent_template = Template('''
+       {"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}
+    ''')
 #    print schema_description.extra_resource_fields
 #    print schema_description.all_resource_fields
     #pprint(schema_description.resource_field_by_id['language']['choices'])
     print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
+#    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
 

@@ -2,11 +2,16 @@ from lxml import etree
 from ckanext.canada.metadata_schema import schema_description
 from pprint import pprint
 
+''' Namespaces required to query .nap files with XPath '''
 nrcan_namespaces = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
+
+
 schema_file_formats = [c['key'] for c in schema_description.resource_field_by_id['format']['choices']]
 # A dict of list might be easierto use that a list of dicts so  you can pick with langs['eng']
 schema_languages = dict((d['eng'],d) for d in schema_description.resource_field_by_id['language']['choices'])
 
+
+''' Checking to see if a File format is in the schema happens both in geogratis and in reports  '''
 
 class XmlStreamReader():
     '''  Loads a large XML file as a stream and returns various 
