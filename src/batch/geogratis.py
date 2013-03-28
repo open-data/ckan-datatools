@@ -140,8 +140,6 @@ class NrcanMunge():
         with open('/Users/peder/dev/goc/nrcan.links', 'r') as inF:
             for line in inF:
                 fr, en = str(line).strip().split(", ")
-                print fr, en
-                sys.exit()
         self.out.close()   
         
     def camel_to_label(self, ccname):
@@ -174,30 +172,31 @@ class NrcanMunge():
     def loadsofargs(context, *args):
         return "Got %d arguments." % len(args)
   
-    def create_ckan_data(self):
+    def create_ckan_data(self,basepath):
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        #jlfile = open(os.path.normpath('/temp/LOAD/nrcan-2.jl'), "a")
+        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-2.jl'), "a")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
         
         nspace = common.nrcan_namespaces
-        for (path, dirs, files) in os.walk(os.path.normpath("/temp/nap/en/")):
+        n = 0
+        for (path, dirs, files) in os.walk(os.path.normpath(basepath+"/en/")):
             for file in files:
-                 
+
                 package_dict = {'resources': [], 'tags':[]}
                 
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
                    
                 try:
-                    fr = open(os.path.normpath("/temp/nap/fr/"+ file), "r")
+                    fr = open(os.path.normpath(basepath+"/fr/"+ file), "r")
                     doc_fr = etree.parse(fr)
                 except IOError:
-                    log.write("IOError " + str(file))
+                    #log.write("IOError " + str(file))
                     continue
 
         
@@ -304,15 +303,6 @@ class NrcanMunge():
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=''
-
-                '''
-                package_dict['data_series_name_fra']=
-                package_dict['data_series_issue_identification_fra']=
-                package_dict['documentation_url_fra']=
-                package_dict['related_document_url_fra']=
-                package_dict['url_fra']=
-                package_dict['endpoint_url_fra']=
-                '''
                 
                 ''' Resources ''' 
                 resources = []
@@ -322,31 +312,29 @@ class NrcanMunge():
                     try:
                         url = r.find('gmd:linkage/gmd:URL', nspace).text
                         format = r.find('gmd:name/gco:CharacterString', nspace).text
-                        for schema_format in  common.formats:
+                        #NOTE schema_description.extra_resource_fields only contains ['language']
+                        lang = common.schema_languages['no language']['key']
+                        
+                        for schema_format in  common.schema_file_formats:
                             if  format == schema_format:
-                                resource={'url':url,'format':format}
-                                print resource
-                                sys.exit()
-                            resources.append(resource)    
+                                resource={'url':url,'format':format,'language':lang}
+
+                        resources.append(resource)    
                         
                     except:
                         pass
-                    
-                
-             
-                   
+
                 package_dict['resources'] = resources
-                ''' Franco Resources '''
-            
-                #print package_dict['name']
-                #f1 = open(os.path.normpath("/temp/nrcan-try1s.jl"), "w")
-                
-                
-                #f1.write(json.dumps(package_dict) + "\n") 
- 
+                n+=1
+                print n
                 jlfile.write(json.dumps(package_dict) + "\n")  
-               
-        
+
+                '''
+                package_dict['documentation_url_fra']= Documentation for API
+                package_dict['related_document_url_fra']=
+                package_dict['url_fra']=
+                package_dict['endpoint_url_fra']=
+                '''       
          
     def write_new_links(self): 
         infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
@@ -430,13 +418,9 @@ class NrcanMunge():
                pass
     
 if __name__ == "__main__":
-
-    NrcanMunge().create_ckan_data()
-    '''
-   
-    '''
-
- 
-
-        
+#    print schema_description.extra_resource_fields
+#    print schema_description.all_resource_fields
+    #pprint(schema_description.resource_field_by_id['language']['choices'])
+    print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
 
