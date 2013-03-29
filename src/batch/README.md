@@ -68,6 +68,8 @@ TOTAL  FILES  170176
 TOTAL  1080632
 ### Entity Guide  ###
 
+North American Profile of ISO19115:2003 - Selected Metadata Elements
+
 6.3.7. Keywords
 Type: MD_Keywords
 Description: Commonly used words or phases which describe the resource. 
@@ -78,3 +80,9 @@ thesaurus of keywords and make them available on the Web for its use with this p
 
 //gmd:MD_KeywordTypeCode[@codeListValue="%s"]/../../gmd:keyword/gco:CharacterString
 
+6.13.6. Temporal Element (O,Repeatable)  Must be in format http://en.wikipedia.org/wiki/ISO_8601  Example Data 2013-03-28
+Type: EX_TemporalExtent
+Description: The time period related to the dataset content.
+BP: A temporal element could be used to describe either the time period covered by the content of the dataset (e.g. during the Jurassic) or the date and time when the data has been collected (e.g. the date on which the geological study was completed). If both are needed, then two temporal extents shall be provided. The use of multiple temporal extents shall be explained in the attribute description of the extent (see 6.13.2).
+
+Spatial Element:  Polygon.  Do we need a multi polygon  See reference implementation at http://geojson.org/geojson-spec.html#polygon

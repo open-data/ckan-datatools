@@ -13,6 +13,7 @@ import time
 import socket 
 import warnings
 import urllib2
+from string import Template
 import argparse
 from ConfigParser import SafeConfigParser 
 from pprint import pprint
@@ -176,7 +177,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-2.jl'), "a")
+        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-3.jl'), "a")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
@@ -241,6 +242,7 @@ class NrcanMunge():
                 package_dict['notes_fra']=charstring_fr('abstract')
                 package_dict['catalog_type']="Geo Data | G\u00e9o"
                 package_dict['digital_object_identifier']= ''
+                package_dict['ready_to_publish']='0'
                 topic_name_en = self.camel_to_label(doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text)
                 try:
                     package_dict['topic_category'] = topicKeys[topic_name_en]
@@ -275,24 +277,27 @@ class NrcanMunge():
                 except IndexError:
                     package_dict['maintenance_and_update_frequency']=''
                     pass
-
+                #ISO 8061
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                
                 try:
-                    package_dict['temporal_element']= '%s/%s' % (time[0].text,time[1].text)
+                    package_dict['time_period_coverage_start'] = time[0].text
+                    package_dict['time_period_coverage_end'] = time[1].text
          
                 except IndexError:
-                    package_dict['temporal_element']=''
+                    package_dict['time_period_coverage_start'] = ''
+                    package_dict['time_period_coverage_end'] = ''
    
                 package_dict['geographic_region']=" ".join(georegions())
                 package_dict['url']=('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['url_fra']=('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-                package_dict['endpoint_url_fr']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
+                package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
                 #ackage_dict['spatial_representation_type']=  spatial represnentation type number
-                package_dict['spatial']=''#geojson.dumps(geojson.Point(georegions()))
+                package_dict['spatial']=geojson.dumps(geojson.geometry.Polygon(georegions()))
+                
 
                 try:
                     pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
@@ -324,17 +329,13 @@ class NrcanMunge():
                     except:
                         pass
 
+                def bookmark_2():
+                    pass
                 package_dict['resources'] = resources
                 n+=1
-                print n
+                if (n % 1000) == 0: print n 
                 jlfile.write(json.dumps(package_dict) + "\n")  
-
-                '''
-                package_dict['documentation_url_fra']= Documentation for API
-                package_dict['related_document_url_fra']=
-                package_dict['url_fra']=
-                package_dict['endpoint_url_fra']=
-                '''       
+      
          
     def write_new_links(self): 
         infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
@@ -363,7 +364,7 @@ class NrcanMunge():
                 try: 
                     f = opener.open(req,timeout=500)
                     data_en = f.read()
-                    print en
+                   
                     
                     filename = en.split('/')[-1]
                     print filename 
@@ -411,20 +412,34 @@ class NrcanMunge():
                    elif nrcan:
                        print n[nrcan]
                        package_dict[ckan] = n[nrcan]
-    
-               pprint(package_dict)
-    
+                       
+               #pprint(package_dict)
+               print "-------"
+              
                sys.exit()
                pass
-    
+
+extent_template = Template('''
+    {"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}
+    ''')
+  
 if __name__ == "__main__":
     
-    extent_template = Template('''
-       {"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}
-    ''')
-#    print schema_description.extra_resource_fields
-#    print schema_description.all_resource_fields
-    #pprint(schema_description.resource_field_by_id['language']['choices'])
+    '''
+    Language Example:
+    http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/ba689b08-d16c-5301-9276-9386e9ab1335
+    "This product is only available in French"
+    from   atom:content/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:language/gco:CharacterString
+    
+    To check if fields are missing use sets of : 
+    print schema_description.extra_resource_fields
+    print schema_description.all_resource_fields
+    pprint(schema_description.resource_field_by_id['language']['choices'])
+    pprint ([key for key,value in package_dict.items() if not value])
+    print "--- Missing Fields ----"
+    print  set(schema_description.all_package_fields) - set(package_dict.keys()) 
+    
+    '''
     print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-#    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
 
