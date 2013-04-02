@@ -34,6 +34,7 @@ class NapReport:
     def resource_formats(self):
         #report = open(os.path.normpath('/temp/reports/filetypes.txt'), 'w')
         total = 0
+        image_format_types = []
         all_format_types=[]
         known_format_types=[]
         unknown_format_types=[]
@@ -41,6 +42,7 @@ class NapReport:
         all_cnt  = Counter()
         known_cnt  = Counter()
         unknown_cnt = Counter()
+        image_cnt = Counter()
         
         for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
             for n, file in enumerate(files):

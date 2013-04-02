@@ -177,7 +177,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-3.jl'), "a")
+        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-4.jl'), "a")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
@@ -207,11 +207,12 @@ class NrcanMunge():
                
                 def georegions():
                     #  replace with list comprehension
-                    compass = ['westBoundLongitude','eastBoundLongitude','southBoundLatitude','northBoundLatitude']
+                    # this should be similar to minx, miny, maxx, maxy
+                    boundingBox = ['westBoundLongitude','southBoundLatitude','eastBoundLongitude','northBoundLatitude']
                     regions = []
-                    for c in compass:
+                    for line in boundingBox:
                         
-                        regions.append(doc.xpath('//gmd:%s/gco:Decimal' % c,namespaces=nspace)[0].text)
+                        regions.append(doc.xpath('//gmd:%s/gco:Decimal' % line,namespaces=nspace)[0].text)
                         
                     return regions
                         
@@ -289,16 +290,29 @@ class NrcanMunge():
                     package_dict['time_period_coverage_start'] = ''
                     package_dict['time_period_coverage_end'] = ''
    
-                package_dict['geographic_region']=" ".join(georegions())
+                package_dict['geographic_region']=""#.join(georegions())
                 package_dict['url']=('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['url_fra']=('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
                 package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
                 #ackage_dict['spatial_representation_type']=  spatial represnentation type number
-                package_dict['spatial']=geojson.dumps(geojson.geometry.Polygon(georegions()))
+                #cornerPoints = doc.xpath('//gmd:cornerPoints/gml:Point/gml:pos',namespaces=nspace)
+                #points = [p.text for p in  cornerPoints]  TODO: Figure out overlap between two representations, rings and points
+                exteriorRing = doc.xpath('//gml:Polygon/gml:exterior/gml:LinearRing/gml:pos',namespaces=nspace)   
+                interiorRing = doc.xpath('//gml:Polygon/gml:interior/gml:LinearRing/gml:pos',namespaces=nspace)   
                 
-
+                extRingPoints = [p.text for p in  exteriorRing]
+                intRingPoints = [p.text for p in interiorRing]
+                if extRingPoints:
+                    package_dict['spatial']=geojson.dumps(geojson.geometry.Polygon(extRingPoints))                                
+                else: 
+                    package_dict['spatial']=extent_template.substitute(
+                                                                        minx = georegions()[0],
+                                                                        miny = georegions()[1],
+                                                                        maxx = georegions()[2],
+                                                                        maxy = georegions()[3]
+                                                                        )
                 try:
                     pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
                     package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
@@ -333,6 +347,9 @@ class NrcanMunge():
                     pass
                 package_dict['resources'] = resources
                 n+=1
+#                if n>100:
+#                    sys.exit()
+                    
                 if (n % 1000) == 0: print n 
                 jlfile.write(json.dumps(package_dict) + "\n")  
       
@@ -419,12 +436,14 @@ class NrcanMunge():
                sys.exit()
                pass
 
-extent_template = Template('''
-    {"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}
-    ''')
-  
+
+
+#extent_template = Template('''{"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}''')
+extent_template = Template('''{"type": "Polygon", "coordinates": ["$minx, $miny", "$minx, $maxy", "$maxx, $maxy", "$maxx, $miny", "$minx, $miny"]}''')
+    
 if __name__ == "__main__":
     
+
     '''
     Language Example:
     http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/ba689b08-d16c-5301-9276-9386e9ab1335
