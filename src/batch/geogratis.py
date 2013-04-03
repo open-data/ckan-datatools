@@ -177,7 +177,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-4.jl'), "a")
+        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-6.jl'), "a")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
@@ -301,11 +301,15 @@ class NrcanMunge():
                 #points = [p.text for p in  cornerPoints]  TODO: Figure out overlap between two representations, rings and points
                 exteriorRing = doc.xpath('//gml:Polygon/gml:exterior/gml:LinearRing/gml:pos',namespaces=nspace)   
                 interiorRing = doc.xpath('//gml:Polygon/gml:interior/gml:LinearRing/gml:pos',namespaces=nspace)   
+                extent_template = Template('''{"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}''')
+
+                extRingPoints = [map(float,p.text.split()) for p in  exteriorRing]
                 
-                extRingPoints = [p.text for p in  exteriorRing]
-                intRingPoints = [p.text for p in interiorRing]
+               
+                intRingPoints = [p.text.split(" ") for p in interiorRing]
                 if extRingPoints:
-                    package_dict['spatial']=geojson.dumps(geojson.geometry.Polygon(extRingPoints))                                
+                    package_dict['spatial']=geojson.dumps(geojson.geometry.Polygon([extRingPoints]))    
+                                          
                 else: 
                     package_dict['spatial']=extent_template.substitute(
                                                                         minx = georegions()[0],
@@ -348,8 +352,8 @@ class NrcanMunge():
                 package_dict['resources'] = resources
                 n+=1
 #                if n>100:
-#                    sys.exit()
-                    
+#                     sys.exit()
+#                pprint(package_dict['spatial'])    
                 if (n % 1000) == 0: print n 
                 jlfile.write(json.dumps(package_dict) + "\n")  
       
@@ -438,8 +442,7 @@ class NrcanMunge():
 
 
 
-#extent_template = Template('''{"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}''')
-extent_template = Template('''{"type": "Polygon", "coordinates": ["$minx, $miny", "$minx, $maxy", "$maxx, $maxy", "$maxx, $miny", "$minx, $miny"]}''')
+#extent_template = Template('''{"type": "Polygon", "coordinates": ["$minx, $miny", "$minx, $maxy", "$maxx, $maxy", "$maxx, $miny", "$minx, $miny"]}''')
     
 if __name__ == "__main__":
     
