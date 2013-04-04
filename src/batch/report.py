@@ -9,16 +9,51 @@ from pprint import pprint
 
 nspace = common.nrcan_namespaces
 
+
+
 class NapReport:
     nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
 
     def __init__(self,path):
         ''' determine if it's a file or folder '''
         self.filedir = path
-        #self._read()
-        #self.minireport()
-        self.resource_formats()
+
         
+    def _xml_generator(self, filedir):
+        '''
+            walk through nap files in en and fr folders and extract xml
+        '''
+        basepath = filedir
+        for (path, dirs, files) in os.walk(os.path.normpath(filedir+"/en")):
+                for n, file in enumerate(files):
+                    # All non nap files should be ex
+                    if ".nap" not in file:continue
+                    en = open(os.path.join(path,file),"r")
+                    fr = open(os.path.join(filedir+"/fr",file),"r")
+                    doc_en = etree.parse(en)
+                    doc_fr = etree.parse(fr)
+                    
+                    yield doc_en,doc_fr
+    
+    def resource_urls(self):
+        print "Reporting on various resource urls to find overlap "
+        xml_gen = self._xml_generator(self.filedir)
+        
+        for n,docs in enumerate(xml_gen):
+            print "---------- {} ----------".format(n)
+
+            try:
+                resources = (docs[0].xpath('//gmd:CI_OnlineResource',namespaces=nspace),docs[1].xpath('//gmd:CI_OnlineResource',namespaces=nspace))
+               
+                for r in resources:
+                    print r[0].find('gmd:linkage/gmd:URL', nspace).text
+                    print r[1].find('gmd:linkage/gmd:URL', nspace).text
+                
+            except Exception as e:
+                print e
+           
+                        
+    
     def minireport(self):
 #        path, dirs, files = os.walk("/usr/lib").next()
 #        file_count = len(files)
@@ -145,12 +180,10 @@ def counter_to_markdown_table(header,counter):
     
 
 if __name__ == "__main__":
-    pprint (common.schema_file_formats)
-    fmt=''
-    for f in common.schema_file_formats:
-      fmt += f+", "
-    print fmt
-    #NapReport(os.path.normpath("/Users/peder/dev/goc/nap/en"))       
+    print "Report"
+    #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
+    path = os.path.normpath("/Users/peder/dev/goc/nap-sample")
+    NapReport(path).resource_urls()     
     '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])

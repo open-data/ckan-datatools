@@ -25,7 +25,7 @@ def packageCount(ckansite):
         
 class DataManager:
     
-    def __init__(self, server,apikey,proxy):
+    def __init__(self, server,apikey,proxy=None):
         self.ckan_client = CkanClient(server,apikey,proxy)
         
     def test(self):
@@ -42,11 +42,11 @@ class DataManager:
     def _packages(self,org): 
         packs = [] 
         if org != 'all':
-            response = self.api3_call('package_search',{'q': u'groups: "'+ org + '"'}) 
+            response = self.ckan_client.api3_call('package_search',{'q': u'groups: "'+ org + '"'}) 
             for item in response['result']['results']:
                 packs.append(item['name'])
         else:
-            response = self.api3_call('package_list',{}) 
+            response = self.ckan_client.api3_call('package_list',{}) 
             for item in response['result']:
                 packs.append(item)   
         return packs
@@ -54,10 +54,21 @@ class DataManager:
     def list_by_organization(self,org):
         for item in self._packages(org):
             print item
+    def delete(self):
+        for item in self._packages(org):
+            print item
             
-    def set_organizations(self):
-        pass
+    
+    def bulk_delete(self):
+        '''
+            ckan.logic.action.update.bulk_update_delete(context, data_dict)
+            Make a list of datasets deleted
 
+        '''
+        ids = json.dumps(self._packages('all'))
+        response = self.ckan_client.api3_call('update/bulk_update_delete',ids) 
+        print response
+        
     def delete_by_owner(self,org):
       for item in self._packages(org):
             selfckan_client.api3_call('package_delete', {'id':item})
@@ -159,7 +170,7 @@ class CkanClient:
     apikey = 'tester'
     proxy = 'http://localhost:8888'
     
-    def __init__(self, server,apikey,proxy=None):
+    def __init__(self, server,apikey,proxy):
         self.server = server
         self.apikey = apikey
         self.proxy = proxy
@@ -222,7 +233,7 @@ if __name__ == "__main__":
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
     ckan_parser.add_argument('endpoint', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
-    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','load','list','update','report','test'])
+    ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','load','list','update','delete','report','test'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
     ckan_parser.add_argument("-s","--server", help="CKAN Server.  Default is localhost:5000", action='store', default="localhost:5000")
     ckan_parser.add_argument("-p","--proxy", help="Proxy for debugging etc. Default is None", action='store', default=None,)
@@ -248,9 +259,12 @@ if __name__ == "__main__":
             DataManager(args.server,args.apikey,args.proxy).create_organizations()
         elif args.action == 'report':
             packageCount(args.server)
+        elif args.action == 'list':
+            pass
+            #DataManager(args.server,args.key).list()
+        elif args.action == 'delete':
+            DataManager(args.server,args.apikey).bulk_delete()
         elif args.action == 'load' and args.entity == 'pack':
             DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata, int(args.skiplines))
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
-        
-   

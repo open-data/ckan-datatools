@@ -173,11 +173,11 @@ class NrcanMunge():
     def loadsofargs(context, *args):
         return "Got %d arguments." % len(args)
   
-    def create_ckan_data(self,basepath):
+    def create_ckan_data(self,basepath,jlfile,start=0,stop=172000):
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath('/Users/peder/dev/goc/LOAD/nrcan-6.jl'), "a")
+        jlfile = open(os.path.normpath(jlfile), "a")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
@@ -186,10 +186,13 @@ class NrcanMunge():
         nspace = common.nrcan_namespaces
         n = 0
         for (path, dirs, files) in os.walk(os.path.normpath(basepath+"/en/")):
-            for file in files:
+            # only process the range required
 
+            for file in files:
+                n+=1
+                if n<start or n>stop: continue
                 package_dict = {'resources': [], 'tags':[]}
-                
+                if ".nap" not in file: continue
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
                    
@@ -331,17 +334,29 @@ class NrcanMunge():
                 resources = []
                 resour=doc.xpath('//gmd:CI_OnlineResource',namespaces=nspace)
                 # search only this resource tree to avoid repetition
+                # keep track of duplicates
+                resource_track =[]
                 for r in resour:
                     try:
                         url = r.find('gmd:linkage/gmd:URL', nspace).text
+                        #check for duplicates
+                        
+                        if url in resource_track: continue
+                        # we don't want ftp links and other unknown or incomplete urls
+                        if "http://" not in url: continue
+                        resource_track.append(url)
                         format = r.find('gmd:name/gco:CharacterString', nspace).text
                         #NOTE schema_description.extra_resource_fields only contains ['language']
                         lang = common.schema_languages['no language']['key']
-                        
+                        #TODO :  Need more information on whether we should actually exclude files via the schema
+                        resource={'url':url,'format':format,'language':lang}
+                        '''
                         for schema_format in  common.schema_file_formats:
                             if  format == schema_format:
                                 resource={'url':url,'format':format,'language':lang}
-
+                        '''
+                    
+                        if url in resource_track: continue
                         resources.append(resource)    
                         
                     except:
@@ -350,11 +365,11 @@ class NrcanMunge():
                 def bookmark_2():
                     pass
                 package_dict['resources'] = resources
-                n+=1
-#                if n>100:
-#                     sys.exit()
-#                pprint(package_dict['spatial'])    
-                if (n % 1000) == 0: print n 
+                
+
+                
+                if (n % 100) == 0: print n 
+                
                 jlfile.write(json.dumps(package_dict) + "\n")  
       
          
@@ -463,5 +478,5 @@ if __name__ == "__main__":
     
     '''
     print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap")
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april4.jl')
 
