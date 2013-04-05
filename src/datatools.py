@@ -60,18 +60,15 @@ class DataManager:
             
     
     def bulk_delete(self):
-        '''
-            ckan.logic.action.update.bulk_update_delete(context, data_dict)
-            Make a list of datasets deleted
-
-        '''
-        ids = json.dumps(self._packages('all'))
-        response = self.ckan_client.api3_call('update/bulk_update_delete',ids) 
-        print response
+        packages = self.ckan_client.api3_call('package_list', {})['result']
+        
+        for item in packages:
+            #print json.dumps({'id':item})
+            response = self.ckan_client.api3_call('package_delete', {'id':item})
+            print response
         
     def delete_by_owner(self,org):
-      for item in self._packages(org):
-            selfckan_client.api3_call('package_delete', {'id':item})
+      pass
    
     def pre_populate(self):
         ''' delegation method  '''
