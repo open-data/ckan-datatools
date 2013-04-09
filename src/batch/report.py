@@ -5,6 +5,7 @@ from lxml import etree
 from collections import Counter
 import common
 from pprint import pprint
+import logging
 #from pyPdf import PdfFileWriter
 
 nspace = common.nrcan_namespaces
@@ -13,7 +14,7 @@ nspace = common.nrcan_namespaces
 
 class NapReport:
     nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
-
+    logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/report.log", level=logging.INFO)
     def __init__(self,path):
         ''' determine if it's a file or folder '''
         self.filedir = path
@@ -26,10 +27,14 @@ class NapReport:
         basepath = filedir
         for (path, dirs, files) in os.walk(os.path.normpath(filedir+"/en")):
                 for n, file in enumerate(files):
-                    # All non nap files should be ex
+                    # All non nap files should be ignored
                     if ".nap" not in file:continue
                     en = open(os.path.join(path,file),"r")
-                    fr = open(os.path.join(filedir+"/fr",file),"r")
+                    try:
+                        fr = open(os.path.join(filedir+"/fr",file),"r")
+                    except IOError:
+                        logging.error(file)
+                        continue
                     doc_en = etree.parse(en)
                     doc_fr = etree.parse(fr)
                     
@@ -53,18 +58,21 @@ class NapReport:
                 print e
            
                         
-    
-    def minireport(self):
-#        path, dirs, files = os.walk("/usr/lib").next()
-#        file_count = len(files)
-#        print len([name for name in os.listdir('.') if os.path.isfile(name)])
-        total = 0
+        
+    def resource_languages(self):
+        ''' what are the languages of the datasets? '''
+        xml_gen = self._xml_generator(self.filedir)
         cnt = Counter()
-        for (path, dirs, files) in os.walk(os.path.normpath(self.filedir)):
-            for n, file in enumerate(files):
-                #cnt[file] += 1
-                total = n
-        print "Number of files ", total
+        
+        for n,docs in enumerate(xml_gen):
+            if n % 1000 == 0: print n
+            try:
+                languages = (docs[0].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace))
+                cnt[n]= languages
+            except Exception as e:
+                print e                        
+        
+        print cnt
     
     def resource_formats(self):
         #report = open(os.path.normpath('/temp/reports/filetypes.txt'), 'w')
@@ -182,8 +190,8 @@ def counter_to_markdown_table(header,counter):
 if __name__ == "__main__":
     print "Report"
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
-    path = os.path.normpath("/Users/peder/dev/goc/nap-sample")
-    NapReport(path).resource_urls()     
+    path = os.path.normpath("/Users/peder/dev/goc/nap")
+    NapReport(path).resource_languages()     
     '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])

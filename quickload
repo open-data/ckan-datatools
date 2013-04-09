@@ -1,2 +1,0 @@
-#!bin/python
-python src/datatools.py ckan load pack -s=http://localhost:5000 -k=tester -p=http://localhost:8888 -j=/Users/peder/dev/OpenData/Pilot/march_25.jl

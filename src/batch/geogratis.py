@@ -340,10 +340,9 @@ class NrcanMunge():
                     try:
                         url = r.find('gmd:linkage/gmd:URL', nspace).text
                         #check for duplicates
-                        
-                        if url in resource_track: continue
+                        #if url in resource_track: continue
                         # we don't want ftp links and other unknown or incomplete urls
-                        if "http://" not in url: continue
+                        #if "http://" not in url: continue
                         resource_track.append(url)
                         format = r.find('gmd:name/gco:CharacterString', nspace).text
                         #NOTE schema_description.extra_resource_fields only contains ['language']
@@ -356,21 +355,21 @@ class NrcanMunge():
                                 resource={'url':url,'format':format,'language':lang}
                         '''
                     
-                        if url in resource_track: continue
+                        #if url in resource_track: continue
+                        
                         resources.append(resource)    
                         
-                    except:
+                    except Exception as e:
+                        
                         pass
 
-                def bookmark_2():
-                    pass
                 package_dict['resources'] = resources
                 
-
+                if n > 100000: sys.exit()
                 
                 if (n % 100) == 0: print n 
                 
-                jlfile.write(json.dumps(package_dict) + "\n")  
+                #jlfile.write(json.dumps(package_dict) + "\n")  
       
          
     def write_new_links(self): 
@@ -418,47 +417,7 @@ class NrcanMunge():
                 logfile.close()
                 sys.exit()
            
-    def read_nrcan_data(self):
-           ''' Read links from enercan and save them into bilinguages dataset file or database '''
-           config = SafeConfigParser()
-           config.read('nrcan.config')
-           opener = urllib2.build_opener()
-           infile = open(os.normpath('/temp/nrcan.links', "r"))
-           outfile = open(os.normpath('/temp/nrcan.dat', "w"))
-           for line in infile:
-               links = str(line).strip("\n").split(', ')
-               req = urllib2.Request(links[0])  
-               try: 
-                   f = opener.open(req,timeout=50)
-               except socket.timeout:
-                   print "socket timeout"
-               package_dict = {'extras': {}, 'resources': [], 'tags': []}
-               response = f.read() 
-               n = json.loads(response)
-               # create english fields
-    
-               for ckan, nrcan in config.items('package'):
-                   if nrcan == "SELECT":
-                      print "SELECT"
-                      package_dict[ckan] = schema_description.dataset_field_by_id[ckan]['choices'][1]['key']
-                   elif "$." in nrcan:
-                       print "Use JSON Path"
-                       print nrcan
-                       print jsonpath(n, nrcan)
-                   elif nrcan:
-                       print n[nrcan]
-                       package_dict[ckan] = n[nrcan]
-                       
-               #pprint(package_dict)
-               print "-------"
-              
-               sys.exit()
-               pass
-
-
-
-#extent_template = Template('''{"type": "Polygon", "coordinates": ["$minx, $miny", "$minx, $maxy", "$maxx, $maxy", "$maxx, $miny", "$minx, $miny"]}''')
-    
+     
 if __name__ == "__main__":
     
 
@@ -478,5 +437,5 @@ if __name__ == "__main__":
     
     '''
     print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april4.jl')
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april.jl')
 
