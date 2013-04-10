@@ -57,7 +57,25 @@ class NapReport:
             except Exception as e:
                 print e
            
-                        
+    def bilingual_title_count(self):
+        ''' How many titles have been translated '''
+        xml_gen = self._xml_generator(self.filedir)
+        cnt = Counter()
+        
+        for n,docs in enumerate(xml_gen):
+            if n % 1000 == 0: print n
+            #if n > 10000: break;
+            try:
+                titles = (docs[0].xpath('//gmd:title/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:title/gco:CharacterString',namespaces=nspace))
+                if titles[0][0].text == titles[1][0].text:
+                    cnt['unilingual']+=1
+                else:
+                   cnt['bilingual']+=1 
+                
+            except Exception as e:
+                print e                        
+        
+        print cnt
         
     def resource_languages(self):
         ''' what are the languages of the datasets? '''
@@ -194,7 +212,7 @@ if __name__ == "__main__":
     print "Report"
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     path = os.path.normpath("/Users/peder/dev/goc/nap")
-    NapReport(path).resource_languages()     
+    NapReport(path).bilingual_title_count()     
     '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])

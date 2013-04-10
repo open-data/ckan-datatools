@@ -124,13 +124,6 @@ def crossReference(fname1,fname2,outfile):
         infile.close()
         out.close()
         inF.close()
-        '''
-        from itertools import izip
-        with open(fname1) as f1:
-            with open(fname2) as f2:
-                for (c1, c2) in izip(f1, car_names(f2)):
-                    print c1, c2 
-        '''      
 
 class NrcanMunge():
     def __init__(self):        
