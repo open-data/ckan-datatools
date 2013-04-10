@@ -66,9 +66,12 @@ class NapReport:
         
         for n,docs in enumerate(xml_gen):
             if n % 1000 == 0: print n
+            #if n > 10000: break;
             try:
                 languages = (docs[0].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace))
-                cnt[n]= languages
+                lang_str = "%s, %s" % (languages[0][0].text,languages[1][0].text)
+                cnt[lang_str]+=1
+                
             except Exception as e:
                 print e                        
         
