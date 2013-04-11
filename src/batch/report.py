@@ -6,6 +6,7 @@ from collections import Counter
 import common
 from pprint import pprint
 import logging
+import argparse
 #from pyPdf import PdfFileWriter
 
 nspace = common.nrcan_namespaces
@@ -76,7 +77,7 @@ class NapReport:
                    cnt['bilingual']+=1 
                 
             except Exception as e:
-                print e                        
+                print e, titles, docs[1].xpath('//gmd:fileIdentifier/gco:Characterstring', namespaces=nspace)[0].text                     
         
         print cnt
         
@@ -87,14 +88,13 @@ class NapReport:
         
         for n,docs in enumerate(xml_gen):
             if n % 1000 == 0: print n
-            #if n > 10000: break;
             try:
                 languages = (docs[0].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString',namespaces=nspace))
                 lang_str = "%s, %s" % (languages[0][0].text,languages[1][0].text)
                 cnt[lang_str]+=1
                 
             except Exception as e:
-                print e                        
+                print e                       
         
         print cnt
     
@@ -139,7 +139,7 @@ class NapReport:
 
                 
                 if (n % 100) == 0: print n 
-                #if n > 1000: break
+
           
             for a in all_format_types:
                 all_cnt[a] +=1
@@ -214,19 +214,20 @@ def counter_to_markdown_table(header,counter):
 if __name__ == "__main__":
     print "Report"
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
-    path = os.path.normpath("/Users/peder/dev/goc/nap")
-    NapReport(path).bilingual_title_count()     
-    '''
+    nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
+    
+       
+
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('action', help='What type of report', action='store',choices=['full', 'short'])
+    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
     
-    if args.action == 'full':
-       NapReport(args.path)
+    if args.action == 'titles':
+       NapReport(nap_path).bilingual_title_count()  
     
- 
+    '''
     You may want to do this interactively to warn of extended processing time for 
     certain files and dirs
 

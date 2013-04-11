@@ -16,6 +16,7 @@ import urllib2
 from datetime import date
 from string import Template
 import argparse
+import logging
 from ConfigParser import SafeConfigParser 
 from pprint import pprint
 from lxml import etree
@@ -24,10 +25,11 @@ from excepts  import NestedKeyword, CodedKeyword, EmptyKeyword
 from collections import Counter
 import common
 from common import get_valid_input
+
+from common import XPather
 from ckanext.canada.metadata_schema import schema_description
 
-
-        
+       
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
                 
@@ -91,44 +93,12 @@ def gather_products():
             file.write(",")
     pass
 
-def test_single():   
-    json_data=open('data/nrcan-single.json')
-    data=json.load(json_data)
-    create_package(data)
-    
-
-def api_call(payload):
-    pprint(json.dumps(payload))
-    headers = {'Authorization': 'tester'}
-    url = u"http://localhost:8080/api/action/package_create"
-    headers = {'Authorization': 'tester','content-type': 'application/json'}
-    r = requests.post(url, data=json.dumps(payload), headers=headers)
-    print r.status_code
-    
-def crossReference(fname1,fname2,outfile):
-    def findit(id):
-        with open(fname2, 'r') as inF:
-            for line in inF:
-                if id in line:
-                    return line
-
-    out = open(outfile, "w")
-    x =0
-    with open(fname1) as infile:
-        for i,line in enumerate(infile):    
-            fr = findit(json.loads(line)['id'])
-            tup = (i, json.loads(line), json.loads(fr))
-            out.write(str(tup) + "\n")
-            x+=1
-            if x > 2:break
-    
-        infile.close()
-        out.close()
-        inF.close()
 
 class NrcanMunge():
+    logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/nrcan-munge.log", level=logging.ERROR)
     def __init__(self):        
         pass
+        
  
     def mungeDatasets(self):
         
@@ -136,7 +106,8 @@ class NrcanMunge():
             for line in inF:
                 fr, en = str(line).strip().split(", ")
         self.out.close()   
-        
+    
+    
     def camel_to_label(self, ccname):
         """
         Convert a camelcase name with irregularities from our proposed xml file
@@ -172,7 +143,8 @@ class NrcanMunge():
 
         '''
         jlfile = open(os.path.normpath(jlfile), "w")
-        #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
+        xpather = XPather(common.nrcan_namespaces)
+
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
@@ -189,12 +161,14 @@ class NrcanMunge():
                 if ".nap" not in file: continue
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
+                xpather.set_tree(doc)
                    
                 try:
                     fr = open(os.path.normpath(basepath+"/fr/"+ file), "r")
                     doc_fr = etree.parse(fr)
-                except IOError:
-                    #log.write("IOError " + str(file))
+                    xpather.set_tree_fr(doc_fr)
+                except IOError as e:
+                    logging.error("{}::{}".format(file,e))
                     continue
 
         
@@ -233,8 +207,12 @@ class NrcanMunge():
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] =''
                 package_dict['author_email'] =''
-                package_dict['title'] = doc.xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace)[0].text
-                package_dict['title_fra'] = doc_fr.xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace)[0].text
+                
+                package_dict['title'] = xpather.query('title',
+                            '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
+                package_dict['title_fra'] = xpather.query('title_fra',
+                            '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
+                
                 package_dict['name'] = file.split(".")[0]
                 package_dict['notes']=charstring('abstract')
                 package_dict['notes_fra']=charstring_fr('abstract')
@@ -244,7 +222,8 @@ class NrcanMunge():
                 topic_name_en = self.camel_to_label(doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text)
                 try:
                     package_dict['topic_category'] = topicKeys[topic_name_en]
-                except KeyError:
+                except KeyError as e:
+                    logging.error("{}::{}".format(file,e))
                     package_dict['topic_category'] =''
                     
                 package_dict['subject']=''
@@ -262,9 +241,12 @@ class NrcanMunge():
                 package_dict['license_id']=''
                 package_dict['data_series_name']=''
                 try:
-                    package_dict['data_series_name']=doc.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
-                    package_dict['data_series_name_fra']=doc_fr.xpath('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString',namespaces=nspace)[0].text
-                except IndexError:
+                    package_dict['data_series_name']=xpather.query('data_series_name',
+                                            '//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
+                    package_dict['data_series_name_fra']=xpather.query('data_series_name_fra',
+                                            '//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
+                except IndexError as e:
+                    logging.error("{}::{}".format(file,e))
                     pass
                 package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['data_series_issue_identification_fra']=doc_fr.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
@@ -412,8 +394,6 @@ class NrcanMunge():
            
      
 if __name__ == "__main__":
-    
-
 
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test'])
