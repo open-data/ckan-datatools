@@ -232,8 +232,8 @@ class NrcanMunge():
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] =''
                 package_dict['author_email'] =''
-                package_dict['title'] = charstring('title')
-                package_dict['title_fra'] = charstring_fr('title')
+                package_dict['title'] = doc.xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace)[0].text
+                package_dict['title_fra'] = doc_fr.xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['name'] = file.split(".")[0]
                 package_dict['notes']=charstring('abstract')
                 package_dict['notes_fra']=charstring_fr('abstract')
@@ -358,11 +358,14 @@ class NrcanMunge():
 
                 package_dict['resources'] = resources
                 
-                if n > 100000: sys.exit()
+                if n > 1000: 
+                    jlfile.close()
+                    break
+                
                 
                 if (n % 100) == 0: print n 
                 
-                #jlfile.write(json.dumps(package_dict) + "\n")  
+                jlfile.write(json.dumps(package_dict) + "\n")  
       
          
     def write_new_links(self): 
@@ -430,5 +433,5 @@ if __name__ == "__main__":
     
     '''
     print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april.jl')
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april11.jl')
 

@@ -48,6 +48,7 @@ class NapReport:
             print "---------- {} ----------".format(n)
 
             try:
+                
                 resources = (docs[0].xpath('//gmd:CI_OnlineResource',namespaces=nspace),docs[1].xpath('//gmd:CI_OnlineResource',namespaces=nspace))
                
                 for r in resources:
@@ -66,7 +67,9 @@ class NapReport:
             if n % 1000 == 0: print n
             #if n > 10000: break;
             try:
-                titles = (docs[0].xpath('//gmd:title/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:title/gco:CharacterString',namespaces=nspace))
+
+                titles = (docs[0].xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace))
+                
                 if titles[0][0].text == titles[1][0].text:
                     cnt['unilingual']+=1
                 else:
