@@ -13,6 +13,7 @@ import time
 import socket 
 import warnings
 import urllib2
+from datetime import date
 from string import Template
 import argparse
 from ConfigParser import SafeConfigParser 
@@ -170,7 +171,7 @@ class NrcanMunge():
         ''' Create ckan ready .jl datasets from .nap XML files  
 
         '''
-        jlfile = open(os.path.normpath(jlfile), "a")
+        jlfile = open(os.path.normpath(jlfile), "w")
         #log = open(os.path.normpath('/temp/LOAD/error-log.jl'), "a")
         presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
@@ -227,7 +228,7 @@ class NrcanMunge():
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                     pass
-                
+                package_dict['organization'] = 'nrcan-rncan'
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] =''
@@ -358,10 +359,6 @@ class NrcanMunge():
 
                 package_dict['resources'] = resources
                 
-                if n > 1000: 
-                    jlfile.close()
-                    break
-                
                 
                 if (n % 100) == 0: print n 
                 
@@ -417,21 +414,21 @@ class NrcanMunge():
 if __name__ == "__main__":
     
 
-    '''
-    Language Example:
-    http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/ba689b08-d16c-5301-9276-9386e9ab1335
-    "This product is only available in French"
-    from   atom:content/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:language/gco:CharacterString
+
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test'])
+    #parser.add_argument("-p", "--path", help="file or dir", action='store_true')
+
+    args = parser.parse_args()
     
-    To check if fields are missing use sets of : 
-    print schema_description.extra_resource_fields
-    print schema_description.all_resource_fields
-    pprint(schema_description.resource_field_by_id['language']['choices'])
-    pprint ([key for key,value in package_dict.items() if not value])
-    print "--- Missing Fields ----"
-    print  set(schema_description.all_package_fields) - set(package_dict.keys()) 
-    
-    '''
-    print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-april11.jl')
+    if args.action == 'full':
+       print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today()))
+
+    elif args.action == 'test':
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=25)
+
+    elif args.action == 'short':
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-short-%s.jl'% (date.today()),start=0,stop=1000)
+
 
