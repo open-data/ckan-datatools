@@ -202,6 +202,8 @@ class NrcanMunge():
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                     pass
+                
+                    
                 package_dict['organization'] = 'nrcan-rncan'
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
@@ -240,14 +242,11 @@ class NrcanMunge():
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
                 package_dict['data_series_name']=''
-                try:
-                    package_dict['data_series_name']=xpather.query('data_series_name',
+                package_dict['data_series_name']=xpather.query('data_series_name',
                                             '//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
-                    package_dict['data_series_name_fra']=xpather.query('data_series_name_fra',
+                package_dict['data_series_name_fra']=xpather.query('data_series_name_fra',
                                             '//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
-                except IndexError as e:
-                    logging.error("{}::{}".format(file,e))
-                    pass
+
                 package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['data_series_issue_identification_fra']=doc_fr.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 #documentation_url_fra=
@@ -360,55 +359,55 @@ class NrcanMunge():
                 start = True
             else:
                 print "SKIP", en
+
+               
+def download_nap(linkfile,outpath):
+        '''Grab NRCan .nap xml files and dump as files into a folder 
             
-    def save_nap_files(self):
-        opener = urllib2.build_opener()
-        infile = open(os.path.normpath('/temp/nrcan.links'), "r")
-        ''' Grab NRCan .nap xml files and dump into as files into a folder '''
-        do = True
+            Keyword Arguments:
+            linkfile -- A list of links to nap files located at Geogratis
+            outpath -- local path to store nap files
+        '''
+        infile = open(os.path.normpath(linkfile), "r")
+
         for line in infile:
-            en, fr = str(line).strip().split(', ')
-            if do:
-                logfile = open(os.path.normpath('/temp/nrcan-nap.log'), "a")
-                req = urllib2.Request(en)  
+                print line
+                req = urllib2.Request(line)  
                 try: 
-                    f = opener.open(req,timeout=500)
-                    data_en = f.read()
-                   
-                    
-                    filename = en.split('/')[-1]
-                    print filename 
-                    napfile = open(os.path.normpath('/temp/nap/%s' % filename), "w")
-                    napfile.write(data_en)
+                    f = urllib2.urlopen(req,timeout=500)
+                    data = f.read()
+   
+                    napfile = open(os.path.normpath('%s/%s' % (outpath,filename), "w"))
+                    napfile.write(data)
                     napfile.close()
-                    logfile.write(filename + ", OK\n")
-                except socket.timeout:
-                    logfile.write(filename + ", Socket timeout\n")
-                
-                except: 
-                    logfile.write(filename + ", " + str(sys.exc_info()[0]) + "\n")
-               
-               
-                logfile.close()
-                sys.exit()
+                except urllib2.HTTPError as h:
+                    print h   
+                except socket.timeout as s:
+                    print s          
+
            
      
 if __name__ == "__main__":
-
+    
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test'])
+    parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test','download'])
     #parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
     
     if args.action == 'full':
        print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."
-       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today()))
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",
+                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today()))
 
     elif args.action == 'test':
-       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=25)
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",
+                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=25)
 
     elif args.action == 'short':
-       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",jlfile='/Users/peder/dev/goc/LOAD/nrcan-short-%s.jl'% (date.today()),start=0,stop=1000)
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",
+                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-short-%s.jl'% (date.today()),start=0,stop=1000)
 
-
+    elif args.action == 'download':
+        download_nap('/Users/peder/dev/goc/ckan-logs/download_missing_fr.links',
+                     '/Users/peder/dev/goc/nap/missing/fr')
