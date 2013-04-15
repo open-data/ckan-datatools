@@ -7,11 +7,11 @@ import common
 from pprint import pprint
 import logging
 import argparse
+from guess_language import guess_language
+from ckanext.canada.metadata_schema import schema_description
 #from pyPdf import PdfFileWriter
 
 nspace = common.nrcan_namespaces
-
-
 
 class NapReport:
     nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
@@ -209,20 +209,47 @@ def counter_to_markdown_table(header,counter):
         
     print table
     
+def pilot_report():
+    pilot_file =  "/Users/peder/dev/OpenData/Pilot/OD_DatasetDump-0.xml" 
     
+    #PilotReport(pilot_file).number_of_records()
+    reader = common.XmlStreamReader("RECORD",pilot_file)
+    cnt = Counter()
+    for i, node in enumerate(reader.elements()):
+        try:
+        # Determine departments
+        #node.xpath("DC.TITLE/text()")
+            uuid = node.xpath("DEPARTMENT/text()")[0].split("|")[1]
+            
+            dept =schema_description.dataset_field_by_id['author']['choices_by_pilot_uuid'][uuid]['key']
+            print dept
+            cnt[dept] += 1
+            
+        except IndexError:
+            print node.xpath("DEPARTMENT/text()")
+            cnt['none'] +=1
+        
+    for i in sorted(cnt.items()):
+        print "{}, {}".format(i[0].split("|")[0], i[1])
+    
+    
+    
+
+
 
 if __name__ == "__main__":
     print "Report"
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
-    
-       
-
     parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis'])
     parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
+    
+    if args.source == 'pilot':
+       pilot_report()
     
     if args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  

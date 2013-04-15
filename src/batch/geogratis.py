@@ -362,12 +362,16 @@ class NrcanMunge():
 
                
 def download_nap(linkfile,outpath):
-        '''Grab NRCan .nap xml files and dump as files into a folder 
-            
-            Keyword Arguments:
-            linkfile -- A list of links to nap files located at Geogratis
-            outpath -- local path to store nap files
-        '''
+    
+        """
+        A simple funtion to fetch .nap files from Geogratis.
+    
+        :param linkfile: A file with a list of links to nap files. Example: 
+                         http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/16d4b644-6ba0-4893-b85e-c5c883f1b875.nap
+        :param outpath:  The local path in which to store .nap files
+        
+        """
+        
         infile = open(os.path.normpath(linkfile), "r")
 
         for line in infile:
@@ -386,7 +390,6 @@ def download_nap(linkfile,outpath):
                     print s          
 
            
-     
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(add_help=True)

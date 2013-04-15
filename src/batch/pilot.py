@@ -12,13 +12,12 @@ from lxml import etree
 from pprint import pprint
 from datetime import  datetime
 from common import XmlStreamReader
-from guess_language import guess_language
 from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
 pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"  
-output_file =  "/Users/peder/dev/OpenData/Pilot/march_25.jl"
+output_file =  "/Users/peder/dev/OpenData/Pilot/april_15.jl"
 
 class PilotXmlStreamReader(XmlStreamReader):
     ''' 
@@ -47,7 +46,6 @@ class PilotReport:
         for i,nodes in enumerate(self.data.combined_elements()):
             (node,node_fr) = nodes
             #etree.dump(node, pretty_print=True)
-            if i > 50: sys.exit()
             print "EN", node.xpath("DC.TITLE/text()")
             print "FR", node_fr.xpath("DC.TITLE/text()")
             print "---------------------"
@@ -56,8 +54,7 @@ class PilotReport:
                 title_fr=  nodes[1].xpath("DC.TITLE/text()")
                 #print i, title, title_fr
                 #print i,title_en, title #guessLanguageName(title)
-                if i > 50:
-                    sys.exit()
+                print i
             except Exception as e:
                 print e
                 #logging.error(e)
@@ -152,12 +149,11 @@ class Transform:
         self.outfile.write(json.dumps(package_dict) + "\n")
            
 if __name__ == "__main__":
+    pass
     #PilotReport(pilot_file).number_of_records()
-    Transform(pilot_file,output_file).write_jl_file()
-    ''' 
-    #PilotReport().number_of_records()
+
+    #Transform(pilot_file,output_file).write_jl_file()
+
     #Transform().structure()   
     #Transform().replace()
     #process_pilot_xml('data/tables_20120815.xml')
-
-    '''
