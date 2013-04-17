@@ -1,4 +1,5 @@
 from lxml import etree
+import os
 from ckanext.canada.metadata_schema import schema_description
 from pprint import pprint
 import logging
@@ -49,8 +50,21 @@ def get_valid_input(input_string, valid_options):
 
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/xpath.log", level=logging.ERROR)
 
+def xml_generator(filedir):
+        """
+            walk through nap files folder to parse and return xml
+            
+            param filedir:  The directory containing the nap files
+        """
+        for (path, dirs, files) in os.walk(os.path.normpath(filedir)):
+            for n, file in enumerate(files):
+                # All non nap files should be ignored
+                if ".nap" not in file:continue
+                f = open(os.path.join(path,file),"r")
+                yield etree.parse(f)
+
 class XPather:
-    """Using a class in this instance means not havin to pass the same parms to query, so it promotes reusability
+    """Using a class in this instance means not having to pass the same parms to query, so it promotes reusability
     
     """
     

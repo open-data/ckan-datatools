@@ -241,7 +241,7 @@ class NrcanMunge():
 
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
-                package_dict['data_series_name']=''
+                
                 package_dict['data_series_name']=xpather.query('data_series_name',
                                             '//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
                 package_dict['data_series_name_fra']=xpather.query('data_series_name_fra',
@@ -269,8 +269,8 @@ class NrcanMunge():
                     package_dict['time_period_coverage_end'] = ''
    
                 package_dict['geographic_region']=""#.join(georegions())
-                package_dict['url']=('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
-                package_dict['url_fra']=('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                package_dict['url']=''#('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                package_dict['url_fra']=''#('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
                 package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
@@ -366,10 +366,10 @@ def download_nap(linkfile,outpath):
         """
         A simple funtion to fetch .nap files from Geogratis.
     
-        :param linkfile: A file with a list of links to nap files. Example: 
-                         http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/16d4b644-6ba0-4893-b85e-c5c883f1b875.nap
-        :param outpath:  The local path in which to store .nap files
-        
+            :param linkfile: A file with a list of links to nap files. Example: 
+                             http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/16d4b644-6ba0-4893-b85e-c5c883f1b875.nap
+            :param outpath:  The local path in which to store .nap files
+            
         """
         
         infile = open(os.path.normpath(linkfile), "r")

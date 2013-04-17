@@ -149,10 +149,11 @@ class Transform:
         self.outfile.write(json.dumps(package_dict) + "\n")
            
 if __name__ == "__main__":
-    pass
-    #PilotReport(pilot_file).number_of_records()
 
-    #Transform(pilot_file,output_file).write_jl_file()
+    #PilotReport(pilot_file).number_of_records()
+    pilot_file =  "/Users/peder/dev/OpenData/Pilot/OD_DatasetDump-0.xml" 
+    output_file =  "/Users/peder/dev/OpenData/Pilot/april_16.jl"
+    Transform(pilot_file,output_file).write_jl_file()
 
     #Transform().structure()   
     #Transform().replace()

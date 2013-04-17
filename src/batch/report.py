@@ -58,7 +58,22 @@ class NapReport:
                 
             except Exception as e:
                 print e
-           
+    def author_email_count(self):
+        print "Reporting on various resource urls to find overlap "
+        xml_gen = self._xml_generator(self.filedir)
+        
+        for n,docs in enumerate(xml_gen):
+            try:
+                
+                resources = (docs[0].xpath('//gmd:CI_OnlineResource',namespaces=nspace),docs[1].xpath('//gmd:CI_OnlineResource',namespaces=nspace))
+               
+                for r in resources:
+                    print r[0].find('gmd:linkage/gmd:URL', nspace).text
+                    print r[1].find('gmd:linkage/gmd:URL', nspace).text
+                
+            except Exception as e:
+                print e  
+                         
     def bilingual_title_count(self):
         ''' How many titles have been translated '''
         xml_gen = self._xml_generator(self.filedir)
@@ -69,7 +84,7 @@ class NapReport:
             #if n > 10000: break;
             try:
 
-                titles = (docs[0].xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace),docs[1].xpath('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString',namespaces=nspace))
+                email = docs[0].xpath('//gmd:electronicMailAddress/gco:CharacterString',namespaces=nspace)
                 
                 if titles[0][0].text == titles[1][0].text:
                     cnt['unilingual']+=1
@@ -77,7 +92,7 @@ class NapReport:
                    cnt['bilingual']+=1 
                 
             except Exception as e:
-                print e, titles, docs[1].xpath('//gmd:fileIdentifier/gco:Characterstring', namespaces=nspace)[0].text                     
+                print e                   
         
         print cnt
         
@@ -233,8 +248,25 @@ def pilot_report():
         print "{}, {}".format(i[0].split("|")[0], i[1])
     
     
+def count_occurances(dir, pathlist):
+    """
+        Return a report of counts of various NAP file elements
+        
+        param dir: Folder containing NAP files
+        param pathlist:  A list of XPath elements to be counted
     
-
+    """
+    
+    cnt = Counter()
+    docs = common.xml_generator(dir)
+    for doc in docs:
+        for path in pathlist:
+            
+            val = doc.find(path, nspace).text
+            cnt[val]+=1
+            
+    
+    print cnt.items()
 
 
 if __name__ == "__main__":
@@ -243,7 +275,7 @@ if __name__ == "__main__":
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis'])
-    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short'])
+    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
@@ -253,6 +285,11 @@ if __name__ == "__main__":
     
     if args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  
+       
+       
+    if args.action == 'counts':
+        pathlist = ['//gmd:electronicMailAddress/gco:CharacterString']
+        count_occurances('/Users/peder/dev/goc/nap/en',pathlist)
     
     '''
     You may want to do this interactively to warn of extended processing time for 
