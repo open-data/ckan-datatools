@@ -14,6 +14,10 @@ CSV, GeoTIFF, KML / KMZ, RDF, RSS, SHP, XML, DOC, EXE, GeoRSS, GIF, HTML, IATI, 
 
 TOTAL  FILES  170176
 
+Contact information Counts:
+	
+	[('broberts@NRCan.gc.ca', 2419), ('geoginfo@NRCan.gc.ca', 138415), ('SupportGeoBase@nrcan.gc.ca', 14579), ('NRCanlibrary@nrcan.gc.ca', 14763)]
+
 |All Geogratis Formats        |   Number   |
 |:-------------|-----------:|
 |gzip (GNU zip)|2828|

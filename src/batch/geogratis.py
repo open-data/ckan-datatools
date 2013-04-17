@@ -133,10 +133,6 @@ class NrcanMunge():
             out.append(b)
         return u''.join(out).title()
 
-    def ola(context, a):
-        return "Ola %s" % a
-    def loadsofargs(context, *args):
-        return "Got %d arguments." % len(args)
   
     def create_ckan_data(self,basepath,jlfile,start=0,stop=172000):
         ''' Create ckan ready .jl datasets from .nap XML files  
@@ -205,10 +201,11 @@ class NrcanMunge():
                 
                     
                 package_dict['organization'] = 'nrcan-rncan'
+                package_dict['group'] = 'nrcan-rncan'
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] =''
-                package_dict['author_email'] =''
+                package_dict['author_email'] =xpather.query('author_email','//gmd:electronicMailAddress/gco:CharacterString')
                 
                 package_dict['title'] = xpather.query('title',
                             '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
@@ -236,9 +233,12 @@ class NrcanMunge():
                 #print keywords
                 tags = []
                 en_tags = [t.text for t in keywords]
+                 # Get rid of commans in keywords if they exist
+                en_tags = [tag.strip() for orig in en_tags for tag in orig.split(",")]
                 fr_tags = [t.text for t in keywords_fr]
+                fr_tags = [tag.strip() for orig in fr_tags for tag in orig.split(",")]
                 tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and (len(clean_tag(en)) + len(clean_tag(fr))) < 96]
-
+               
                 package_dict['tags'] = tags
                 package_dict['license_id']=''
                 
@@ -303,7 +303,7 @@ class NrcanMunge():
                 
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
-                package_dict['browse_graphic_url']=''
+                package_dict['browse_graphic_url']=xpather.query('browse_graphic_url','//MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
                 
                 ''' Resources ''' 
                 resources = []
