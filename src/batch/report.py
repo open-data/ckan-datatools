@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import sys
 import time
@@ -12,6 +13,83 @@ from ckanext.canada.metadata_schema import schema_description
 #from pyPdf import PdfFileWriter
 
 nspace = common.nrcan_namespaces
+
+class PilotReport:
+    
+    def __init__(self,datafile,report=False):
+        # create instance of PilotData
+        self.data = common.XmlStreamReader("RECORD",datafile)
+
+    def biligual_titles(self):
+        cnt = Counter()
+       
+        for i,node in enumerate(self.data.elements()):
+            
+            print "----------{}-----------".format(i)
+
+            try:
+                title = node.xpath("FORM[NAME='title_en']/A/text()")[0]
+                title_fra = node.xpath("FORM[NAME='title_fr']/A/text()")[0]
+                #print titles 
+                language_markers = common.title_langauge_markers + common.title_langauge_markers_fra
+                for marker in language_markers:
+                    if marker in title:
+                        en = title.replace(marker,'')
+                        
+                    elif marker in title_fra:
+                        fra = title.replace(marker,'')
+                    else:
+                       pass
+                print en,fra
+                    
+                    
+                    
+                
+                
+                
+#                [f() for marker in language_markers if marker in titles[0:1]]
+#                    if marker in titles:
+#                        print marker
+#                        new_titles = (titles[0].replace(marker, ''),titles[1].replace(marker,''))
+#                        print new_titles
+#                        
+                        
+            except IndexError as e:
+                print  "INDEX ERROR ", node.xpath("FORM[NAME='title_en']/A/text()")
+                cnt['None']+=1
+            except Exception as e:
+                print e
+                raise   
+        pprint(cnt.items())
+        
+    def departments():
+        
+
+        cnt = Counter()
+        for i, node in enumerate(self.data.elements()):
+            try:
+            # Determine departments
+            #node.xpath("DC.TITLE/text()")
+                uuid = node.xpath("DEPARTMENT/text()")[0].split("|")[1]
+                
+                dept =schema_description.dataset_field_by_id['author']['choices_by_pilot_uuid'][uuid]['key']
+                print dept
+                cnt[dept] += 1
+                
+            except IndexError:
+                print node.xpath("DEPARTMENT/text()")
+                cnt['none'] +=1
+            
+        for i in sorted(cnt.items()):
+            print "{}, {}".format(i[0].split("|")[0], i[1])
+    
+        
+    def unique_fields(self):
+        counter = 0
+        unique_form_id = 0        
+        for doc in self.data.elements():
+            
+            self.report.write(str(counter)+"\n")    
 
 class NapReport:
     nspace = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}   
@@ -75,6 +153,7 @@ class NapReport:
                 print e  
                          
     def bilingual_title_count(self):
+       
         ''' How many titles have been translated '''
         xml_gen = self._xml_generator(self.filedir)
         cnt = Counter()
@@ -224,29 +303,7 @@ def counter_to_markdown_table(header,counter):
         
     print table
     
-def pilot_report():
-    pilot_file =  "/Users/peder/dev/OpenData/Pilot/OD_DatasetDump-0.xml" 
-    
-    #PilotReport(pilot_file).number_of_records()
-    reader = common.XmlStreamReader("RECORD",pilot_file)
-    cnt = Counter()
-    for i, node in enumerate(reader.elements()):
-        try:
-        # Determine departments
-        #node.xpath("DC.TITLE/text()")
-            uuid = node.xpath("DEPARTMENT/text()")[0].split("|")[1]
-            
-            dept =schema_description.dataset_field_by_id['author']['choices_by_pilot_uuid'][uuid]['key']
-            print dept
-            cnt[dept] += 1
-            
-        except IndexError:
-            print node.xpath("DEPARTMENT/text()")
-            cnt['none'] +=1
-        
-    for i in sorted(cnt.items()):
-        print "{}, {}".format(i[0].split("|")[0], i[1])
-    
+
     
 def count_occurances(dir, pathlist):
     """
@@ -261,50 +318,42 @@ def count_occurances(dir, pathlist):
     docs = common.xml_generator(dir)
     for doc in docs:
         for path in pathlist:
-            
-            val = doc.find(path, nspace).text
-            cnt[val]+=1
+            try:
+                val = doc.find(path, nspace).text
+                cnt[val]+=1
+            except AttributeError:
+                print path, doc.find("//gmd:fileIdentifier/gco:CharacterString", nspace).text
             
     
-    print cnt.items()
-
+    for item,count in cnt.items():
+        print item, count
 
 if __name__ == "__main__":
     print "Report"
+    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis'])
-    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts'])
+    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
     
-    if args.source == 'pilot':
-       pilot_report()
+    if args.source == 'pilot' and args.action == 'titles':
+        PilotReport(pilot_file).biligual_titles()
+       #pilot_report()
+       
+    elif args.source == 'geogratis' and args.action == 'counts':
+        pathlist = ['//gmd:electronicMailAddress/gco:CharacterString',
+                    '//gmd:MD_MaintenanceFrequencyCode',
+                    '//gml:begin/gml:TimeInstant/gml:timePosition']
+        count_occurances('/Users/peder/dev/goc/nap-sample/en',pathlist)
     
-    if args.action == 'titles':
+    
+    elif args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  
        
-       
-    if args.action == 'counts':
-        pathlist = ['//gmd:electronicMailAddress/gco:CharacterString']
-        count_occurances('/Users/peder/dev/goc/nap/en',pathlist)
-    
-    '''
-    You may want to do this interactively to warn of extended processing time for 
-    certain files and dirs
 
-    if get_valid_input("What do you want to do?", ("report","build")) == 'report':
-        path = os.path.normpath(raw_input("Enter file or path: "))
-        stat = os.stat(path)
-        created = os.stat(path).st_mtime
-        asciiTime = time.asctime( time.gmtime( created ) )
-        if os.path.isdir(path) == True:
-            print path, "is a dir  (created", asciiTime, ")"
-            list_files(path)
-        else:   
-            asciiTime = time.asctime( time.gmtime( created ) )
-            print d, "is a file (created", asciiTime, ")"
 
-    '''
+ 

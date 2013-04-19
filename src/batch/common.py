@@ -1,3 +1,4 @@
+# coding=utf-8
 from lxml import etree
 import os
 from ckanext.canada.metadata_schema import schema_description
@@ -92,15 +93,16 @@ class XPather:
     def query(self,key,query_path): 
         
             
-            """Return value from an XPath query on a document, or return empty string and log excption.
+            """
+            Return value from an XPath query on a document, or return empty string and log excption.
             This method is used extensively in both .jl file creating and reporting
-            doc -- an Etree Object that the query is performed on .  This is use to override the default if there is
-                   a french version of the xml that has to be processes
-                   
-            Keyword Arguments:
-            key -- the key in the dictionary that the caller is trying to set.  Used for logging
             
-            qpath -- the xpath query string
+            param doc: an Etree Object that the query is performed on .  This is use to override the default if there is
+                   a french version of the xml that has to be processes
+
+            param key: the key in the dictionary that the caller is trying to set.  Used for logging
+            
+            param qpath: the xpath query string
                   
             This method does not deal with the logic of how to react to failures, it merely logs it. 
             Any validation logic or possible default values as a result of empty values are left to the caller.
@@ -116,4 +118,20 @@ class XPather:
             except Exception as e: 
                 logging.error("{}::{}".format(key,e))
                 return ""
+
+title_langauge_markers=[' - English Version',
+                                ' - French Version', 
+                                ' (in English)',
+                                ' (in French)',
+                                '(- English)',
+                                ' - English',
+                                ' - French',
+                                ' (English Version)',
+                                ' (French Version)']
+        
+title_langauge_markers_fra=[' - version anglaise',
+                                    u' - version française',
+                                    u' (en français)',
+                                    ' (en anglais)']
+        
             

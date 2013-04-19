@@ -198,13 +198,12 @@ class NrcanMunge():
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                     pass
-                
-                    
+                                   
                 package_dict['organization'] = 'nrcan-rncan'
-                package_dict['group'] = 'nrcan-rncan'
+                package_dict['group'] = 'nrcan-rncan'# See if this solves the problem with org not showing up in CKAN
                 package_dict['language'] =''
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
-                package_dict['department_number'] =''
+                package_dict['department_number'] ='115'
                 package_dict['author_email'] =xpather.query('author_email','//gmd:electronicMailAddress/gco:CharacterString')
                 
                 package_dict['title'] = xpather.query('title',
@@ -269,8 +268,8 @@ class NrcanMunge():
                     package_dict['time_period_coverage_end'] = ''
    
                 package_dict['geographic_region']=""#.join(georegions())
-                package_dict['url']=''#('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
-                package_dict['url_fra']=''#('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                #package_dict['url']=''#('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
+                #package_dict['url_fra']=''#('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
                 package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
@@ -329,9 +328,6 @@ class NrcanMunge():
                             if  format == schema_format:
                                 resource={'url':url,'format':format,'language':lang}
                         '''
-                    
-                        #if url in resource_track: continue
-                        
                         resources.append(resource)    
                         
                     except Exception as e:
