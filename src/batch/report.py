@@ -5,6 +5,7 @@ import time
 from lxml import etree
 from collections import Counter
 import common
+import tabular as tb
 from pprint import pprint
 import logging
 import argparse
@@ -19,17 +20,18 @@ class PilotReport:
     def __init__(self,datafile,report=False):
         # create instance of PilotData
         self.data = common.XmlStreamReader("RECORD",datafile)
-
+    def full(self):
+    
+        X =tb.tabarray(columns = Cols2, names=['Region','Sector','Amount','Population'])
+        print X
+        
     def biligual_titles(self):
         cnt = Counter()
        
         for i,node in enumerate(self.data.elements()):
-            
-            print "----------{}-----------".format(i)
 
             try:
-                title = node.xpath("FORM[NAME='title_en']/A/text()")[0]
-                title_fra = node.xpath("FORM[NAME='title_fr']/A/text()")[0]
+                titles = (node.xpath("FORM[NAME='title_en']/A/text()")[0],node.xpath("FORM[NAME='title_fr']/A/text()")[0])
                 #print titles 
                 language_markers = common.title_langauge_markers + common.title_langauge_markers_fra
                 for marker in language_markers:
@@ -41,26 +43,21 @@ class PilotReport:
                     else:
                        pass
                 print en,fra
-                    
-                    
-                    
-                
-                
                 
 #                [f() for marker in language_markers if marker in titles[0:1]]
 #                    if marker in titles:
 #                        print marker
 #                        new_titles = (titles[0].replace(marker, ''),titles[1].replace(marker,''))
 #                        print new_titles
-#                        
-                        
+            
             except IndexError as e:
                 print  "INDEX ERROR ", node.xpath("FORM[NAME='title_en']/A/text()")
                 cnt['None']+=1
             except Exception as e:
                 print e
                 raise   
-        pprint(cnt.items())
+        #pprint(cnt.items())
+     
         
     def departments():
         
@@ -335,13 +332,16 @@ if __name__ == "__main__":
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis'])
-    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles'])
+    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles','full'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
     
     if args.source == 'pilot' and args.action == 'titles':
         PilotReport(pilot_file).biligual_titles()
+    
+    elif args.source == 'pilot' and args.action == 'full':
+        PilotReport(pilot_file).full()
        #pilot_report()
        
     elif args.source == 'geogratis' and args.action == 'counts':

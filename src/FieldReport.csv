@@ -1,0 +1,35 @@
+ID	Description	CKAN Name	Pilot Name
+id	u'A unique phrase or string which uniquely identifies the metadata file.'	id	None
+language	u'The language of the metadata'	language	language__
+author	u'The organization directly responsible for the datasets and for metadata maintece.'	author	department
+department_number	u'The unique number assigned to each department'	department_number	None
+author_email	u'The electronic mail address of the responsible organization or individual.'	author_email	None
+title	u'The name by which the cited dataset is know'	title	title_en
+title	u'The name by which the cited dataset is know'	title_fra	title_fr
+name	u'The Uniform Resource Identifier for the dataset along with its on line function code.'	name	None
+notes	u'A brief narrative summary of the dataset\u2019s contents'	notes	description_en
+notes	u'A brief narrative summary of the dataset\u2019s contents'	notes_fra	description_fr
+digital_object_identifier	u'The Digital Object Identifier  assigned to file	digital_object_identifier	None
+catalog_type	for more information see (URL to info about DOIs)'	catalog_type	None
+subject	u'The type of catalogue to which the metadata record belongs: Raw	subject	category
+topic_category	Geo'	topic_category	None
+tags	u'The main subject(s) of the dataset.'	tags	keywords_en
+license_id	u'The main theme(s) of the dataset.'	license_id	None
+data_series_name	u'The commonly used word(s)	data_series_name	group_name_en
+data_series_name	or formalized word(s) or phrase(s) used to describe the subject of the resource.'	data_series_name_fra	group_name_fr
+data_series_issue_identification	u'The limitations or constraints on the use of the resource.'	data_series_issue_identification	deptIdentifier
+data_series_issue_identification	u'The name of the series	data_series_issue_identification_fra	None
+geographic_region	or aggregate dataset	geographic_region	Geographic_Region_Name
+date_published	of which the dataset is a part'	date_published	date_released
+maintenance_and_update_frequency	u'The name of the series	maintenance_and_update_frequency	frequency
+time_period_coverage_start	or aggregate dataset	time_period_coverage_start	time_period_start
+time_period_coverage_end	of which the dataset is a part'	time_period_coverage_end	time_period_end
+url	u'The identification of the series\u2019 issue information.'	url	program_page_en
+url	u'The identification of the series\u2019 issue information.'	url_fra	program_url_fr
+endpoint_url	u'The geographic area of the dataset'	endpoint_url	None
+endpoint_url	u'The date in which the resource was issued.'	endpoint_url_fra	None
+ready_to_publish	u'The frequency with which changes and additions are made to the resource after the initial resource is completed.'	ready_to_publish	None
+spatial_representation_type	u'The start date or time interval(s) covered by the data. (YYYY-MM-DD)'	spatial_representation_type	None
+presentation_form	u'The end date or time interval(s) covered by the data. (YYYY-MM-DD)'	presentation_form	None
+spatial	u'The URL for the Government of Canada program that is responsible for the dataset.'	spatial	None
+browse_graphic_url	u'The URL for the Government of Canada program that is responsible for the dataset.'	browse_graphic_url	None

@@ -59,3 +59,5 @@ record
 *.jl
 
 src/batch/data/pilot-pass1.jl
+
+*.prefs
