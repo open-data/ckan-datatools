@@ -325,6 +325,9 @@ def count_occurances(dir, pathlist):
     for item,count in cnt.items():
         print item, count
 
+
+
+
 if __name__ == "__main__":
     print "Report"
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 

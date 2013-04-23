@@ -1,0 +1,4 @@
+Hello include me please.
+\
+
+mvn archetype:generate -DgroupId=ca.gc.data -DartifactId=my-app -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false

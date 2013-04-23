@@ -13,7 +13,7 @@ import time
 import socket 
 import warnings
 import urllib2
-from datetime import date
+from datetime import date,datetime
 from string import Template
 import argparse
 import logging
@@ -184,24 +184,19 @@ class NrcanMunge():
                     return regions
                         
                 def clean_tag(x):
-                    cleaned =  u''.join(re.findall(u'[\w\-.]+ ?', x, re.UNICODE)).rstrip()  
-                    if " > " in cleaned:
-                        return 
-                    #elif len(cleaned) > 90:
-                    #    return
-                    elif "CONTINENT" in cleaned:
-                        return
-                    else:
-                        return cleaned
-                    
+                    #replace forward slashes and semicolon so keywords will pass validation
+                    #Apostrophes in french words causes a proble; temporary fixx
+                    x = x.replace("/"," - ").replace("; ","-").replace("'","-")
+
+                    return x.split(">")[-1].lower().strip().capitalize()
                 
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                     pass
                                    
-                package_dict['organization'] = 'nrcan-rncan'
-                package_dict['group'] = 'nrcan-rncan'# See if this solves the problem with org not showing up in CKAN
-                package_dict['language'] =''
+                #package_dict['organization'] = 'nrcan-rncan'
+                #package_dict['group'] = 'nrcan-rncan'# See if this solves the problem with org not showing up in CKAN
+                package_dict['owner_org'] = '9391E0A2-9717-4755-B548-4499C21F917B'  #FIXME
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
                 package_dict['department_number'] ='115'
                 package_dict['author_email'] =xpather.query('author_email','//gmd:electronicMailAddress/gco:CharacterString')
@@ -211,7 +206,7 @@ class NrcanMunge():
                 package_dict['title_fra'] = xpather.query('title_fra',
                             '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
                 
-                package_dict['name'] = file.split(".")[0]
+                package_dict['id'] = file.split(".")[0]
                 package_dict['notes']=charstring('abstract')
                 package_dict['notes_fra']=charstring_fr('abstract')
                 package_dict['catalog_type']="Geo Data | G\u00e9o"
@@ -230,15 +225,24 @@ class NrcanMunge():
                 keywords = doc.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
                 keywords_fr = doc_fr.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
                 #print keywords
-                tags = []
-                en_tags = [t.text for t in keywords]
-                 # Get rid of commans in keywords if they exist
-                en_tags = [tag.strip() for orig in en_tags for tag in orig.split(",")]
-                fr_tags = [t.text for t in keywords_fr]
-                fr_tags = [tag.strip() for orig in fr_tags for tag in orig.split(",")]
-                tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and (len(clean_tag(en)) + len(clean_tag(fr))) < 96]
+                #tags = []
+   
+           
+                en_tags = [clean_tag(t.text) for t in keywords]  # must remove forward slashes to pass validation
+                
+                # Get rid of commans in keywords if they exist
+                #en_tags = [tag.strip() for orig in en_tags for tag in orig.split(",")]
+                fr_tags = [clean_tag(t.text) for t in keywords_fr]
+                #fr_tags = [tag.strip() for orig in fr_tags for tag in orig.split(",")]
+                #tags = [{'name': clean_tag(en) + u'  ' + clean_tag(fr)} for en, fr in zip(en_tags, fr_tags) if clean_tag(en) and (len(clean_tag(en)) + len(clean_tag(fr))) < 96]
+    
+                #package_dict['tags'] = tags
+                # Tags are now gone, replaced by en, fr lists of comma delimited keywords
                
-                package_dict['tags'] = tags
+                package_dict['keywords'] = ",".join(en_tags)
+                package_dict['keywords_fra'] = ",".join(fr_tags)
+               
+                
                 package_dict['license_id']=''
                 
                 package_dict['data_series_name']=xpather.query('data_series_name',
@@ -253,15 +257,23 @@ class NrcanMunge():
                     frequencyCode = doc.xpath('//gmd:MD_MaintenanceFrequencyCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
                     package_dict['maintenance_and_update_frequency']=maintenanceFrequencyCodes[int(frequencyCode)]
                 except IndexError:
-                    package_dict['maintenance_and_update_frequency']=''
+                    package_dict['maintenance_and_update_frequency']=schema_description.dataset_field_by_id['maintenance_and_update_frequency']['example']
                     pass
                 #ISO 8061
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                
                 try:
-                    package_dict['time_period_coverage_start'] = time[0].text
-                    package_dict['time_period_coverage_end'] = time[1].text
+                    if len(time[0].text) or (time[1].text) == 4:
+                        year = datetime(int(time[0].text),1,1)
+                        year_end = datetime(int(time[1].text),1,1)
+                        
+                        package_dict['time_period_coverage_start'] = str(datetime.date(year))
+                        package_dict['time_period_coverage_end'] = str(datetime.date(year_end))
+                    else:
+                    
+                        package_dict['time_period_coverage_start'] = time[0].text
+                        package_dict['time_period_coverage_end'] = time[1].text
          
                 except IndexError:
                     package_dict['time_period_coverage_start'] = ''
@@ -303,7 +315,7 @@ class NrcanMunge():
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=xpather.query('browse_graphic_url','//MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
-                
+                #TODO:  gmd:otherCitationDetails for DOI
                 ''' Resources ''' 
                 resources = []
                 resour=doc.xpath('//gmd:CI_OnlineResource',namespaces=nspace)
@@ -317,10 +329,13 @@ class NrcanMunge():
                         #if url in resource_track: continue
                         # we don't want ftp links and other unknown or incomplete urls
                         #if "http://" not in url: continue
-                        resource_track.append(url)
+                        
                         format = r.find('gmd:name/gco:CharacterString', nspace).text
+                        
+                        resource_track.append(url)
                         #NOTE schema_description.extra_resource_fields only contains ['language']
                         lang = common.schema_languages['no language']['key']
+                      
                         #TODO :  Need more information on whether we should actually exclude files via the schema
                         resource={'url':url,'format':format,'language':lang}
                         '''
@@ -328,12 +343,16 @@ class NrcanMunge():
                             if  format == schema_format:
                                 resource={'url':url,'format':format,'language':lang}
                         '''
-                        resources.append(resource)    
+                        
+                        resources.append(resource) 
+                           
                         
                     except Exception as e:
-                        
+                        continue
                         pass
-
+                        #raise
+                        
+                pprint(resources)
                 package_dict['resources'] = resources
                 
                 
@@ -400,7 +419,7 @@ if __name__ == "__main__":
                                      jlfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today()))
 
     elif args.action == 'test':
-       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap",
+       NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap-sample",
                                      jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=25)
 
     elif args.action == 'short':
