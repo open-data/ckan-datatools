@@ -60,13 +60,13 @@ class Transform:
             
     def _process_node(self,count, node,node_fr):
         package_dict = {'resources': [], 'tags':[]}
-
         # Resource fields are not mapped in schema, so do them first 
         dataset_links=['dataset_link_en_%d' % n for n in range(1,7)]
  
         for i, dl in enumerate(dataset_links):
            
             try:
+                
                 link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
                 format_code = node.xpath("FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1))[0].split("|")[1]
                 format = formats[format_code]['key']
@@ -88,13 +88,10 @@ class Transform:
             try:
                      
                 if ckan_name == "id":
-                    continue
+                    package_dict['id'] =  str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
                 elif ckan_name in dataset_links:
                     continue
                 elif ckan_name == 'name':
-                    #package_dict['name'] = "pilot-" + str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).split("-")[0].lower()
-                    #Makus request it be just the id
-                    package_dict['name'] =  str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
                     continue
                 elif ckan_name== 'tags':
                     continue
@@ -103,9 +100,8 @@ class Transform:
                 elif ckan_name=='title_fra':
                     package_dict['title_fra'] =  self.strip_title(node.xpath("FORM[NAME='title_fr']/A/text()")[0])
                     continue
-                    
-                else:
-                    value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)[0]
+                
+                value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)[0]
                     
                 if "|" in value:
                     split_value = value.split("|")[1]
@@ -113,7 +109,7 @@ class Transform:
                     package_dict[ckan_name] = rval['key']
                     
                     if pilot_name == "department":
-                        package_dict['organization'] = str(rval['id']).lower()
+                        package_dict['owner_org'] = split_value
                 else:
                     package_dict[ckan_name] = value
             except IndexError:  #when None, eg. same as elif pilot_name is None:
@@ -129,15 +125,7 @@ class Transform:
         package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
-        print package_dict['url']
-        print package_dict['url_fra']
-            
-#        print "-------------{}----------".format(count)
-#        print package_dict['title']
-#        print package_dict['title_fra']
-#        pprint(package_dict['resources'])
- 
-        #self.outfile.write(json.dumps(package_dict) + "\n")
+        self.outfile.write(json.dumps(package_dict) + "\n")
            
 if __name__ == "__main__":
 
