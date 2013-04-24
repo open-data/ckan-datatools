@@ -57,38 +57,58 @@ class Transform:
         for marker in language_markers:
             if marker in title:
                 return title.replace(marker, '')
+        
+        return title
             
     def _process_node(self,count, node,node_fr):
-        package_dict = {'resources': [], 'tags':[]}
+        package_dict = {'resources': []}
         # Resource fields are not mapped in schema, so do them first 
         dataset_links=['dataset_link_en_%d' % n for n in range(1,7)]
- 
+        #if count>1000:sys.exit()
         for i, dl in enumerate(dataset_links):
-           
+
             try:
+               
+                link1 = node.xpath("FORM[NAME='%s']/A/text()" % dl)
+      
+                if link1:
+                    
+                    link = link1[0]
+                    format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
+                    format_code = node.xpath(format_path)
+                    if format_code:
+                        format_value = format_code[0].split("|")[1]
+                        format = formats[format_value]['key']
+                    else:
+                        format = ''
+                    
                 
-                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
-                format_code = node.xpath("FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1))[0].split("|")[1]
-                format = formats[format_code]['key']
+                    link_fr = node_fr.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
+                    resource_dict = {'url':link, 'format':format, 'resource_type': 'Dataset','language':'English | Anglais'} 
+                    resource_dict_fr = {'url':link_fr, 'format':format, 'resource_type': 'Dataset','language':'French | Fran\u00e7ais'} 
+                    package_dict['resources'].append(resource_dict)
+                    if link_fr != link:
+                        package_dict['resources'].append(resource_dict_fr)
+                else:
+                    break
                 
-                link_fr = node_fr.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
-                resource_dict = {'url':link, 'format':format, 'resource_type': 'Dataset','language':'English | Anglais'} 
-                resource_dict_fr = {'url':link_fr, 'format':format, 'resource_type': 'Dataset','language':'French | Fran\u00e7ais'} 
-                package_dict['resources'].append(resource_dict)
-                if link_fr != link:
-                    package_dict['resources'].append(resource_dict_fr)
+                
             except IndexError as e:
                 #print "RESOURCE ERROR ", e, link
                 #This simply means that there is an empty link element, and it should be ignored
                 pass
-            except Error as e:
-                print e 
-                        
+            except:
+                raise
+               
+                      
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+            
             try:
                      
                 if ckan_name == "id":
                     package_dict['id'] =  str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+                    
+                    continue
                 elif ckan_name in dataset_links:
                     continue
                 elif ckan_name == 'name':
@@ -96,13 +116,35 @@ class Transform:
                 elif ckan_name== 'tags':
                     continue
                 elif ckan_name == 'title':
-                    package_dict['title'] =  self.strip_title(node.xpath("FORM[NAME='title_en']/A/text()")[0])
-                elif ckan_name=='title_fra':
-                    package_dict['title_fra'] =  self.strip_title(node.xpath("FORM[NAME='title_fr']/A/text()")[0])
+
+                    t = node.xpath("FORM[NAME='title_en']/A/text()")[0]
+
+                    package_dict['title'] =  self.strip_title(t)
+                    if t == None: raise "No English Title", t
                     continue
-                
-                value = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)[0]
                     
+                elif ckan_name=='title_fra':
+
+                    t_fr = node.xpath("FORM[NAME='title_fr']/A/text()")[0]
+                    if t_fr == None: raise "No French Title", t_fr
+                    package_dict['title_fra'] =  self.strip_title(t_fr)
+                    continue
+        
+                value =''
+                if pilot_name:
+                    if pilot_name=="url_fra": 
+                        print pilot_name
+                    try: 
+                        
+                        result = node.xpath("FORM[NAME='%s']/A/text()" % pilot_name)
+                        if result:
+                            value  = result[0]
+                        else: 
+                            value =''
+                  
+                    except IndexError as e:
+                        print "!!!!!!!!!", e
+     
                 if "|" in value:
                     split_value = value.split("|")[1]
                     rval = field['choices_by_pilot_uuid'][split_value]
@@ -114,10 +156,15 @@ class Transform:
                     package_dict[ckan_name] = value
             except IndexError:  #when None, eg. same as elif pilot_name is None:
                package_dict[ckan_name] = ''
-               #print "INDEX ERROR ", ckan_name, pilot_name
-               pass
+
+               
+               continue
+               #print count, "INDEX ERROR ", ckan_name, pilot_name,package_dict[pilot_name]
+               
             except KeyError as e:
-                print "KEY ERROR : ", pilot_name, e 
+                print "KEY ERROR : ", ckan_name, pilot_name, e 
+                package_dict[ckan_name] = ''
+                continue
                 
 
         # Filter out things that will not pass validatation
@@ -125,6 +172,22 @@ class Transform:
         package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
+        #Override validation
+        package_dict['validation_override']=True
+        #Fix dates
+        t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
+        package_dict['time_period_coverage_start'] = common.timefix(t[0])
+        package_dict['time_period_coverage_end'] =  common.timefix(t[1])
+        # Keywords Hack 
+        print package_dict['time_period_coverage_start']
+        print package_dict['time_period_coverage_end']
+        
+        key_eng = package_dict['keywords'].replace("/","-")
+        key_fra = package_dict['keywords_fra'].replace("'","-").replace("/","-")
+        package_dict['keywords'] = key_eng
+        package_dict['keywords_fra'] = key_fra
+       
+        #print count, package_dict['id']
         self.outfile.write(json.dumps(package_dict) + "\n")
            
 if __name__ == "__main__":

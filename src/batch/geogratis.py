@@ -166,7 +166,6 @@ class NrcanMunge():
                 except IOError as e:
                     logging.error("{}::{}".format(file,e))
                     continue
-
         
                 def charstring(key):
                     return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
@@ -224,9 +223,6 @@ class NrcanMunge():
                 #item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices']
                 keywords = doc.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
                 keywords_fr = doc_fr.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
-                #print keywords
-                #tags = []
-   
            
                 en_tags = [clean_tag(t.text) for t in keywords]  # must remove forward slashes to pass validation
                 
@@ -263,22 +259,19 @@ class NrcanMunge():
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                
-                try:
-                    if len(time[0].text) or (time[1].text) == 4:
-                        year = datetime(int(time[0].text),1,1)
-                        year_end = datetime(int(time[1].text),1,1)
-                        
-                        package_dict['time_period_coverage_start'] = str(datetime.date(year))
-                        package_dict['time_period_coverage_end'] = str(datetime.date(year_end))
-                    else:
-                    
-                        package_dict['time_period_coverage_start'] = time[0].text
-                        package_dict['time_period_coverage_end'] = time[1].text
+                
+                try:         
+                    t = common.time_coverage_fix(time[0].text,time[1].text)
+                    package_dict['time_period_coverage_start'] = common.timefix(t[0])
+                    package_dict['time_period_coverage_end'] =  common.timefix(t[1])
+
          
-                except IndexError:
+                except IndexError, ValueError:
+                   
                     package_dict['time_period_coverage_start'] = ''
                     package_dict['time_period_coverage_end'] = ''
-   
+                    
+
                 package_dict['geographic_region']=""#.join(georegions())
                 #package_dict['url']=''#('http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
                 #package_dict['url_fra']=''#('http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/%s.html' % package_dict['name'])
@@ -349,10 +342,8 @@ class NrcanMunge():
                         
                     except Exception as e:
                         continue
-                        pass
-                        #raise
                         
-                pprint(resources)
+                #pprint(resources)
                 package_dict['resources'] = resources
                 
                 

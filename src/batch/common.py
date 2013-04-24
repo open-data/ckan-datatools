@@ -1,6 +1,7 @@
 # coding=utf-8
 from lxml import etree
 import os
+from datetime import date, datetime
 from ckanext.canada.metadata_schema import schema_description
 from pprint import pprint
 import logging
@@ -134,4 +135,38 @@ title_langauge_markers_fra=[' - version anglaise',
                                     u' (en français)',
                                     ' (en anglais)']
         
+
+def timefix(str_time):
+    # this time only has year, so default to Jan. 1
+    try:
+        if len(str_time) == 4:
+            return str(datetime.date(datetime(int(str_time),1,1)))
+        elif len(str_time) == 7:
+            return str(datetime.date(datetime(int(str_time.split("-")[0]),
+                                                              int(str_time.split("-")[1]),1)))
+        else:
+            return str_time
+    except ValueError:
+        return ''
+                
+def time_coverage_fix(str_time1,str_time2):
+    # Check to see if the start time and end time are different formats
+    if len(str_time2) < str_time1:
+        # make end time equal to start time
+        return (str_time1, str_time1)
+    else:
+        return (str_time1, str_time2)
             
+
+class Resource():
+    """
+    A generic resource class that can be extended to hold conversion and validation logic for each field
+    
+    """
+
+    def __init__(self,language,url,format):      
+        self.language=language
+        self.url=url
+        self.format=format
+    
+      
