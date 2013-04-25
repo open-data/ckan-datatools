@@ -326,9 +326,12 @@ class NrcanMunge():
                         format = r.find('gmd:name/gco:CharacterString', nspace).text
                         
                         resource_track.append(url)
-                        #NOTE schema_description.extra_resource_fields only contains ['language']
-                        lang = common.schema_languages['no language']['key']
-                      
+                        
+                        langval = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace)
+                        langkey = langval.text.split(";")[0]
+                        #lang = schema_description.resource_field_by_id['language']['choices']
+                        lang="eng"
+                    
                         #TODO :  Need more information on whether we should actually exclude files via the schema
                         resource={'url':url,'format':format,'language':lang}
                         '''
@@ -336,16 +339,15 @@ class NrcanMunge():
                             if  format == schema_format:
                                 resource={'url':url,'format':format,'language':lang}
                         '''
-                        
                         resources.append(resource) 
-                           
+                        #print resource 
                         
                     except Exception as e:
+                        #print "Resource Exception ",  e
                         continue
                         
                 #pprint(resources)
-                package_dict['resources'] = resources
-                
+                package_dict['resources'] = resources              
                 
                 if (n % 100) == 0: print n 
                 
@@ -403,6 +405,11 @@ if __name__ == "__main__":
     #parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
+    def bypass_cli(command):
+        class Object(object):
+            pass
+        args= Object()
+        args.action =command
     
     if args.action == 'full':
        print "You are about to write a new .jl file from the geogratis dataholdings. This could take a long time."

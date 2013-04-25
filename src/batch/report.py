@@ -2,6 +2,8 @@
 import os
 import sys
 import time
+import json 
+import csv
 from lxml import etree
 from collections import Counter
 import common
@@ -59,9 +61,7 @@ class PilotReport:
         #pprint(cnt.items())
      
         
-    def departments():
-        
-
+    def departments():  
         cnt = Counter()
         for i, node in enumerate(self.data.elements()):
             try:
@@ -79,7 +79,6 @@ class PilotReport:
             
         for i in sorted(cnt.items()):
             print "{}, {}".format(i[0].split("|")[0], i[1])
-    
         
     def unique_fields(self):
         counter = 0
@@ -113,7 +112,6 @@ class NapReport:
                         continue
                     doc_en = etree.parse(en)
                     doc_fr = etree.parse(fr)
-                    
                     yield doc_en,doc_fr
     
     def resource_urls(self):
@@ -292,14 +290,7 @@ class NapReport:
                 
          pass
 
-def counter_to_markdown_table(header,counter):
-    table = "|%s        |   Number   |\n|:-------------|-----------:|\n" % header
-    for item in counter.items():
-        row ="|%s|%s|\n" % (item[0], item[1])
-        table+=row
-        
-    print table
-    
+
 
     
 def count_occurances(dir, pathlist):
@@ -325,17 +316,71 @@ def count_occurances(dir, pathlist):
     for item,count in cnt.items():
         print item, count
 
+def write_csv(pilot_file):
+    
+    csvout = "/Users/peder/dev/goc/pilot.csv"
+        
 
 
+    f = open(csvout, 'wt')
+    writer = csv.writer(f)
+    fields = sorted(tuple(schema_description.all_package_fields ))
+    writer.writerow(fields)
 
+    file = open(os.path.normpath(pilot_file),"r")
+    
+    for line in file:
+        
+        record = json.loads(line)
+        # test to see if there are resources
+        #print record['resources'] 
+        #print (schema_description.all_package_fields - schema_description.extra_package_fields)
+        row =[]
+        for field in fields:
+            
+            try:
+                
+                val=record[field]
+                row.append(val)
+                
+            
+                
+            except Exception as e:
+                print e
+            
+        print row
+        writer.writerow(row)
+        sys.exit()
+  
+        f.close()
+
+def jl_test(nrcanjl_path):
+    
+    file = open(os.path.normpath(nrcanjl_path),"r")
+    for line in file:
+        record = json.loads(line)
+        # test to see if there are resources
+        #print record['resources'] 
+        #print (schema_description.all_package_fields - schema_description.extra_package_fields)
+        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+            try:
+               
+                if pilot_name:
+                 
+                    print">>>", pilot_name ,"::", record[ckan_name]
+                
+            except KeyError:
+                pass
+                #print "Does not exist"
+        sys.exit()
 if __name__ == "__main__":
     print "Report"
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis'])
-    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles','full'])
+    parser.add_argument('source', help='Which data source', action='store',choices=['pilot', 'geogratis','nrcan-jl','pilot-jl'])
+    parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles','full','test','csv'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
     args = parser.parse_args()
@@ -357,6 +402,12 @@ if __name__ == "__main__":
     elif args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  
        
-
+    elif args.source == 'nrcan-jl' and args.action == 'test':
+        nrcanjl_file = "/Users/peder/dev/goc/LOAD/nrcan-full-2013-04-24.jl"
+        jl_test(nrcanjl_file)
+    
+    elif args.source == 'pilot-jl' and args.action == 'csv':
+        pilot_file = "/Users/peder/dev/goc/LOAD/pilot-2013-04-24.jl"
+        write_csv(pilot_file)
 
  
