@@ -323,36 +323,46 @@ def write_csv(pilot_file):
 
 
     f = open(csvout, 'wt')
-    writer = csv.writer(f)
+    writer = common.UnicodeWriter(f)#csv.writer(f)
     fields = sorted(tuple(schema_description.all_package_fields ))
-    writer.writerow(fields)
+    fields2 = [ x for x in fields if "name" not in x ]
+    
+    fields3 = list(fields2)
+    
+    for x in range(1,4):
+        fields3.append('resource_url_%s' % x)
+        fields3.append('resource_url_format_%s' % x)
+        fields3.append('resource_language_%s' % x)
+        fields3.append('resource_resource_type_%s' % x)
+
+    writer.writerow(fields3)
 
     file = open(os.path.normpath(pilot_file),"r")
     
     for line in file:
         
         record = json.loads(line)
-        # test to see if there are resources
-        #print record['resources'] 
-        #print (schema_description.all_package_fields - schema_description.extra_package_fields)
         row =[]
-        for field in fields:
-            
+        
+        for i,field in enumerate(fields2):
+           
             try:
                 
                 val=record[field]
                 row.append(val)
                 
-            
-                
             except Exception as e:
-                print e
-            
-        print row
+
+                raise
+        resources = record['resources']
+        for r in resources:
+
+            for val in r.values():
+                row.append(val)
+
         writer.writerow(row)
-        sys.exit()
-  
-        f.close()
+
+    f.close()
 
 def jl_test(nrcanjl_path):
     
