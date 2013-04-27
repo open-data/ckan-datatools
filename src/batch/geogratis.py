@@ -238,7 +238,6 @@ class NrcanMunge():
                 package_dict['keywords'] = ",".join(en_tags)
                 package_dict['keywords_fra'] = ",".join(fr_tags)
                
-                
                 package_dict['license_id']=''
                 
                 package_dict['data_series_name']=xpather.query('data_series_name',
@@ -258,8 +257,7 @@ class NrcanMunge():
                 #ISO 8061
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
-               
-                
+
                 try:         
                     t = common.time_coverage_fix(time[0].text,time[1].text)
                     package_dict['time_period_coverage_start'] = common.timefix(t[0])
@@ -330,7 +328,7 @@ class NrcanMunge():
                         langval = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace)
                         langkey = langval.text.split(";")[0]
                         #lang = schema_description.resource_field_by_id['language']['choices']
-                        lang="eng"
+                        lang=langval
                     
                         #TODO :  Need more information on whether we should actually exclude files via the schema
                         resource={'url':url,'format':format,'language':lang}
@@ -350,8 +348,11 @@ class NrcanMunge():
                 package_dict['resources'] = resources              
                 
                 if (n % 100) == 0: print n 
-                
-                jlfile.write(json.dumps(package_dict) + "\n")  
+                if n > 2000:  sys.exit()
+                print "------------------------"
+                if "Abstract " in package_dict['notes']:
+                    print package_dict['notes']
+                #jlfile.write(json.dumps(package_dict) + "\n")  
       
          
     def write_new_links(self): 

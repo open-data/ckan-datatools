@@ -16,7 +16,7 @@ from ckanext.canada.metadata_schema import schema_description
 #from pyPdf import PdfFileWriter
 
 nspace = common.nrcan_namespaces
-
+jl_dir = "/Users/peder/dev/goc/LOAD/"
 class PilotReport:
     
     def __init__(self,datafile,report=False):
@@ -34,6 +34,7 @@ class PilotReport:
 
             try:
                 titles = (node.xpath("FORM[NAME='title_en']/A/text()")[0],node.xpath("FORM[NAME='title_fr']/A/text()")[0])
+
                 #print titles 
                 language_markers = common.title_langauge_markers + common.title_langauge_markers_fra
                 for marker in language_markers:
@@ -113,7 +114,8 @@ class NapReport:
                     doc_en = etree.parse(en)
                     doc_fr = etree.parse(fr)
                     yield doc_en,doc_fr
-    
+    def pathstring(key):
+            return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
     def resource_urls(self):
         print "Reporting on various resource urls to find overlap "
         xml_gen = self._xml_generator(self.filedir)
@@ -310,8 +312,7 @@ def count_occurances(dir, pathlist):
                 val = doc.find(path, nspace).text
                 cnt[val]+=1
             except AttributeError:
-                print path, doc.find("//gmd:fileIdentifier/gco:CharacterString", nspace).text
-            
+                print path, doc.find("//gmd:fileIdentifier/gco:CharacterString", nspace).text        
     
     for item,count in cnt.items():
         print item, count
@@ -319,9 +320,6 @@ def count_occurances(dir, pathlist):
 def write_csv(pilot_file):
     
     csvout = "/Users/peder/dev/goc/pilot.csv"
-        
-
-
     f = open(csvout, 'wt')
     writer = common.UnicodeWriter(f)#csv.writer(f)
     fields = sorted(tuple(schema_description.all_package_fields ))
@@ -365,25 +363,40 @@ def write_csv(pilot_file):
     f.close()
 
 def jl_test(nrcanjl_path):
-    
+    print os.path.normpath(nrcanjl_path)
     file = open(os.path.normpath(nrcanjl_path),"r")
+  
+        
+    print file
     for line in file:
+
         record = json.loads(line)
+        
+        if "Abstract not available" in  record['notes']:
+            try:
+                
+                print record['notes'].split(' - ')[0]
+            except:
+                pass
+                #print record['notes']
+        #print [record[ckan_name] for (ckan_name, pilot_name, field) in schema_description.dataset_all_fields()]
         # test to see if there are resources
         #print record['resources'] 
         #print (schema_description.all_package_fields - schema_description.extra_package_fields)
-        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-            try:
-               
-                if pilot_name:
-                 
-                    print">>>", pilot_name ,"::", record[ckan_name]
-                
-            except KeyError:
-                pass
+        
+        
                 #print "Does not exist"
-        sys.exit()
+        #sys.exit()
+
+# Find latests .jl file
+def newest_jl(dir,type):
+    jl_files = sorted([f for f in os.listdir(dir) if f.startswith(type)])
+    return  dir + jl_files[-1]        
+        
 if __name__ == "__main__":
+
+    #/Users/peder/dev/goc/LOAD/
+        
     print "Report"
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
@@ -412,12 +425,12 @@ if __name__ == "__main__":
     elif args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  
        
-    elif args.source == 'nrcan-jl' and args.action == 'test':
-        nrcanjl_file = "/Users/peder/dev/goc/LOAD/nrcan-full-2013-04-24.jl"
-        jl_test(nrcanjl_file)
-    
-    elif args.source == 'pilot-jl' and args.action == 'csv':
-        pilot_file = "/Users/peder/dev/goc/LOAD/pilot-2013-04-24.jl"
-        write_csv(pilot_file)
+    elif args.source == 'nrcan-jl':
+         if args.action == 'test': jl_test(newest_jl(jl_dir,'nrcan'))
+
+    elif args.source == 'pilot-jl':  
+        jl_file = newest_jl(jl_dir,'pilot')  
+        if   args.action == 'csv':write_csv(jl_file)
+        elif args.action == 'test':jl_test(jl_file)
 
  
