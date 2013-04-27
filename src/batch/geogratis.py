@@ -206,8 +206,12 @@ class NrcanMunge():
                             '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
                 
                 package_dict['id'] = file.split(".")[0]
-                package_dict['notes']=charstring('abstract')
+                notes=charstring('abstract')
                 package_dict['notes_fra']=charstring_fr('abstract')
+                if 'This series is produced to expedite the release of information' in notes:
+                    package_dict['notes']="Abstract not available."
+                    package_dict['notes_fra']=u"Résumé non disponible."
+          
                 package_dict['catalog_type']="Geo Data | G\u00e9o"
                 package_dict['digital_object_identifier']= ''
                 package_dict['ready_to_publish']='0'

@@ -365,17 +365,28 @@ def write_csv(pilot_file):
 def jl_test(nrcanjl_path):
     print os.path.normpath(nrcanjl_path)
     file = open(os.path.normpath(nrcanjl_path),"r")
-  
+    cnt = Counter()
         
     print file
-    for line in file:
+    for i,line in enumerate(file):
 
         record = json.loads(line)
         
-        if "Abstract not available" in  record['notes']:
+        if "Abstract not available - " in  record['notes']:
+            cnt['dash'] +=1
+        elif "This series is produced to expedite the release of information" in record['notes']:
+            cnt['full'] +=1
+            print record['notes'].split('This series is produced to expedite the release of information')[0]
+            print record['notes_fra']
+            sys.exit()
+        elif record['notes'] == "Abstract not available." :
+        
+            cnt['small'] +=1
+            #print record['notes']
+            #if i>50: sys.exit()
             try:
-                
-                print record['notes'].split(' - ')[0]
+                pass
+                #print record['notes'].split(' - ')[0]
             except:
                 pass
                 #print record['notes']
@@ -387,6 +398,7 @@ def jl_test(nrcanjl_path):
         
                 #print "Does not exist"
         #sys.exit()
+    print cnt.items()
 
 # Find latests .jl file
 def newest_jl(dir,type):
