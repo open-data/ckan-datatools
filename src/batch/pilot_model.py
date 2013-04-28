@@ -4,7 +4,7 @@ import pickle
 from collections import Counter
 from pprint import pprint
 import common
-
+from ckanext.canada.metadata_schema import schema_description
 
 class Resource:
     pass
@@ -29,6 +29,8 @@ class PilotRecord:
 
     """
     lang_marker_cnt = Counter()
+    node=''
+    language=''
     def __init__(self,node):
         #This is required so it can be pickled
         #self.raw = lxml.etree.tostring(node)
@@ -55,9 +57,9 @@ class PilotRecord:
         # With the broken ids out of the way, we can now do a lanuge sorting and other clean up work
         
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()")) 
-        #self.__title(node.xpath("FORM[NAME='title_fr']/A/text()"))
+        self.__title_fr(node.xpath("FORM[NAME='title_fr']/A/text()"))
+        self.__language(node.xpath("FORM[NAME='language__']/A/text()"))
         '''
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
@@ -76,13 +78,36 @@ class PilotRecord:
             self.title_en = title[0]
  
         except IndexError as e: 
-            #e = Exception()
             e.id = None
             e.type = "TitleError"
             e.message = "No english title exists for this RECORD node."
             e.node = self.node
             raise e
-
+    def __title_fr(self,title): 
+        #print title[0]
+        try:
+            self.title_fr = title[0]
+ 
+        except IndexError as e: 
+            e.id = None
+            e.type = "FrenchTitleError"
+            e.message = "No french title exists for this RECORD node."
+            e.node = self.node
+            raise e
+    def __language(self,lang_element): 
+        try:
+            langcode = lang_element[0].split("|")[1]
+            self.language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][langcode]['key']
+            
+        except:
+            "Langcode missing"
+    def match(self, filter):
+        '''Determine if this note matches the filter
+        text. Return True if it matches, False otherwise.
+        Search is case sensitive and matches both text and
+        tags.'''
+        return filter in self.title_en or filter in self.title_fr
+        
 class PilotHoldings:
     
     '''Represent a collection of records that can be
@@ -92,9 +117,10 @@ class PilotHoldings:
     '''
     cnt = Counter()
     number_of_records=0
+    records = []
+
     def __init__(self):
         
-        self.records = []
         self.bilingual = []
         self.french = []
         self.english = []
@@ -105,6 +131,8 @@ class PilotHoldings:
         '''Create a new record and add it to the list.'''
         try:
             record = PilotRecord(node)
+#            print record.title_en
+#            print record.title_fr
             self.records.append(record)
         except Exception as e:        
             # One of the fields in the Record could not be found on Create
@@ -136,14 +164,16 @@ class PilotHoldings:
             if record.id == record_id:
                 record.tags = tags
                 break
-    def search(self, filter):
+    def find_french_record(self, filter_en):
         '''Find all records that match the given filter
            string.
         '''
         return [record for record in self.records if
-            record.match(filter)]
+            filter_en in record.title_en]
+        
     def report(self, type):
         if type == 'full':
+            print "Full Report"
             pprint(self.cnt.items())
     
         
