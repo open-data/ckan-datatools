@@ -48,15 +48,20 @@ class PilotDelegator:
         self.holdings.test() 
     def match_languages(self):
         file = open("/Users/peder/dev/goc/matched-pilot-records.xml", "w")
+        bifile = open("/Users/peder/dev/goc/bilingual-pilot-records.xml", "w")
         file.write("<XML>\n")
+        bifile.write("<XML>\n")
         lang_counts = Counter()
         match_count = 0
         #print title[0]
         language_markers=[
                     (' - English Version',' - French Version'),
                     (' (in English)', ' (in French)'),
+                    (' (In English)', ' (In French)'),
                     ('(- English)', '(- French)'),  
-                    (' (English Version)',' (French Version)')]
+                     (' (English version)',' (French version)'),
+                    (' (English Version)',' (French Version)')
+                    ]
   
 
         ''' If one of these markers is in the data,
@@ -65,8 +70,11 @@ class PilotDelegator:
         for i,record in enumerate(self.holdings.records):   
             lang_counts[record.language]+=1               
             for marker in language_markers:
-               
-                if marker[0] in record.title_en:
+                if record.language == u'Bilingual (English and French) | Bilingue (Anglais et Fran\xe7ais)':
+                    print i, record.title_en
+                    bifile.write(lxml.etree.tostring(record.node)+"\n")
+                    continue
+                elif marker[0] in record.title_en:
                    
                     # Split the marker out of the record
                     split_title_en = record.title_en.split(marker[0])[0]
@@ -86,12 +94,12 @@ class PilotDelegator:
 #                        print i, record.node 
 #                        print i, french_record[0].node
                         if e == f:
-                            print "Match", record.node
-#                            print i, "WE HAVE A MATCH " + match_count
+                            #print "Match for  {}".format(marker[1])
+#                           print i, "WE HAVE A MATCH " + match_count
 
-                            file.write(lxml.etree.tostring(record.node)+"\n")
-                            file.write(lxml.etree.tostring(french_record[0].node)+"\n")
-                            #file.write(french_record[0].node + "\n")
+                            #file.write(lxml.etree.tostring(record.node)+"\n")
+                            #file.write(lxml.etree.tostring(french_record[0].node)+"\n")
+                           
                             match_count +=1
                             break
                         
@@ -106,6 +114,8 @@ class PilotDelegator:
                     break
         file.write("</XML>\n")
         file.close()
+        bifile.write("</XML>\n")
+        bifile.close()
         print "LANGUAGE COUNTS", lang_counts.items()
         print "MATCH COUNT ", match_count
 if __name__ == "__main__":
