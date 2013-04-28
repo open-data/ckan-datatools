@@ -1,3 +1,4 @@
+import sys
 import lxml
 import common
 from collections import Counter
@@ -46,26 +47,71 @@ class PilotDelegator:
         # This will fail, so we must alther the holdings to make it pass
         self.holdings.test() 
     def match_languages(self):
+        file = open("/Users/peder/dev/goc/matched-pilot-records.xml", "w")
+        file.write("<XML>\n")
+        lang_counts = Counter()
+        match_count = 0
         #print title[0]
-        english_record_markers=[
-                    'English Version',
-                    ' (in English)',
-                    ' (in French)',
-                    '(- English)',
-                    ' - English',      
-                    ' (English Version)']
+        language_markers=[
+                    (' - English Version',' - French Version'),
+                    (' (in English)', ' (in French)'),
+                    ('(- English)', '(- French)'),  
+                    (' (English Version)',' (French Version)')]
+  
+
         ''' If one of these markers is in the data,
             then there is probably a french equivalent
-        '''                       
-        for marker in english_record_markers:
-                
-            if marker in self.title_en:
-                print self.title_en
-                break
+        '''  
+        for i,record in enumerate(self.holdings.records):   
+            lang_counts[record.language]+=1               
+            for marker in language_markers:
+               
+                if marker[0] in record.title_en:
+                   
+                    # Split the marker out of the record
+                    split_title_en = record.title_en.split(marker[0])[0]
+                    equivalent_title_french_record = split_title_en + marker[1]
+                    #print equivalent_title_french_record
+                    # Having this title should enable us to find the french record
+                    # in the many cases where it's not alternating with the english
+                    
+                    french_record =  self.holdings.find_french_record(equivalent_title_french_record)
 
+                    try:
+                        #print marker
+                        e = str(record.title_en.split(marker[0])[0])
+                        f = str(french_record[0].title_en.split(marker[1])[0])
+#                        print e
+#                        print f
+#                        print i, record.node 
+#                        print i, french_record[0].node
+                        if e == f:
+                            print "Match", record.node
+#                            print i, "WE HAVE A MATCH " + match_count
+
+                            file.write(lxml.etree.tostring(record.node)+"\n")
+                            file.write(lxml.etree.tostring(french_record[0].node)+"\n")
+                            #file.write(french_record[0].node + "\n")
+                            match_count +=1
+                            break
+                        
+                    except:
+                        pass
+                        #print i, "NONE"
+                        #print "No match for " + split_title_en
+                        #raise
+                        
+                    #search holdings for the french record
+                    #sys.exit()
+                    break
+        file.write("</XML>\n")
+        file.close()
+        print "LANGUAGE COUNTS", lang_counts.items()
+        print "MATCH COUNT ", match_count
 if __name__ == "__main__":
      
     print "Report"
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
+    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     pilot = PilotDelegator(pilot_file)
     pilot.report()
+    pilot.match_languages()
