@@ -195,8 +195,9 @@ if __name__ == "__main__":
     #PilotReport(pilot_file).number_of_records()
     outputdir = '/Users/peder/dev/goc/LOAD'
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
-    Transform(pilot_file,output_file).write_jl_file()
+    Transform(matched_file,output_file).write_jl_file()
 
     #Transform().structure()   
     #Transform().replace()
