@@ -1,11 +1,11 @@
-import requests
+
 import os 
 import json
 from lxml import etree
 from ConfigParser import SafeConfigParser
 import sys
 import pprint
-from ckan_api_client import submit
+
 
 def clean_data():
     class FileResolver(etree.Resolver):
