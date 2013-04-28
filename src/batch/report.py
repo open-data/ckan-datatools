@@ -14,9 +14,10 @@ import argparse
 from guess_language import guess_language
 from ckanext.canada.metadata_schema import schema_description
 #from pyPdf import PdfFileWriter
+from pilot_model import PilotHoldings, PilotRecord
 
 nspace = common.nrcan_namespaces
-
+jl_dir = "/Users/peder/dev/goc/LOAD/"
 class PilotReport:
     
     def __init__(self,datafile,report=False):
@@ -34,6 +35,7 @@ class PilotReport:
 
             try:
                 titles = (node.xpath("FORM[NAME='title_en']/A/text()")[0],node.xpath("FORM[NAME='title_fr']/A/text()")[0])
+
                 #print titles 
                 language_markers = common.title_langauge_markers + common.title_langauge_markers_fra
                 for marker in language_markers:
@@ -44,21 +46,98 @@ class PilotReport:
                         fra = title.replace(marker,'')
                     else:
                        pass
-                print en,fra
-                
-#                [f() for marker in language_markers if marker in titles[0:1]]
-#                    if marker in titles:
-#                        print marker
-#                        new_titles = (titles[0].replace(marker, ''),titles[1].replace(marker,''))
-#                        print new_titles
+                print en,fra 
+            except:
+                raise 
             
-            except IndexError as e:
-                print  "INDEX ERROR ", node.xpath("FORM[NAME='title_en']/A/text()")
-                cnt['None']+=1
-            except Exception as e:
-                print e
-                raise   
-        #pprint(cnt.items())
+            
+    def clean_pilot_xml(self):
+     
+        cnt = Counter()
+        file = open("/Users/peder/dev/goc/bilingual-pilot-records.xml", "w")
+        file.write("<XML>\n")
+        changed = 1
+        for i,node in enumerate(self.data.elements()):
+            
+            title=''
+            try:
+                lang_code=''
+                language=''
+                title = node.xpath("FORM[NAME='title_en']/A/text()")[0]
+                lang_code = node.xpath("FORM[NAME='language__']/A/text()")[0].split("|")[1]
+                language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][lang_code]['eng']
+                print i, language
+                cnt[language]+=1
+                #print language
+                if language == "Bilingual (English and French)":# or "ilingual" in title:
+                    print "Bilingual ", ">>>", changed, i, language, title
+                    cnt['cleaned'] +=1
+                    changed+=1
+                    file.write(etree.tostring(node) +"\n")                   
+                 #root.append(node)   
+                 #title = node.xpath("FORM[NAME='title_en']/A/text()")[0]
+#                print language,title
+#                #print language
+#                cnt[language]+=1
+#                department_code = node.xpath("FORM[NAME='department']/A/text()")[0].split("|")[1]
+#                department = schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][department_code]['eng']
+#                dept = department
+#                #cnt[department]+=1
+#                
+            except  IndexError:
+   
+                #print node.xpath("FORM[NAME='language__']/A/text()")
+                print "No Language ",changed,i, title
+                changed+1
+                
+            except:
+                raise
+
+                #print "No Lang"
+                #raise
+            finally:
+                pass
+        file.write("</XML>")
+        pprint(cnt.items())
+            #bi_tree.write('/Users/peder/dev/goc/bilingual-pilot-records.xml', pretty_print=True, xml_declaration=False)
+        
+                
+    def biligual_datasets(self):
+        root = etree.Element("root")
+
+        print etree.tostring(root, pretty_print=True, xml_declaration=True)
+        sys.exit()
+        # write to file:
+        # tree = ET.ElementTree(root)
+        # tree.write('output.xml', pretty_print=True, xml_declaration=True)
+
+        cnt = Counter()
+        dept =''
+        title =''
+        for i,node in enumerate(self.data.elements()):
+           
+            #print etree.tostring(node, pretty_print=True)
+            try:
+                
+                lang_code = node.xpath("FORM[NAME='language__']/A/text()")[0].split("|")[1]
+                language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][lang_code]['eng']
+#                if language == "Bilingual (English and French)":continue
+                title = node.xpath("FORM[NAME='title_en']/A/text()")[0]
+                print language,title
+                #print language
+                cnt[language]+=1
+                department_code = node.xpath("FORM[NAME='department']/A/text()")[0].split("|")[1]
+                department = schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][department_code]['eng']
+                dept = department
+                #cnt[department]+=1
+                
+            except:
+                print "No Language ", title
+                cnt[dept]+=1
+                #print "No Lang"
+                #raise
+                
+        pprint(cnt.items())
      
         
     def departments():  
@@ -113,7 +192,8 @@ class NapReport:
                     doc_en = etree.parse(en)
                     doc_fr = etree.parse(fr)
                     yield doc_en,doc_fr
-    
+    def pathstring(key):
+            return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
     def resource_urls(self):
         print "Reporting on various resource urls to find overlap "
         xml_gen = self._xml_generator(self.filedir)
@@ -222,11 +302,9 @@ class NapReport:
                             unknown_format_types.append(fmt)
                             pass
                             
-                    except:
-                        
+                    except:                        
                         pass
-
-                
+    
                 if (n % 100) == 0: print n 
 
           
@@ -310,8 +388,7 @@ def count_occurances(dir, pathlist):
                 val = doc.find(path, nspace).text
                 cnt[val]+=1
             except AttributeError:
-                print path, doc.find("//gmd:fileIdentifier/gco:CharacterString", nspace).text
-            
+                print path, doc.find("//gmd:fileIdentifier/gco:CharacterString", nspace).text        
     
     for item,count in cnt.items():
         print item, count
@@ -319,9 +396,6 @@ def count_occurances(dir, pathlist):
 def write_csv(pilot_file):
     
     csvout = "/Users/peder/dev/goc/pilot.csv"
-        
-
-
     f = open(csvout, 'wt')
     writer = common.UnicodeWriter(f)#csv.writer(f)
     fields = sorted(tuple(schema_description.all_package_fields ))
@@ -365,27 +439,94 @@ def write_csv(pilot_file):
     f.close()
 
 def jl_test(nrcanjl_path):
-    
+    print os.path.normpath(nrcanjl_path)
     file = open(os.path.normpath(nrcanjl_path),"r")
-    for line in file:
+    cnt = Counter()
+
+    print file
+    for i,line in enumerate(file):
+
         record = json.loads(line)
+        
+        if "Abstract not available - " in  record['notes']:
+            cnt['dash'] +=1
+        elif "This series is produced to expedite the release of information" in record['notes']:
+            cnt['full'] +=1
+            print record['notes'].split('This series is produced to expedite the release of information')[0]
+            print record['notes_fra']
+            sys.exit()
+        elif record['notes'] == "Abstract not available." :
+           
+            cnt['small'] +=1
+            #print record['notes']
+            #if i>50: sys.exit()
+            try:
+                pass
+                #print record['notes'].split(' - ')[0]
+            except:
+                pass
+                #print record['notes']
+        #print [record[ckan_name] for (ckan_name, pilot_name, field) in schema_description.dataset_all_fields()]
         # test to see if there are resources
         #print record['resources'] 
         #print (schema_description.all_package_fields - schema_description.extra_package_fields)
-        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-            try:
-               
-                if pilot_name:
-                 
-                    print">>>", pilot_name ,"::", record[ckan_name]
-                
-            except KeyError:
-                pass
+        
+        
                 #print "Does not exist"
-        sys.exit()
+        #sys.exit()
+    print cnt.items()
+
+# Find latests .jl file
+def newest_jl(dir,type):
+    jl_files = sorted([f for f in os.listdir(dir) if f.startswith(type)])
+    return  dir + jl_files[-1]        
+
+
+class PilotDelegator:
+    """
+        To work with pilot data, its best for first create
+        the data in memore for later manipulation rather than reading it 
+        again and again from the xml.
+        
+        When dealing with a collection of records, encapsulation is very useful:
+        I only want to know that a record has been created and validated, and that
+        if it fails to do so, that I'm alerted so I can log it. 
+
+    
+    """
+    cnt = Counter()
+    def __init__(self, datafile):
+        self.holdings = PilotHoldings()
+        self.data = common.XmlStreamReader("RECORD",datafile)
+        for i,node in enumerate(self.data.elements()):
+            
+            try:
+                self.holdings.add_record(node)
+            except Exception  as e:
+                # this is where logging belongs
+                print "----------Error------------"
+                print e.message
+                print e.node
+                print "----------Error End---------"
+                self.cnt[e.message]+=1
+        print cnt.items()
+        #self.holdings.pickle_it()
+    def report(self):
+        self.holdings.report('full')
+    def test(self):
+        # This will fail, so we must alther the holdings to make it pass
+        self.holdings.test() 
+    
 if __name__ == "__main__":
+
+    #/Users/peder/dev/goc/LOAD/
+        
     print "Report"
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    pilot = PilotDelegator(pilot_file)
+    pilot.report()
+   
+    
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
     parser = argparse.ArgumentParser(add_help=True)
@@ -393,7 +534,7 @@ if __name__ == "__main__":
     parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles','full','test','csv'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
-    args = parser.parse_args()
+    #args = parser.parse_args()
     
     if args.source == 'pilot' and args.action == 'titles':
         PilotReport(pilot_file).biligual_titles()
@@ -408,16 +549,16 @@ if __name__ == "__main__":
                     '//gml:begin/gml:TimeInstant/gml:timePosition']
         count_occurances('/Users/peder/dev/goc/nap-sample/en',pathlist)
     
-    
     elif args.action == 'titles':
        NapReport(nap_path).bilingual_title_count()  
        
-    elif args.source == 'nrcan-jl' and args.action == 'test':
-        nrcanjl_file = "/Users/peder/dev/goc/LOAD/nrcan-full-2013-04-24.jl"
-        jl_test(nrcanjl_file)
-    
-    elif args.source == 'pilot-jl' and args.action == 'csv':
-        pilot_file = "/Users/peder/dev/goc/LOAD/pilot-2013-04-24.jl"
-        write_csv(pilot_file)
+    elif args.source == 'nrcan-jl':
+         if args.action == 'test': jl_test(newest_jl(jl_dir,'nrcan'))
+
+    elif args.source == 'pilot-jl':  
+        jl_file = newest_jl(jl_dir,'pilot')  
+        if   args.action == 'csv':write_csv(jl_file)
+        elif args.action == 'report':pilot.report()
+        elif args.action == 'test':pilot.test()
 
  
