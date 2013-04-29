@@ -14,6 +14,10 @@ class Resource:
     'format':
     'resource_type': 'Dataset',
     'language':'English | Anglais'
+    
+    Each object should make sure that its internal state is consistent,
+    so validation is best done before the 
+    internal state is modified - in the object's setter methods.
                    
     """
     

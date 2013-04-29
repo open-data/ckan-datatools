@@ -343,7 +343,6 @@ class TransformBilingual:
         #pprint(package_dict['title_fra'])
         #print count, package_dict['id']
         
-     
            
         try:
             if len(package_dict['resources']) !=0 and package_dict['id'] != self.last_id:     
