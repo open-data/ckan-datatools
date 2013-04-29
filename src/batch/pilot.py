@@ -334,12 +334,12 @@ class TransformBilingual:
         key_fra = package_dict['keywords_fra'].replace("'","-").replace("/","-")
         package_dict['keywords'] = key_eng
         package_dict['keywords_fra'] = key_fra
-        #pprint(package_dict['id'])
-        #sys.exit()
+        pprint(package_dict['title_fra'])
+       
         #print count, package_dict['id']
         try:
             
-            self.outfile.write(json.dumps(package_dict) + "\n")
+#            self.outfile.write(json.dumps(package_dict) + "\n")
             print count
         except Exception as e: 
             print e
