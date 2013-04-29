@@ -509,7 +509,7 @@ class PilotDelegator:
                 print e.node
                 print "----------Error End---------"
                 self.cnt[e.message]+=1
-        print cnt.items()
+        print self.cnt.items()
         #self.holdings.pickle_it()
     def report(self):
         self.holdings.report('full')

@@ -1,3 +1,4 @@
+# coding=utf-8
 '''
 Created on 2013-01-10
 
@@ -40,7 +41,7 @@ class PilotXmlStreamReader(XmlStreamReader):
 formats = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid']
 
 class Transform:
-    
+    last_record_id=''
     def __init__(self,datafile,outfile):
         
         self.outfile = open(outfile,"w")
@@ -192,6 +193,7 @@ class Transform:
 
 class TransformBilingual:
     
+    last_id=''
     def __init__(self,datafile,outfile):
         
         self.outfile = open(outfile,"w")
@@ -324,26 +326,34 @@ class TransformBilingual:
         package_dict['validation_override']=True
         #Fix dates
         t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
-        package_dict['time_period_coverage_start'] = common.timefix(t[0])
-        package_dict['time_period_coverage_end'] =  common.timefix(t[1])
+        package_dict['time_period_coverage_start'] ='' #common.timefix(t[0])
+        package_dict['time_period_coverage_end'] = '' #common.timefix(t[1])
+        package_dict['date_published'] = '' #str(package_dict['date_published']).replace("/", "-")
         # Keywords Hack 
-        print package_dict['time_period_coverage_start']
-        print package_dict['time_period_coverage_end']
+#        print package_dict['time_period_coverage_start']
+#        print package_dict['time_period_coverage_end']
+#        print package_dict['date_published']
+        #if count>100:sys.exit()
         
         key_eng = package_dict['keywords'].replace("/","-")
         key_fra = package_dict['keywords_fra'].replace("'","-").replace("/","-")
         package_dict['keywords'] = key_eng
         package_dict['keywords_fra'] = key_fra
-        pprint(package_dict['title_fra'])
-       
+        
+        #pprint(package_dict['title_fra'])
         #print count, package_dict['id']
+        
+     
+           
         try:
-            
-#            self.outfile.write(json.dumps(package_dict) + "\n")
-            print count
+            if len(package_dict['resources']) !=0 and package_dict['id'] != self.last_id:     
+                print "Write", package_dict['id']  
+                self.last_id=package_dict['id']  
+                self.outfile.write(json.dumps(package_dict) + "\n")
+                print count,package_dict['title']
         except Exception as e: 
             print e
-            print count, "Can't Write"
+            print count, "Can't Write", package_dict['id']
             pprint(package_dict)
             pass
            
@@ -351,7 +361,7 @@ if __name__ == "__main__":
 
     #PilotReport(pilot_file).number_of_records()
     outputdir = '/Users/peder/dev/goc/LOAD'
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
     matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
     bi_file = "/Users/peder/dev/goc/bilingual-pilot-records.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 

@@ -1,5 +1,6 @@
 eclipse.preferences.version=1
 encoding//src/batch/common.py=utf-8
 encoding//src/batch/lang_fix.py=utf-8
+encoding//src/batch/pilot.py=utf-8
 encoding//src/batch/report.py=utf-8
 encoding//src/schemadoc.py=utf-8

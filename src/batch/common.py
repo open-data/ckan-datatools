@@ -32,6 +32,7 @@ class XmlStreamReader():
         self.record_tag = record_tag
     
     def _iter_open(self):
+
         # by using the default 'end' event, you start at the _bottom_ of the tree
         for event, element in etree.iterparse(self.xml_file, events=("start","end")):
             if event == "start" and  element.tag == self.record_tag:
@@ -141,6 +142,8 @@ title_langauge_markers_fra=[' - version anglaise',
 
 def timefix(str_time):
     # this time only has year, so default to Jan. 1
+    if str_time == "Varies by indicator":return ''
+    if "T" in str_time: raise Exception
     try:
         if len(str_time) == 4:
             return str(datetime.date(datetime(int(str_time),1,1)))
