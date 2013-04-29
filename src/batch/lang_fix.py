@@ -8,9 +8,9 @@ class PilotDelegator:
     """
         To work with pilot data, its best for first create
         the data in memore for later manipulation rather than reading it 
-        again and again from the xml.
+        from the xml file.
         
-        When dealing with a collection of records, encapsulation is very useful:
+        When dealing with a collection of records, encapsulation is useful:
         I only want to know that a record has been created and validated, and that
         if it fails to do so, that I'm alerted so I can log it. 
  
@@ -18,6 +18,7 @@ class PilotDelegator:
     brokenfile = open("/Users/peder/dev/goc/broken-pilot-records.xml", "w")
     brokenfile.write("<XML>\n")
     cnt = Counter()
+    
     def __init__(self, datafile):
         self.holdings = PilotHoldings()
         self.data = common.XmlStreamReader("RECORD",datafile)
@@ -43,6 +44,8 @@ class PilotDelegator:
         
     def report(self):
         self.holdings.report('full')
+        
+        
     def test(self):
         # This will fail, so we must alther the holdings to make it pass
         self.holdings.test() 
@@ -63,7 +66,6 @@ class PilotDelegator:
                     (' (English Version)',' (French Version)')
                     ]
   
-
         ''' If one of these markers is in the data,
             then there is probably a french equivalent
         '''  
@@ -124,4 +126,4 @@ if __name__ == "__main__":
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     pilot = PilotDelegator(pilot_file)
     pilot.report()
-    pilot.match_languages()
+    #pilot.match_languages()

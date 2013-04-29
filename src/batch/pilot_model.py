@@ -7,7 +7,28 @@ import common
 from ckanext.canada.metadata_schema import schema_description
 
 class Resource:
-    pass
+    """
+    A resource has the following fields:
+    
+    'url':
+    'format':
+    'resource_type': 'Dataset',
+    'language':'English | Anglais'
+                   
+    """
+    
+    
+    def __init__(self,url, format, resource_type='Dataset'):
+        self.url=url
+        self.format=format
+        self.resource_type=resource_type
+
+    def set_langauge(self,language):
+        self.language=language
+        
+    def json(self):
+        pass
+    
 class PilotRecord:
     
     """
@@ -29,12 +50,12 @@ class PilotRecord:
 
     """
     lang_marker_cnt = Counter()
-    node=''
-    language=''
+
     def __init__(self,node):
         #This is required so it can be pickled
         #self.raw = lxml.etree.tostring(node)
         self.node = node
+        self.resources=[]
         try:
             
             self.id = node.xpath("FORM[NAME='thisformid']/A/text()")[0]
@@ -52,10 +73,11 @@ class PilotRecord:
             e.message = "FORM[NAME='thisformid']/A/text() failed to find a value for this RECORD node, so I can't be instantiated."
             e.node = node
             raise e
+
+        ''' Set resources first  '''
+        self.__resources(node)
             
-            #raise e
-        # With the broken ids out of the way, we can now do a lanuge sorting and other clean up work
-        
+            
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()")) 
         self.__title_fr(node.xpath("FORM[NAME='title_fr']/A/text()"))
         self.__language(node.xpath("FORM[NAME='language__']/A/text()"))
@@ -71,7 +93,36 @@ class PilotRecord:
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
         self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
         '''   
-            
+    def __resources(self,node):
+        
+        dataset_links=['dataset_link_en_%d' % n for n in range(1,5)]
+        for i, dl in enumerate(dataset_links):
+            try:
+                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
+                format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
+                format_code = node.xpath(format_path)
+                resource = Resource(link, format_code)
+                self.resources.append(resource)
+                
+                
+                '''
+                If the dataset is not bi-lingual, then get the equivalent
+                french resource. But for now set as is, and handle this later
+                when the entire collection can be searched
+                
+                It may not possible to set langauge for a resource
+                at the resource level
+                
+                
+                '''
+
+            except Exception as e:
+                #print "ERROR ", e
+                # gettin to here means no more resources, so break
+                break
+
+
+     
     def __title(self,title): 
         
         try:
@@ -131,8 +182,8 @@ class PilotHoldings:
         '''Create a new record and add it to the list.'''
         try:
             record = PilotRecord(node)
-#            print record.title_en
-#            print record.title_fr
+            num_resources = str(len(record.resources))  
+            self.cnt[num_resources]+=1
             self.records.append(record)
         except Exception as e:        
             # One of the fields in the Record could not be found on Create
