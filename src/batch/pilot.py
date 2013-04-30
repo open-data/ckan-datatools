@@ -9,6 +9,7 @@ This module is used for converting various items from in the pilot XML
 import sys
 import logging
 import simplejson as json
+import time
 from lxml import etree
 from pprint import pprint
 from datetime import date
@@ -20,6 +21,20 @@ from ckanext.canada.metadata_schema import schema_description
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
 pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"  
 output_file =  "/Users/peder/dev/OpenData/Pilot/april_15.jl"
+
+def check_date(date):
+    # Get rid of eg. 2008-06-26T08:30:00
+    if "T" in date:
+        date=date.split("T")[0]
+            
+    elif date=='':
+        return date
+    try:
+        valid_date = time.strptime(date, '%Y-%m-%d')
+        return date
+    except ValueError:
+        print 'Invalid date!', date
+        return ''
 
 class PilotXmlStreamReader(XmlStreamReader):
     ''' 
@@ -326,14 +341,16 @@ class TransformBilingual:
         package_dict['validation_override']=True
         #Fix dates
         t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
-        package_dict['time_period_coverage_start'] ='' #common.timefix(t[0])
-        package_dict['time_period_coverage_end'] = '' #common.timefix(t[1])
-        package_dict['date_published'] = '' #str(package_dict['date_published']).replace("/", "-")
-        # Keywords Hack 
-#        print package_dict['time_period_coverage_start']
-#        print package_dict['time_period_coverage_end']
-#        print package_dict['date_published']
-        #if count>100:sys.exit()
+        package_dict['time_period_coverage_start'] =common.timefix(t[0])
+        package_dict['time_period_coverage_end'] = common.timefix(t[1])
+        package_dict['date_published'] = str(package_dict['date_published']).replace("/", "-")
+          
+
+        package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
+        package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
+        package_dict['date_published']=check_date(package_dict['date_published'])
+        
+        #if count>1200:sys.exit()
         
         key_eng = package_dict['keywords'].replace("/","-")
         key_fra = package_dict['keywords_fra'].replace("'","-").replace("/","-")
@@ -342,8 +359,7 @@ class TransformBilingual:
         
         #pprint(package_dict['title_fra'])
         #print count, package_dict['id']
-        
-           
+
         try:
             if len(package_dict['resources']) !=0 and package_dict['id'] != self.last_id:     
                 print "Write", package_dict['id']  
@@ -355,18 +371,19 @@ class TransformBilingual:
             print count, "Can't Write", package_dict['id']
             pprint(package_dict)
             pass
-           
+         
 if __name__ == "__main__":
 
     #PilotReport(pilot_file).number_of_records()
     outputdir = '/Users/peder/dev/goc/LOAD'
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
-    matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
-    bi_file = "/Users/peder/dev/goc/bilingual-pilot-records.xml"
+    #matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
+    matched_file="/Users/peder/temp/merged_languages.xml"
+    bi_file = "/Users/peder/temp/bilingual-pilot.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
-    bi_output_file =  "{}/bipilot-{}.jl".format(outputdir,date.today()) 
-    #Transform(matched_file,output_file).write_jl_file()
-    TransformBilingual(bi_file,bi_output_file).write_jl_file()
+    bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
+    Transform(matched_file,output_file).write_jl_file()
+    #TransformBilingual(bi_file,bi_output_file).write_jl_file()
     #Transform().structure()   
     #Transform().replace()
     #process_pilot_xml('data/tables_20120815.xml')
