@@ -22,6 +22,28 @@ logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=l
 pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"  
 output_file =  "/Users/peder/dev/OpenData/Pilot/april_15.jl"
 
+pilot_frequency_list = {'annual':u'Annually | Annuel',
+                        'quarterly':u'Quarterly | Trimestriel',
+                        'monthly'  :u'Monthly | Mensuel', 
+                        'bi-weekly':u'Fortnightly | Quinzomadaire',
+                        'weekly':u'Weekly | Hebdomadaire',
+                        'daily': u'Daily | Quotidien',
+                        'hourly':u'Continual | Continue',
+                        '':u'Unknown | Inconnu'}
+
+
+
+# Don't generated this[(item['eng'],item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices']]
+
+supplemental_info_fields=[
+            'data_series_url_en',
+            'dictionary_list:_en', # note: different than French
+            'supplementary_documentation_en',
+            'data_series_url_fr',
+            'data_dictionary_fr',
+            'supplementary_documentation_fr',
+                            ]
+
 def check_date(date):
     # Get rid of eg. 2008-06-26T08:30:00
     if "T" in date:
@@ -78,6 +100,8 @@ class Transform:
             
     def _process_node(self,count, node,node_fr):
         package_dict = {'resources': []}
+        
+        
         # Resource fields are not mapped in schema, so do them first 
         dataset_links=['dataset_link_en_%d' % n for n in range(1,7)]
         #if count>1000:sys.exit()
@@ -97,7 +121,6 @@ class Transform:
                         format = formats[format_value]['key']
                     else:
                         format = ''
-                    
                 
                     link_fr = node_fr.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
                     resource_dict = {'url':link, 'format':format, 'resource_type': 'Dataset','language':'English | Anglais'} 
@@ -110,7 +133,7 @@ class Transform:
                 
                 
             except IndexError as e:
-                #print "RESOURCE ERROR ", e, link
+                print "RESOURCE ERROR ", e, link
                 #This simply means that there is an empty link element, and it should be ignored
                 pass
             except:
@@ -118,7 +141,7 @@ class Transform:
                
                       
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-            
+            print ckan_name, pilot_name
             try:
                      
                 if ckan_name == "id":
@@ -159,7 +182,7 @@ class Transform:
                             value =''
                   
                     except IndexError as e:
-                        print "!!!!!!!!!", e
+                        print "Some Form element Missing", e
      
                 if "|" in value:
                     split_value = value.split("|")[1]
@@ -168,6 +191,9 @@ class Transform:
                     
                     if pilot_name == "department":
                         package_dict['owner_org'] = split_value
+                    
+                    if pilot_name in supplemental_info_fields:
+                        print pilot_name
                 else:
                     package_dict[ckan_name] = value
             except IndexError:  #when None, eg. same as elif pilot_name is None:
@@ -181,8 +207,8 @@ class Transform:
                 print "KEY ERROR : ", ckan_name, pilot_name, e 
                 package_dict[ckan_name] = ''
                 continue
-                
-
+  
+        
         # Filter out things that will not pass validatation
         if package_dict['geographic_region'] == "Canada  Canada":package_dict['geographic_region']=''
         package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
@@ -228,38 +254,66 @@ class TransformBilingual:
         return title
             
     def _process_node(self,count, node):
+        
         package_dict = {'resources': []}
-        # Resource fields are not mapped in schema, so do them first 
+        ''' Special fields that contain documents that must be added to resources, 
+            but are not yet listed in the schema  
+                        
+                Pilot fields that should be stored as resource_type='doc' resources
+                'data_series_url_en',
+                'dictionary_list:_en', # note: different than French
+                'supplementary_documentation_en',
+ 
+                'data_series_url_fr',
+                'data_dictionary_fr',
+                'supplementary_documentation_fr',
+        '''
+
+        for sup_field in supplemental_info_fields:
+            try:
+                sup_value = link = node.xpath("FORM[NAME='%s']/A/text()" % sup_field)[0]
+                #format = schema_description.resource_field_by_id['format']['choices_by_key']['html']['key']
+                #print format
+                # Create resource from this
+                resource_dict = {'url':sup_value, 
+                                         'format':'HTML',
+                                         'resource_type': 'doc',
+                                         'language':u'eng; CAN | fra; CAN'}
+                
+                package_dict['resources'].append(resource_dict)
+            except:
+                "EMPTY SUPPLEMENTAL VALUE"
+        
+        
+       
         dataset_links=['dataset_link_en_%d' % n for n in range(1,7)]
         #if count>1000:sys.exit()
         for i, dl in enumerate(dataset_links):
 
             try:
                
-                link1 = node.xpath("FORM[NAME='%s']/A/text()" % dl)
-      
-                if link1:
-                    
-                    link = link1[0]
+                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
+                format=''
+                
+
+                try:
                     format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
                     format_code = node.xpath(format_path)
-                    if format_code:
-                        format_value = format_code[0].split("|")[1]
-                        format = formats[format_value]['key']
-                    else:
-                        format = ''
+                    format_uuid = format_code[0].split("|")[1]
+                    format = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][format_uuid]['key']
+                except:
+                    print "No Resource"
+                    raise
                     
-                
-                   
-                    resource_dict = {'url':link, 'format':format, 'resource_type': 'Dataset','language':u'Bilingual (English and French) | Bilingue (Anglais et Fran\xe7ais)'} 
-                    package_dict['resources'].append(resource_dict)
-
-                else:
-                    break
-                
-                
+                resource_dict = {'url':link, 
+                                         'format':format,
+                                         'resource_type': 'file',
+                                         'language':u'eng; CAN | fra; CAN'} 
+                        
+                package_dict['resources'].append(resource_dict)
+    
             except IndexError as e:
-                #print "RESOURCE ERROR ", e, link
+                #  No Link element
                 #This simply means that there is an empty link element, and it should be ignored
                 pass
             except:
@@ -267,6 +321,7 @@ class TransformBilingual:
                
                       
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+            
             
             try:
                      
@@ -289,7 +344,7 @@ class TransformBilingual:
                     continue
                     
                 elif ckan_name=='title_fra':
-
+                    # Look for 
                     t_fr = node.xpath("FORM[NAME='title_fr']/A/text()")[0]
                     if t_fr == None: raise "No French Title", t_fr
                     package_dict['title_fra'] =  self.strip_title(t_fr)
@@ -317,8 +372,16 @@ class TransformBilingual:
                     
                     if pilot_name == "department":
                         package_dict['owner_org'] = split_value
+                    
                 else:
-                    package_dict[ckan_name] = value
+                    if pilot_name == 'frequency':
+                        
+                        package_dict['maintenance_and_update_frequency'] = pilot_frequency_list[value]
+#                        print package_dict['maintenance_and_update_frequency']
+#                        sys.exit()
+                    else:
+
+                        package_dict[ckan_name] = value
             except IndexError:  #when None, eg. same as elif pilot_name is None:
                package_dict[ckan_name] = ''
 
@@ -350,6 +413,8 @@ class TransformBilingual:
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
         
+            
+        
         #if count>1200:sys.exit()
         
         key_eng = package_dict['keywords'].replace("/","-")
@@ -359,17 +424,22 @@ class TransformBilingual:
         
         #pprint(package_dict['title_fra'])
         #print count, package_dict['id']
-
+        '''  TODO: CHECK FOR DUPLICATES '''
         try:
+            # Quick hack her to deal with bug that caused duplicate lines in XML 
             if len(package_dict['resources']) !=0 and package_dict['id'] != self.last_id:     
-                print "Write", package_dict['id']  
+                #print "Write", package_dict['id']  
                 self.last_id=package_dict['id']  
-                self.outfile.write(json.dumps(package_dict) + "\n")
-                print count,package_dict['title']
+                #self.outfile.write(json.dumps(package_dict) + "\n")
+                #print count,package_dict['title']
+                #pprint(package_dict)
+                print json.dumps(package_dict)
+                sys.exit()
         except Exception as e: 
             print e
             print count, "Can't Write", package_dict['id']
-            pprint(package_dict)
+            
+            #pprint(package_dict)
             pass
          
 if __name__ == "__main__":
@@ -382,8 +452,8 @@ if __name__ == "__main__":
     bi_file = "/Users/peder/temp/bilingual-pilot.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
-    Transform(matched_file,output_file).write_jl_file()
-    #TransformBilingual(bi_file,bi_output_file).write_jl_file()
+    #Transform(matched_file,output_file).write_jl_file()
+    TransformBilingual(bi_file,bi_output_file).write_jl_file()
     #Transform().structure()   
     #Transform().replace()
     #process_pilot_xml('data/tables_20120815.xml')
