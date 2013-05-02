@@ -4,6 +4,7 @@ from pprint import pprint
 from collections import Counter
 from ckanext.canada.metadata_schema import schema_description
 
+
 """
     1. Load pilot file into memory, check size and number of RECORDS
     2. Remove any RECORDS that are missing the FORM, check number and size
@@ -16,7 +17,14 @@ from ckanext.canada.metadata_schema import schema_description
     There are 1445 bilingual records.  Only 1098 made it into the bilingual .jl file due to date errors or other issues.
       
 """
-
+language_markers=[
+                    (' - English Version',' - French Version'),
+                    (' (in English)', ' (in French)'),
+                    (' (In English)', ' (In French)'),
+                    ('(- English)', '(- French)'),  
+                     (' (English version)',' (French version)'),
+                    (' (English Version)',' (French Version)')
+                    ]
 def split_xml_files():
     cnt = Counter()
     print "Report"
@@ -76,7 +84,7 @@ def split_xml_files():
 
 
 def match_eng_fra():
-    print "Matching English and French"
+
     cnt = Counter()
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     tree = etree.parse(pilot_file)
@@ -89,6 +97,11 @@ def match_eng_fra():
     last_name=''
     last_eng_title=""
     total_matched=0
+    eng_records_no_marker=[]
+    eng_records=[]
+    
+    fra_records={}
+    
     for i,child in enumerate(root):
         # TOTAL RECORDS
         cnt['TotalRecords']+=1
@@ -101,10 +114,10 @@ def match_eng_fra():
         try: 
             # RECORDS WITH FORM ID
             formid = child.xpath("FORM[NAME='thisformid']/A")
+            title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
+            #print title
             #print i,formid[0].text
             cnt['formids']+=1
-            
-            
             
             # RECORDS WITH LANGUAGE INDICATOR
             langcode=''
@@ -119,33 +132,68 @@ def match_eng_fra():
                 #print formid[0].text
                 language = child.xpath("FORM[NAME='language']/A") 
                 langcode=language[0].text
-                #print i, "language", language[0].text
-                cnt['language']+=1
+               
+                
             try:
                 langcode = langcode.split("|")[1]
                 # NUMBER OF BILINGUAL RECORDS
                 language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][langcode]['key']
-                #print language
+
                 cnt[language]+=1
+                
                 if language == u'English | Anglais':
-                    last_language=language
-                    last_node = child
+                                    
+
                     cnt['English']+=1
-                    last_eng_title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
+                    short_title=None
+                    for marker in language_markers:
+
+                        if marker[0] in title:
+                            short_title = title.split(marker[0])[0]
+                            break
+
+                    if short_title:
+                        #print "---------------"
+                        eng=(short_title,child)
+                    else:
+                       eng=(title,child)
+                    #print "ENG", eng[0]
+                    eng_records.append(eng)
+
                     
-                if language==u"French | Fran\u00e7ais" and last_language =='English | Anglais':
+                elif language==u"French | Fran\u00e7ais":
+                   
                     #print i,last_eng_title 
-                    title= child.xpath("FORM[NAME='title_en']/A/text()")[0]
-#                    print last_eng_title.split(" ")[1:4]
-#                    print title.split(" ")[1:4]
-                    if last_eng_title.split(" ")[1:4] == title.split(" ")[1:4]:
+                    short_title=None
+                    for marker in language_markers:
+                        if marker[1] in title:
+                            short_title_fr = title.split(marker[1])[0]
+                            break
+                  
+                    if short_title_fr:
+                       fra=(short_title_fr, child)
+                    else:
+                       fra=(title,child)
+                    #print "FRA", fra[0]
+                    fra_records[fra[0]]=fra[1]
+
+                # now we can match the two arrays
+                
+            except:
+                
+                #raise
+                '''
+                for node_en in eng_records:
+                print "WE HAVE ONE"
+                
+                if last_eng_title.split(" ")[1:4] == title.split(" ")[1:4]:
                        
-                        total_matched+=1
-                        cnt["GOOD MATCH"]+=1
-                        print etree.tostring(last_node)
-                        print etree.tostring(child)
-                    else: 
-                        cnt["POOR MATCH"]+=1
+                    total_matched+=1
+                    cnt["GOOD MATCH"]+=1
+                    print etree.tostring(last_node)
+                    print etree.tostring(child)
+                else: 
+                    cnt["POOR MATCH"]+=1
                        
                     #print i, title
                    
@@ -156,12 +204,45 @@ def match_eng_fra():
             except:
                 #raise
                 print "LANG ERROR"
-                    
+        '''         
         except:
-            print formid
+            #print "BLAH ", formid
             raise
-    print "TOTAL MATCHED ", total_matched
-    pprint(cnt.items())
+
+    
+#    pprint(fra_records.keys())
+#    print len(fra_records.items())
+    unmatched=[]
+    print "<XML>\n"
+    for i, en in enumerate(eng_records):
+        
+        en_title=en[0]
+        # Now find this in french 
+        try:
+            node_en = etree.tostring(en[1])
+            node_fr = etree.tostring(fra_records[en_title])
+            
+#            print "EEEEEEEEENNNG", i, en_title
+#            print "FRAAAAAAAAAAA" , i,fra_records[en_title]
+            print node_en
+            print node_fr
+            #sys.exit()
+        except KeyError:
+            #raise
+            #print "Cannot match ", en_title
+            unmatched.append(en)
+        except:
+            raise
+        
+        
+    print "\n</XML>"
+          
+        
+        
+        
+        
+    #pprint(cnt.items())
+    
 
 if __name__ == "__main__":
     match_eng_fra()
