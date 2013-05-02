@@ -141,10 +141,15 @@ class NrcanMunge():
         jlfile = open(os.path.normpath(jlfile), "w")
         xpather = XPather(common.nrcan_namespaces)
 
-        presentationCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices'])
+
+        # For some reason, Pydev does not like this type of dict comprehension
+        #{ choice['id']:choice['key'] for choice in schema_description.dataset_field_by_id['presentation_form']['choices']}
+        presentationCodes = dict((choice['id'],choice['key']) for choice in schema_description.dataset_field_by_id['presentation_form']['choices'])
+        spatialRepTypeCodes = dict((choice['id'],choice['key']) for choice in schema_description.dataset_field_by_id['spatial_representation_type']['choices'])
         maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
         topicKeys = dict((item['eng'], item['key']) for item in schema_description.dataset_field_by_id['topic_category']['choices'])
-        
+        formatTypes=dict((item['eng'], item['key']) for item in schema_description.resource_field_by_id['format']['choices'])
+     
         nspace = common.nrcan_namespaces
         n = 0
         for (path, dirs, files) in os.walk(os.path.normpath(basepath+"/en/")):
@@ -192,8 +197,7 @@ class NrcanMunge():
                 def charstring_fr(key):
                     return doc_fr.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
                     pass
-                                   
-                #package_dict['organization'] = 'nrcan-rncan'
+                package_dict['organization'] = 'nrcan-rncan'
                 #package_dict['group'] = 'nrcan-rncan'# See if this solves the problem with org not showing up in CKAN
                 package_dict['owner_org'] = '9391E0A2-9717-4755-B548-4499C21F917B'  #FIXME
                 package_dict['author'] = "Natural Resources Canada | Ressources naturelles Canada"
@@ -206,13 +210,21 @@ class NrcanMunge():
                             '//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
                 
                 package_dict['id'] = file.split(".")[0]
-                notes=charstring('abstract')
-                package_dict['notes_fra']=charstring_fr('abstract')
-                if 'This series is produced to expedite the release of information' in notes:
+                #notes=charstring('abstract')
+                notes=xpather.query('notes','//gmd:abstract/gco:CharacterString')
+                notes_fra=xpather.query('notes_fra','//gmd:abstract/gco:CharacterString')
+                
+                
+                if 'Abstract not available' in notes:
                     package_dict['notes']="Abstract not available."
                     package_dict['notes_fra']=u"Résumé non disponible."
+                    
+                else:
+                    package_dict['notes']=notes
+                    package_dict['notes_fra']=notes_fra
+
           
-                package_dict['catalog_type']="Geo Data | G\u00e9o"
+                package_dict['catalog_type']=u"Geo Data | G\xe9o"
                 package_dict['digital_object_identifier']= ''
                 package_dict['ready_to_publish']='0'
                 topic_name_en = self.camel_to_label(doc.xpath('//gmd:MD_TopicCategoryCode',namespaces=nspace)[0].text)
@@ -251,13 +263,14 @@ class NrcanMunge():
 
                 package_dict['data_series_issue_identification']=doc.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
                 package_dict['data_series_issue_identification_fra']=doc_fr.xpath('//gmd:issueIdentification/gco:CharacterString',namespaces=nspace)[0].text
-                #documentation_url_fra=
+
                 try:
                     frequencyCode = doc.xpath('//gmd:MD_MaintenanceFrequencyCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
-                    package_dict['maintenance_and_update_frequency']=maintenanceFrequencyCodes[int(frequencyCode)]
-                except IndexError:
-                    package_dict['maintenance_and_update_frequency']=schema_description.dataset_field_by_id['maintenance_and_update_frequency']['example']
-                    pass
+                    package_dict['maintenance_and_update_frequency']=maintenanceFrequencyCodes[540]
+                    
+                except IndexError, TypeError:
+                    package_dict['maintenance_and_update_frequency']=schema_description.dataset_field_by_id['maintenance_and_update_frequency']['example']['eng']
+                    #print "Eror", package_dict['maintenance_and_update_frequency']
                 #ISO 8061
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
                 #end = doc.xpath('/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent/gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent/gml:TimePeriod/gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
@@ -280,7 +293,8 @@ class NrcanMunge():
                 package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
                 package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
                 package_dict['date_published']=doc.xpath('//gmd:CI_Date/gmd:date/gco:Date',namespaces=nspace)[0].text
-                #ackage_dict['spatial_representation_type']=  spatial represnentation type number
+                
+                
                 #cornerPoints = doc.xpath('//gmd:cornerPoints/gml:Point/gml:pos',namespaces=nspace)
                 #points = [p.text for p in  cornerPoints]  TODO: Figure out overlap between two representations, rings and points
                 exteriorRing = doc.xpath('//gml:Polygon/gml:exterior/gml:LinearRing/gml:pos',namespaces=nspace)   
@@ -301,15 +315,38 @@ class NrcanMunge():
                                                                         maxx = georegions()[2],
                                                                         maxy = georegions()[3]
                                                                         )
+                    
+                
+                
                 try:
-                    pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
-                    package_dict['spatial_representation_type'] = presentationCodes[int(pCode)]
+                    pCode = doc.xpath('//gmd:MD_SpatialRepresentationTypeCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
+                    package_dict['spatial_representation_type'] = spatialRepTypeCodes[int(pCode)]
                 except IndexError:
                     package_dict['spatial_representation_type'] =''
+                except KeyError:
+                    print "Spatial Rep Type not in Schema", int(pCode)
+              
+                except:
+                    raise
+                    
+           
+                try:
+                    pCode = doc.xpath('//gmd:CI_PresentationFormCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
+                except IndexError:
+                    print "No presentation Form"
+                    package_dict['presentation_form'] =''
+                except KeyError:
+                    print "Presentation code not in Schema"
+                    print int(pCode), spatialRepTypeCodes
                 
                 package_dict['presentation_form']= presentationCodes[int(pCode)]
+        
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=xpather.query('browse_graphic_url','//MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
+                if package_dict['browse_graphic_url'] == '':
+                    package_dict['browse_graphic_url'] ='http://www.fakeimageurl123.com/foo.jpg'
+                    
+                
                 #TODO:  gmd:otherCitationDetails for DOI
                 ''' Resources ''' 
                 resources = []
@@ -324,18 +361,26 @@ class NrcanMunge():
                         #if url in resource_track: continue
                         # we don't want ftp links and other unknown or incomplete urls
                         #if "http://" not in url: continue
+                        try:
+                            format = r.find('gmd:name/gco:CharacterString', nspace).text
+                        except AttributeError:
+                            #r.find('gmd:name/gco:CharacterString', nspace). returns NoneType
+                            format =  formatTypes['Other']
+                        print "FOrmat", format
+                        if format in formatTypes:
+                            
+                            format = formatTypes[format]
+                        else:
+                           
+                            format =  formatTypes['Other']
                         
-                        format = r.find('gmd:name/gco:CharacterString', nspace).text
                         
                         resource_track.append(url)
                         
-                        langval = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace)
-                        langkey = langval.text.split(";")[0]
-                        #lang = schema_description.resource_field_by_id['language']['choices']
-                        lang=langval
-                    
+                        lang = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
+                       
                         #TODO :  Need more information on whether we should actually exclude files via the schema
-                        resource={'url':url,'format':format,'language':lang}
+                        resource={'url':url,'format':format,'language':lang,'resource_type': 'file'}
                         '''
                         for schema_format in  common.schema_file_formats:
                             if  format == schema_format:
@@ -343,21 +388,22 @@ class NrcanMunge():
                         '''
                         resources.append(resource) 
                         #print resource 
-                        
+                       
                     except Exception as e:
+                        raise
                         #print "Resource Exception ",  e
                         continue
                         
                 #pprint(resources)
                 package_dict['resources'] = resources              
+                #pprint (package_dict)
                 
                 if (n % 100) == 0: print n 
-                if n > 2000:  sys.exit()
-                print "------------------------"
-                if "Abstract " in package_dict['notes']:
-                    print package_dict['notes']
-                #jlfile.write(json.dumps(package_dict) + "\n")  
-      
+                if n > 20:  sys.exit()
+
+
+                jlfile.write(json.dumps(package_dict) + "\n")  
+             
          
     def write_new_links(self): 
         infile = open(os.path.normpath('/temp/nrcan2.links'), "r")   
@@ -404,7 +450,11 @@ def download_nap(linkfile,outpath):
 
            
 if __name__ == "__main__":
+    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap-sample",
+                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=250)
+
     
+    '''
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test','download'])
     #parser.add_argument("-p", "--path", help="file or dir", action='store_true')
@@ -432,3 +482,4 @@ if __name__ == "__main__":
     elif args.action == 'download':
         download_nap('/Users/peder/dev/goc/ckan-logs/download_missing_fr.links',
                      '/Users/peder/dev/goc/nap/missing/fr')
+    '''

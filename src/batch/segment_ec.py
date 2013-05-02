@@ -23,7 +23,8 @@ language_markers=[
                     (' (In English)', ' (In French)'),
                     ('(- English)', '(- French)'),  
                      (' (English version)',' (French version)'),
-                    (' (English Version)',' (French Version)')
+                    (' (English Version)',' (French Version)'),
+                    [' [ ', ]
                     ]
 def split_xml_files():
     cnt = Counter()
