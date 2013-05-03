@@ -236,7 +236,7 @@ class NrcanMunge():
                     
                 package_dict['subject']=''
                 
-                #item['id'], item['key']) for item in schema_description.dataset_field_by_id['presentation_form']['choices']
+
                 keywords = doc.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
                 keywords_fr = doc_fr.xpath('//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword/gco:CharacterString',namespaces=nspace)
            
@@ -339,7 +339,15 @@ class NrcanMunge():
                     print "Presentation code not in Schema"
                     print int(pCode), spatialRepTypeCodes
                 
-                package_dict['presentation_form']= presentationCodes[int(pCode)]
+                try:
+                    package_dict['presentation_form']= presentationCodes[int(pCode)]
+                except KeyError:
+                    ''' Default to  u'id': 387,
+                       u'key': u'Document Digital | Document num\xe9rique'}
+                    '''
+                    print "Presentation Code Missing", pCode
+                    package_dict['presentation_form']= presentationCodes[387]
+                  
         
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=xpather.query('browse_graphic_url','//MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
@@ -366,7 +374,7 @@ class NrcanMunge():
                         except AttributeError:
                             #r.find('gmd:name/gco:CharacterString', nspace). returns NoneType
                             format =  formatTypes['Other']
-                        print "FOrmat", format
+                     
                         if format in formatTypes:
                             
                             format = formatTypes[format]
@@ -399,8 +407,6 @@ class NrcanMunge():
                 #pprint (package_dict)
                 
                 if (n % 100) == 0: print n 
-                if n > 20:  sys.exit()
-
 
                 jlfile.write(json.dumps(package_dict) + "\n")  
              
@@ -450,11 +456,10 @@ def download_nap(linkfile,outpath):
 
            
 if __name__ == "__main__":
-    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap-sample",
-                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=250)
+#    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap-sample",
+#                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=250)
 
-    
-    '''
+
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('action', help='Build a dataset', action='store',choices=['full', 'short', 'test','download'])
     #parser.add_argument("-p", "--path", help="file or dir", action='store_true')
@@ -482,4 +487,3 @@ if __name__ == "__main__":
     elif args.action == 'download':
         download_nap('/Users/peder/dev/goc/ckan-logs/download_missing_fr.links',
                      '/Users/peder/dev/goc/nap/missing/fr')
-    '''

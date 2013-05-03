@@ -664,14 +664,19 @@ class TransformDelegator:
             #print i,node_en, node_fr
             package_en = Transform().process_node(i,node_en)
             package_fr = Transform().process_node(i,node_fr)
-#            print "--------"
-#            print package_en['title']
-#            print package_fr['title']
+            
+            
+            print "--------"
+            print package_en['title']
+            print package_fr['title']
+            
+            # Transfer French Data to English Package
             for pack in  package_fr['resources']:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
             
-            print json.dumps(package_en)
+            #print json.dumps(package_en)
+            
             
             '''
             title_en_short = None

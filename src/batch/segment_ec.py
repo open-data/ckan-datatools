@@ -17,23 +17,37 @@ from ckanext.canada.metadata_schema import schema_description
     There are 1445 bilingual records.  Only 1098 made it into the bilingual .jl file due to date errors or other issues.
       
 """
+langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
+           'FA6486B4-8A2A-4DA4-A727-E4EA3D29BF71':'French',
+           '790CE47F-0B49-4D1F-9CE0-50EC57517981':'Bilingual'
+           }
+
+''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
 language_markers=[
+                   (' - English Version [AAFC-AIMIS-RP-', ' - French Version [AAFC-AIMIS-RP-'),
                     (' - English Version',' - French Version'),
+                    (' - English version',' - French version'),
                     (' (in English)', ' (in French)'),
                     (' (In English)', ' (In French)'),
                     ('(- English)', '(- French)'),  
-                     (' (English version)',' (French version)'),
-                    (' (English Version)',' (French Version)'),
-                    [' [ ', ]
+                    (' (English',' (French'),
+                    (' (English',' (Fench'),
+                    (' English',' French'),
+                    (' - ENGLISH VERSION', ' - FRENCH VERSION')
+                    
                     ]
-def split_xml_files():
+
+
+
+def split_xml_files(pilot_file):
+
     cnt = Counter()
-    print "Report"
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     tree = etree.parse(pilot_file)
-    
     root = tree.getroot()
-    print (sys.getsizeof(root))
+    special_title_numbers=[]
+    split_en=[]
+    split_fr=[]
+    not_split=[]
 
     for i,child in enumerate(root):
         # TOTAL RECORDS
@@ -41,8 +55,8 @@ def split_xml_files():
         #print i+1,child.tag
         if "CVReferenceCountByFormtype" in etree.tostring(child):
             cnt['CVReferenceCountByFormtype']+=1
-            continue       
-        
+            continue      
+        formid = None           
         try: 
             # RECORDS WITH FORM ID
             formid = child.xpath("FORM[NAME='thisformid']/A")
@@ -50,44 +64,109 @@ def split_xml_files():
             cnt['formids']+=1
             
             
-            # RECORDS WITH LANGUAGE INDICATOR
-            langcode=''
-            language__ = child.xpath("FORM[NAME='language__']/A") 
-            #print i, "language__", language[0].text
+            # GET THE TITLE
+            title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
+            
+            ''' Sadly there is no discernable pattern in this title element
+            if "[AAFC-AIMIS-RP" in title: 
+                cnt["[AAFC-AIMIS-RP-"]+=1
+                num= title.split("[AAFC-AIMIS-RP-")[1].split("]")[0]
+            '''
+
+                
+            # GET ALL RECORDS WITH language or language__ LANGUAGE INDICATORS
+            # Document instances of records that do not have one.
+            language=None
+            langcode=None
             
             try:
+                language__ = child.xpath("FORM[NAME='language__']/A") 
+               
+                if language__: 
+                    cnt['language__']+=1
+                else:
+                    language = child.xpath("FORM[NAME='language']/A") 
+                    if language: 
+                       cnt['language']+=1
+                       language__=language
+                    
+
+
                 langcode=language__[0].text
-                cnt['language__']+=1
+                if langcode: 
+                    langcode = langcode.split('|')[1]
+                else:
+                    
+                    cnt['no langcode']+=1
+                    continue
             except:
-                cnt['no langugage__ form elem']+=1
-                #print formid[0].text
-                language = child.xpath("FORM[NAME='language']/A") 
-                langcode=language[0].text
-                #print i, "language", language[0].text
-                cnt['language']+=1
+                cnt["empty language Element"]
+                raise
+                
+                #langcode=language[0].text
+                continue
+                 
             try:
-                langcode = langcode.split("|")[1]
                 # NUMBER OF BILINGUAL RECORDS
-                language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][langcode]['key']
-                #print language
+                language = langcodes[langcode]
                 cnt[language]+=1
-                if language != u'Bilingual (English and French) | Bilingue (Anglais et Fran\xe7ais)':
-                    print etree.tostring(child)
+                #print i,language, title
+                '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
+                if language == u'Bilingual':          
+                    continue
+                
+                ''' collect titles that have a langauge, but no langauge marker '''
+                split_marker=False
+                split_title=None
+                ''' Split the titles so they can be matched '''
+                for marker in language_markers:
+                    
+                    if language=="English" and marker[0] in title:
+                        split_title = title.split(marker[0])[0]
+                        split_marker=True
+                    elif language =="French" and marker[1] in title:
+                        split_title = title.split(marker[1])[0]
+                        split_marker=True
+                        break
+                   
+         
+                if split_marker == False:
+                    print i,"NO SPLIT ::",language,"::",title
+                    
+                    cnt['NO SPLIT']+=1
+                    if language=="English":
+                        cnt['NO SPLIT English']
+                    if language=="French":
+                        cnt['NO SPLIT English']
+                        
+                elif language== "English":
+                    #print i,"EN SPLIT", title
+                    cnt['EN SPLIT']+=1
+                elif language=="French":
+                    #print i,"FR SPLIT", title
+                    cnt['FR SPLIT']+=1
+                    
+                #if i>1000:sys.exit()
+                    
+                
                 
             except:
-                cnt['language element without language']+=1
-                # FALL BACK TO <DC.LANGUAGE>En</DC.LANGUAGE>
+               print "WOOOT"
+               raise
             
         except:
-            pprint(etree.tostring(child))
+            print "FAIL", formid
+            raise
+#            pprint(etree.tostring(child))
 
-    pprint(cnt.items())   
+    pprint(cnt.items())  
+
 
 
 def match_eng_fra():
 
     cnt = Counter()
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
     tree = etree.parse(pilot_file)
     root = tree.getroot()
     # Find the first English file
@@ -121,29 +200,35 @@ def match_eng_fra():
             cnt['formids']+=1
             
             # RECORDS WITH LANGUAGE INDICATOR
-            langcode=''
-            language__ = child.xpath("FORM[NAME='language__']/A") 
+            langcode=None
+            
             #print i, "language__", language[0].text
             
             try:
-                langcode=language__[0].text
-                cnt['language__']+=1
-            except:
-                cnt['no langugage__ form elem']+=1
-                #print formid[0].text
                 language = child.xpath("FORM[NAME='language']/A") 
                 langcode=language[0].text
-               
-                
+                cnt['language']+=1
+                language = child.xpath("FORM[NAME='language__']/A") 
+                langcode=language[0].text
+                cnt['language__']+=1
+            except:
+                raise
+                cnt['no langugage form elem']+=1
+                #print formid[0].text
+
             try:
                 langcode = langcode.split("|")[1]
+            except:
+                raise
+                cnt['langcode blank in lanugage element']+=1
+            
+            try: 
                 # NUMBER OF BILINGUAL RECORDS
-                language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][langcode]['key']
-
+               
+                print langcode, language
                 cnt[language]+=1
                 
                 if language == u'English | Anglais':
-                                    
 
                     cnt['English']+=1
                     short_title=None
@@ -209,8 +294,7 @@ def match_eng_fra():
         except:
             #print "BLAH ", formid
             raise
-
-    
+   
 #    pprint(fra_records.keys())
 #    print len(fra_records.items())
     unmatched=[]
@@ -222,9 +306,7 @@ def match_eng_fra():
         try:
             node_en = etree.tostring(en[1])
             node_fr = etree.tostring(fra_records[en_title])
-            
-#            print "EEEEEEEEENNNG", i, en_title
-#            print "FRAAAAAAAAAAA" , i,fra_records[en_title]
+
             print node_en
             print node_fr
             #sys.exit()
@@ -233,18 +315,13 @@ def match_eng_fra():
             #print "Cannot match ", en_title
             unmatched.append(en)
         except:
-            raise
-        
-        
+            raise      
     print "\n</XML>"
-          
-        
-        
-        
-        
+  
     #pprint(cnt.items())
     
-
 if __name__ == "__main__":
-    match_eng_fra()
+    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    split_xml_files(pilot_file)
+    #match_eng_fra()
    
