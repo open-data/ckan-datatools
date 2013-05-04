@@ -24,15 +24,18 @@ langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
 
 ''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
 language_markers=[
-                   (' - English Version [AAFC-AIMIS-RP-', ' - French Version [AAFC-AIMIS-RP-'),
-                    (' - English Version',' - French Version'),
-                    (' - English version',' - French version'),
-                    (' (in English)', ' (in French)'),
-                    (' (In English)', ' (In French)'),
-                    ('(- English)', '(- French)'),  
+                   (' - (In English)', ' - (In French)'),
+                   (' - English Version [AAFC', ' - French Version [AAFC'),
+                   (' - English Version',' - French Version'),
+                   (' - English version',' - French version'),
+                    (' - (in English)', ' - (in French)'),
+                    
+                    (' - (in English)', ' - (in French)'),
+                    (' (in english)', ' (in french)'),
+                    (' - (in english)', ' - (in french)'),
+                    (' - (English)', ' - (French)'),  
                     (' (English',' (French'),
                     (' (English',' (Fench'),
-                    (' English',' French'),
                     (' - ENGLISH VERSION', ' - FRENCH VERSION')
                     
                     ]
@@ -45,13 +48,19 @@ def split_xml_files(pilot_file):
     tree = etree.parse(pilot_file)
     root = tree.getroot()
     special_title_numbers=[]
-    split_en=[]
-    split_fr=[]
-    not_split=[]
+    docs_en=[]
+    fra_dict={}
+    docs_unsplit_titles=[]
+    docs_bilingual=[]
+    matched=[]
+    unmatched=[]
+
 
     for i,child in enumerate(root):
         # TOTAL RECORDS
         cnt['TotalRecords']+=1
+        if i==168:
+            print i
         #print i+1,child.tag
         if "CVReferenceCountByFormtype" in etree.tostring(child):
             cnt['CVReferenceCountByFormtype']+=1
@@ -59,11 +68,15 @@ def split_xml_files(pilot_file):
         formid = None           
         try: 
             # RECORDS WITH FORM ID
-            formid = child.xpath("FORM[NAME='thisformid']/A")
+            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+        
+            
             #print i,formid[0].text
-            cnt['formids']+=1
-            
-            
+            cnt['formid']+=1
+        except IndexError:
+            cnt['no formid']+=1   
+            continue
+        try:
             # GET THE TITLE
             title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
             
@@ -84,6 +97,9 @@ def split_xml_files(pilot_file):
                
                 if language__: 
                     cnt['language__']+=1
+                elif language__ == []:
+                    cnt['no language code']
+                    continue
                 else:
                     language = child.xpath("FORM[NAME='language']/A") 
                     if language: 
@@ -99,7 +115,8 @@ def split_xml_files(pilot_file):
                     
                     cnt['no langcode']+=1
                     continue
-            except:
+            except Exception as e:
+                print e
                 cnt["empty language Element"]
                 raise
                 
@@ -131,7 +148,7 @@ def split_xml_files(pilot_file):
                    
          
                 if split_marker == False:
-                    print i,"NO SPLIT ::",language,"::",title
+                    #print i,"NO SPLIT ::",language,"::",title
                     
                     cnt['NO SPLIT']+=1
                     if language=="English":
@@ -141,26 +158,53 @@ def split_xml_files(pilot_file):
                         
                 elif language== "English":
                     #print i,"EN SPLIT", title
+                    docs_en.append((split_title,child))
                     cnt['EN SPLIT']+=1
                 elif language=="French":
                     #print i,"FR SPLIT", title
+                    fra_dict[split_title] =child
                     cnt['FR SPLIT']+=1
-                    
-                #if i>1000:sys.exit()
-                    
-                
-                
-            except:
-               print "WOOOT"
+
+            except Exception as e:
+               print "WOOOT", e
                raise
             
-        except:
-            print "FAIL", formid
+        except Exception as e:
+            print e
+            print "FAIL",i, formid
             raise
 #            pprint(etree.tostring(child))
 
     pprint(cnt.items())  
+    print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
+    ''' with these lists ready, we can now do some matchin work '''
 
+    
+    print "SIZE OF FRA DICT ", len(fra_dict)
+
+    ''' Let's match records '''
+    for i, en in enumerate(docs_en):
+        
+        en_title=en[0]
+        print "EN", en_title
+        # Now find this in french 
+        try:
+           
+            
+#            node_en = etree.tostring(en[1])
+#            node_fr = etree.tostring(fra_records[en_title])
+             matched.append(fra_dict[en_title])
+#            print node_en
+#            print node_fr
+#            #sys.exit()
+        except KeyError:
+            #raise
+            #print "Cannot match ", en_title
+            unmatched.append(en)
+        except:
+            raise      
+
+    print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
 
 
 def match_eng_fra():
@@ -195,8 +239,7 @@ def match_eng_fra():
             # RECORDS WITH FORM ID
             formid = child.xpath("FORM[NAME='thisformid']/A")
             title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
-            #print title
-            #print i,formid[0].text
+ 
             cnt['formids']+=1
             
             # RECORDS WITH LANGUAGE INDICATOR
