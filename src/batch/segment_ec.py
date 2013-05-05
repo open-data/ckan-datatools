@@ -1,4 +1,5 @@
 import sys
+from datetime import date
 from lxml import etree
 from pprint import pprint
 from collections import Counter
@@ -25,11 +26,14 @@ langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
 ''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
 language_markers=[
                    (' - (In English)', ' - (In French)'),
+                    (' (In English)', ' (In French)'),
+                   (' - English', ' - French'),
                    (' - English Version [AAFC', ' - French Version [AAFC'),
                    (' - English Version',' - French Version'),
                    (' - English version',' - French version'),
+                    (' (in English)', ' (in French)'),
                     (' - (in English)', ' - (in French)'),
-                    
+                    (' (English version)', ' (French version)'),
                     (' - (in English)', ' - (in French)'),
                     (' (in english)', ' (in french)'),
                     (' - (in english)', ' - (in french)'),
@@ -59,12 +63,17 @@ def split_xml_files(pilot_file):
     for i,child in enumerate(root):
         # TOTAL RECORDS
         cnt['TotalRecords']+=1
-        if i==168:
-            print i
+
         #print i+1,child.tag
         if "CVReferenceCountByFormtype" in etree.tostring(child):
             cnt['CVReferenceCountByFormtype']+=1
-            continue      
+            continue  
+        # Throw out any records that are incomplete
+        # Count number of FORM elements   
+  
+        cnt[len(child.xpath("FORM"))]+=1
+       
+       
         formid = None           
         try: 
             # RECORDS WITH FORM ID
@@ -79,7 +88,8 @@ def split_xml_files(pilot_file):
         try:
             # GET THE TITLE
             title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
-            
+
+                
             ''' Sadly there is no discernable pattern in this title element
             if "[AAFC-AIMIS-RP" in title: 
                 cnt["[AAFC-AIMIS-RP-"]+=1
@@ -122,6 +132,8 @@ def split_xml_files(pilot_file):
                 
                 #langcode=language[0].text
                 continue
+            
+            
                  
             try:
                 # NUMBER OF BILINGUAL RECORDS
@@ -129,14 +141,17 @@ def split_xml_files(pilot_file):
                 cnt[language]+=1
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
-                if language == u'Bilingual':          
+                if language == u'Bilingual': 
+                    docs_bilingual.append(child)         
                     continue
+                
                 
                 ''' collect titles that have a langauge, but no langauge marker '''
                 split_marker=False
                 split_title=None
                 ''' Split the titles so they can be matched '''
                 for marker in language_markers:
+                    
                     
                     if language=="English" and marker[0] in title:
                         split_title = title.split(marker[0])[0]
@@ -148,25 +163,21 @@ def split_xml_files(pilot_file):
                    
          
                 if split_marker == False:
-                    #print i,"NO SPLIT ::",language,"::",title
+                    print i,"NO SPLIT ::",language,"::",title
                     
                     cnt['NO SPLIT']+=1
-                    if language=="English":
-                        cnt['NO SPLIT English']
-                    if language=="French":
-                        cnt['NO SPLIT English']
-                        
-                elif language== "English":
+
+                elif language== "English" and "French" not in title:
                     #print i,"EN SPLIT", title
                     docs_en.append((split_title,child))
                     cnt['EN SPLIT']+=1
-                elif language=="French":
+                elif language=="French" and "English" not in title:
                     #print i,"FR SPLIT", title
                     fra_dict[split_title] =child
                     cnt['FR SPLIT']+=1
 
             except Exception as e:
-               print "WOOOT", e
+               print  e
                raise
             
         except Exception as e:
@@ -175,196 +186,59 @@ def split_xml_files(pilot_file):
             raise
 #            pprint(etree.tostring(child))
 
-    pprint(cnt.items())  
+
     print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
     ''' with these lists ready, we can now do some matchin work '''
 
-    
     print "SIZE OF FRA DICT ", len(fra_dict)
 
     ''' Let's match records '''
     for i, en in enumerate(docs_en):
         
         en_title=en[0]
-        print "EN", en_title
+        
         # Now find this in french 
-        try:
-           
-            
-#            node_en = etree.tostring(en[1])
-#            node_fr = etree.tostring(fra_records[en_title])
-             matched.append(fra_dict[en_title])
-#            print node_en
-#            print node_fr
-#            #sys.exit()
+        try:   
+             matched.append(fra_dict[en_title])  # match first before appending english record so both fail and ENG / FRA sequence does not get broken       
+             matched.append(en[1])
+             
+             cnt["matched"]+=1
         except KeyError:
-            #raise
-            #print "Cannot match ", en_title
+            
             unmatched.append(en)
+            cnt["unmatched"]+=1
         except:
             raise      
 
     print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
-
-
-def match_eng_fra():
-
-    cnt = Counter()
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
-    tree = etree.parse(pilot_file)
-    root = tree.getroot()
-    # Find the first English file
-    eng=False
-    fra=True
-    last_node=''
-    last_language=''
-    last_name=''
-    last_eng_title=""
-    total_matched=0
-    eng_records_no_marker=[]
-    eng_records=[]
     
-    fra_records={}
+    '''  Now we can build the new XML document '''
+    root = etree.Element("XML")
     
-    for i,child in enumerate(root):
-        # TOTAL RECORDS
-        cnt['TotalRecords']+=1
-        #print i+1,child.tag
-        if "CVReferenceCountByFormtype" in etree.tostring(child):
-            cnt['CVReferenceCountByFormtype']+=1
-            continue
-        
-        
-        try: 
-            # RECORDS WITH FORM ID
-            formid = child.xpath("FORM[NAME='thisformid']/A")
-            title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
- 
-            cnt['formids']+=1
-            
-            # RECORDS WITH LANGUAGE INDICATOR
-            langcode=None
-            
-            #print i, "language__", language[0].text
-            
-            try:
-                language = child.xpath("FORM[NAME='language']/A") 
-                langcode=language[0].text
-                cnt['language']+=1
-                language = child.xpath("FORM[NAME='language__']/A") 
-                langcode=language[0].text
-                cnt['language__']+=1
-            except:
-                raise
-                cnt['no langugage form elem']+=1
-                #print formid[0].text
+    for record in matched:
+        root.append(record)
 
-            try:
-                langcode = langcode.split("|")[1]
-            except:
-                raise
-                cnt['langcode blank in lanugage element']+=1
-            
-            try: 
-                # NUMBER OF BILINGUAL RECORDS
-               
-                print langcode, language
-                cnt[language]+=1
-                
-                if language == u'English | Anglais':
-
-                    cnt['English']+=1
-                    short_title=None
-                    for marker in language_markers:
-
-                        if marker[0] in title:
-                            short_title = title.split(marker[0])[0]
-                            break
-
-                    if short_title:
-                        #print "---------------"
-                        eng=(short_title,child)
-                    else:
-                       eng=(title,child)
-                    #print "ENG", eng[0]
-                    eng_records.append(eng)
-
-                    
-                elif language==u"French | Fran\u00e7ais":
-                   
-                    #print i,last_eng_title 
-                    short_title=None
-                    for marker in language_markers:
-                        if marker[1] in title:
-                            short_title_fr = title.split(marker[1])[0]
-                            break
-                  
-                    if short_title_fr:
-                       fra=(short_title_fr, child)
-                    else:
-                       fra=(title,child)
-                    #print "FRA", fra[0]
-                    fra_records[fra[0]]=fra[1]
-
-                # now we can match the two arrays
-                
-            except:
-                
-                #raise
-                '''
-                for node_en in eng_records:
-                print "WE HAVE ONE"
-                
-                if last_eng_title.split(" ")[1:4] == title.split(" ")[1:4]:
-                       
-                    total_matched+=1
-                    cnt["GOOD MATCH"]+=1
-                    print etree.tostring(last_node)
-                    print etree.tostring(child)
-                else: 
-                    cnt["POOR MATCH"]+=1
-                       
-                    #print i, title
-                   
-                    # CHECK TITLE QUIVALENCY
-                    cnt["ENG_FRA-SEQUENCED-Maybe"]
-                    cnt['French']+=1
-                    #print etree.tostring(child)
-            except:
-                #raise
-                print "LANG ERROR"
-        '''         
-        except:
-            #print "BLAH ", formid
-            raise
+    outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
+    
+    with open(outfile,'w') as f:
+      f.write(etree.tostring(root))
+    
    
-#    pprint(fra_records.keys())
-#    print len(fra_records.items())
-    unmatched=[]
-    print "<XML>\n"
-    for i, en in enumerate(eng_records):
-        
-        en_title=en[0]
-        # Now find this in french 
-        try:
-            node_en = etree.tostring(en[1])
-            node_fr = etree.tostring(fra_records[en_title])
-
-            print node_en
-            print node_fr
-            #sys.exit()
-        except KeyError:
-            #raise
-            #print "Cannot match ", en_title
-            unmatched.append(en)
-        except:
-            raise      
-    print "\n</XML>"
-  
-    #pprint(cnt.items())
+    pprint(cnt.items())
+    print "Bilingual Records", cnt["Bilingual"]
+    print "Matched Records", cnt["matched"]*2
+    print "Total Processed", cnt["Bilingual"]+(cnt["matched"]*2)
     
+    print "Total Records", (cnt["TotalRecords"]-  # Total number of <RECORD> Elements in the file
+                           cnt['CVReferenceCountByFormtype']-  #5 of these are irrelevant
+                           cnt['no langcode']-    # Some don't have any language code
+                           cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
+                           cnt['NO SPLIT']   #
+                           )
+ 
 if __name__ == "__main__":
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    
     split_xml_files(pilot_file)
     #match_eng_fra()
    

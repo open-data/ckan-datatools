@@ -418,7 +418,7 @@ class TransformBilingual:
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
         #Override validation
-        package_dict['validation_override']=True
+        #package_dict['validation_override']=True
         #Fix dates
         t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
         package_dict['time_period_coverage_start'] =common.timefix(t[0])
@@ -663,12 +663,16 @@ class TransformDelegator:
 
             #print i,node_en, node_fr
             package_en = Transform().process_node(i,node_en)
+            if "Fiscal Reference Tables - October 2010 - Table 9" in package_en['title']:
+                 print etree.tostring(node_fr)
+                 print "STOP"
             package_fr = Transform().process_node(i,node_fr)
             
             
             print "--------"
             print package_en['title']
             print package_fr['title']
+            
             
             # Transfer French Data to English Package
             for pack in  package_fr['resources']:
@@ -723,7 +727,7 @@ if __name__ == "__main__":
     outputdir = '/Users/peder/dev/goc/LOAD'
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
     #matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
-    matched_file="/Users/peder/temp/temp.xml"
+    matched_file="/Users/peder/dev/goc/pilot-matched-{}.xml".format('2013-05-05')
     bi_file = "/Users/peder/temp/bilingual-pilot.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
