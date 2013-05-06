@@ -124,20 +124,24 @@ class XPather:
                 logging.error("{}::{}".format(key,e))
                 return ""
 
-title_langauge_markers=[' - English Version',
-                                ' - French Version', 
-                                ' (in English)',
-                                ' (in French)',
-                                '(- English)',
-                                ' - English',
-                                ' - French',
-                                ' (English Version)',
-                                ' (French Version)']
-        
-title_langauge_markers_fra=[' - version anglaise',
-                                    u' - version française',
-                                    u' (en français)',
-                                    ' (en anglais)']
+''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
+language_markers=[
+                   (' - (In English)', ' - (In French)'),
+                    (' (In English)', ' (In French)'),
+                   (' - English', ' - French'),
+                   (' - English Version [AAFC', ' - French Version [AAFC'),
+                   (' - English Version',' - French Version'),
+                   (' - English version',' - French version'),
+                    (' (in English)', ' (in French)'),
+                    (' - (in English)', ' - (in French)'),
+                    (' (English version)', ' (French version)'),
+                    (' - (in English)', ' - (in French)'),
+                    (' (in english)', ' (in french)'),
+                    (' - (in english)', ' - (in french)'),
+                    (' - (English)', ' - (French)'),  
+                    (' (English',' (French'),
+                    (' (English',' (Fench'),
+                    (' - ENGLISH VERSION', ' - FRENCH VERSION')]
         
 
 def timefix(str_time):

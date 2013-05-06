@@ -99,11 +99,15 @@ class TransformDouble:
             (node,node_fr) = nodes
             self._process_node(i,node,node_fr)
     def strip_title(self, title):
-        language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
+        #language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
    
-        for marker in language_markers:
-            if marker in title:
+        for marker in common.language_markers:
+            if marker[0] in title:
                 return title.replace(marker, '')
+    
+            elif marker[1] in title:
+                return title.replace(marker, '')
+                
         
         return title
             
@@ -224,7 +228,7 @@ class TransformDouble:
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
         #Override validation
-        package_dict['validation_override']=True
+#        package_dict['validation_override']=False
         #Fix dates
         t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
         package_dict['time_period_coverage_start'] = common.timefix(t[0])
@@ -256,10 +260,11 @@ class TransformBilingual:
             self._process_node(i,node)
             
     def strip_title(self, title):
-        language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
+        #language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
    
-        for marker in language_markers:
-            if marker in title:
+        for marker in common.language_markers:
+            if marker[0] in title:
+                
                 return title.replace(marker, '')
         
         return title
@@ -459,11 +464,13 @@ class Transform:
     def __init__(self):
         pass       
     def strip_title(self, title):
-        language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
+        #language_markers = common.title_langauge_markers + common.title_langauge_markers_fra        
    
-        for marker in language_markers:
-            if marker in title:
-                return title.replace(marker, '')
+        for marker in common.language_markers:
+            if marker[0] in title:
+                return title.replace(marker[0], '')
+            elif marker[1] in title:
+                return title.replace(marker[1],'')
         
         return title
     
@@ -621,7 +628,7 @@ class Transform:
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
         #Override validation
-        package_dict['validation_override']=True
+        #package_dict['validation_override']=False
         #Fix dates
         t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
         package_dict['time_period_coverage_start'] =common.timefix(t[0])
@@ -669,7 +676,7 @@ class TransformDelegator:
             package_fr = Transform().process_node(i,node_fr)
             
             
-            print "--------"
+            print "--------", i
             print package_en['title']
             print package_fr['title']
             
@@ -679,47 +686,10 @@ class TransformDelegator:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
             
-            #print json.dumps(package_en)
-            
-            
-            '''
-            title_en_short = None
-       
-            for en,fr in language_markers:
-                if en in package_en['title']:
-                
-                    title_en_short = package_en['title'].split(en)[0]
-                    
-                    #print title_en_short
-          
-                    break
-            try:
-                title_en_no_brackets=None
-                if title_en_short == None: 
-                    if " [" in package_en['title']:
-                        title_en_no_brackets = package_en['title'].split(" [")[0]
-                        print title_en_no_brackets
-#                    print "---------- SKIPPING ------------"
-#                    print package_en['title']
-#                    print package_fr['title']
-#                    continue
-                if title_en_short or title_en_no_brackets in package_fr['title']:
-                    print i, "Lets do some work"
-    #                print "--------OK----------"
-                    print package_en['title']
-                    print package_fr['title']
-                    print "---------------------------"
-                    
-                else: 
-                    pass
-#                print "--------NOT OK----------"
-#                print package_en['title']
-#                print package_fr['title']
-            
-            except:
-                print "not sure what happened", package_en['title']
-                raise
-            '''
+            self.outfile.write(json.dumps(package_en) + "\n")
+           
+        self.outfile.close()
+   
          
 if __name__ == "__main__":
 

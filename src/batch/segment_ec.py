@@ -23,29 +23,6 @@ langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
            '790CE47F-0B49-4D1F-9CE0-50EC57517981':'Bilingual'
            }
 
-''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
-language_markers=[
-                   (' - (In English)', ' - (In French)'),
-                    (' (In English)', ' (In French)'),
-                   (' - English', ' - French'),
-                   (' - English Version [AAFC', ' - French Version [AAFC'),
-                   (' - English Version',' - French Version'),
-                   (' - English version',' - French version'),
-                    (' (in English)', ' (in French)'),
-                    (' - (in English)', ' - (in French)'),
-                    (' (English version)', ' (French version)'),
-                    (' - (in English)', ' - (in French)'),
-                    (' (in english)', ' (in french)'),
-                    (' - (in english)', ' - (in french)'),
-                    (' - (English)', ' - (French)'),  
-                    (' (English',' (French'),
-                    (' (English',' (Fench'),
-                    (' - ENGLISH VERSION', ' - FRENCH VERSION')
-                    
-                    ]
-
-
-
 def split_xml_files(pilot_file):
 
     cnt = Counter()
