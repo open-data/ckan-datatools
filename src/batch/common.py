@@ -124,25 +124,51 @@ class XPather:
                 logging.error("{}::{}".format(key,e))
                 return ""
 
-''' This could be lowercased to reduce number of hits, but then reporting would be less useful '''
+''' This could be lowercased to reduce number of hits, but then reporting 
+would be less useful.  THE ORDER OF THIS LIST IS VERY IMPORTANT in order check to return at the right spot.  
+Put cases that can be misunderstood last '''
 language_markers=[
                    (' - (In English)', ' - (In French)'),
                     (' (In English)', ' (In French)'),
-                   (' - English', ' - French'),
                    (' - English Version [AAFC', ' - French Version [AAFC'),
                    (' - English Version',' - French Version'),
                    (' - English version',' - French version'),
                     (' (in English)', ' (in French)'),
                     (' - (in English)', ' - (in French)'),
                     (' (English version)', ' (French version)'),
+                    (' (English verison)', ' (French version)'),
                     (' - (in English)', ' - (in French)'),
                     (' (in english)', ' (in french)'),
                     (' - (in english)', ' - (in french)'),
                     (' - (English)', ' - (French)'),  
-                    (' (English',' (French'),
-                    (' (English',' (Fench'),
-                    (' - ENGLISH VERSION', ' - FRENCH VERSION')]
-        
+                    (' - ENGLISH VERSION', ' - FRENCH VERSION'),
+                    (' - English', ' - French'),]
+
+language_markers_fra = [
+                         u' (Version anglaise)',
+                         u' (Version française)',
+                         u' - version française [AAFC',
+                         u' - version anglaise [AAFC',
+                         u' - version anglaise',
+                         u' - version française',
+                        
+                       ]
+
+foobared_title_filters=['(French verison)', '(Fench version)']
+
+'''
+Some fiscal tables are marked bilingual, but infact they are not. Find language in URL.
+Filter out bilingual
+Finance Dat  
+
+Historial Project data set 2005-2006  -   No resources   several records have in withous resources other than HTML.
+Parsing problems with Keywords, sometimes keyword is just a blank box: Historical PRoject Dataset 2005-2006
+Dateset with no keywords should go wihtout keywords.  They should still go in. 
+2008  Public Service Employee Survey (PSES) results   one xsl file marked as 2 different HTML files, this is wrong.
+
+Denis, keywords not filtering.
+'''
+ 
 
 def timefix(str_time):
     # this time only has year, so default to Jan. 1

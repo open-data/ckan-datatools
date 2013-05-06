@@ -3,6 +3,7 @@ from datetime import date
 from lxml import etree
 from pprint import pprint
 from collections import Counter
+import common
 from ckanext.canada.metadata_schema import schema_description
 
 
@@ -55,7 +56,8 @@ def split_xml_files(pilot_file):
         try: 
             # RECORDS WITH FORM ID
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-        
+            if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
+                print "ZERO ", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
             
             #print i,formid[0].text
             cnt['formid']+=1
@@ -65,6 +67,7 @@ def split_xml_files(pilot_file):
         try:
             # GET THE TITLE
             title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
+            #keywords  =child.xpath("FORM[NAME='title_fr']/A/text()")[0]
 
                 
             ''' Sadly there is no discernable pattern in this title element
@@ -118,16 +121,21 @@ def split_xml_files(pilot_file):
                 cnt[language]+=1
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
-                if language == u'Bilingual': 
-                    docs_bilingual.append(child)         
-                    continue
+#                if language == u'Bilingual': 
+#                    print "-----------"
+#                    print formid, language
+#                    print child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
+#                    print child.xpath("FORM[NAME='dataset_link_fr_1']/A/text()")
+#                    print "-----------"
+#                    #docs_bilingual.append(child)         
+#                continue
                 
                 
                 ''' collect titles that have a langauge, but no langauge marker '''
                 split_marker=False
                 split_title=None
                 ''' Split the titles so they can be matched '''
-                for marker in language_markers:
+                for marker in common.language_markers:
                     
                     
                     if language=="English" and marker[0] in title:
@@ -166,7 +174,7 @@ def split_xml_files(pilot_file):
 
     print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
     ''' with these lists ready, we can now do some matchin work '''
-
+    sys.exit()
     print "SIZE OF FRA DICT ", len(fra_dict)
 
     ''' Let's match records '''
@@ -195,12 +203,11 @@ def split_xml_files(pilot_file):
     for record in matched:
         root.append(record)
 
-    outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
+    #outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
     
-    with open(outfile,'w') as f:
-      f.write(etree.tostring(root))
-    
-   
+    #with open(outfile,'w') as f:
+      #f.write(etree.tostring(root))
+
     pprint(cnt.items())
     print "Bilingual Records", cnt["Bilingual"]
     print "Matched Records", cnt["matched"]*2
