@@ -57,7 +57,8 @@ def split_xml_files(pilot_file):
             # RECORDS WITH FORM ID
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
             if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
-                print "ZERO ", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
+                pass
+                #print "ZERO ? or ...", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
             
             #print i,formid[0].text
             cnt['formid']+=1
@@ -68,7 +69,8 @@ def split_xml_files(pilot_file):
             # GET THE TITLE
             title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
             #keywords  =child.xpath("FORM[NAME='title_fr']/A/text()")[0]
-
+           
+              
                 
             ''' Sadly there is no discernable pattern in this title element
             if "[AAFC-AIMIS-RP" in title: 
@@ -148,7 +150,7 @@ def split_xml_files(pilot_file):
                    
          
                 if split_marker == False:
-                    print i,"NO SPLIT ::",language,"::",title
+                    #print i,"NO SPLIT ::",language,"::",title
                     
                     cnt['NO SPLIT']+=1
 
@@ -172,21 +174,21 @@ def split_xml_files(pilot_file):
 #            pprint(etree.tostring(child))
 
 
-    print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
+    #print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
     ''' with these lists ready, we can now do some matchin work '''
-    sys.exit()
-    print "SIZE OF FRA DICT ", len(fra_dict)
 
+    #print "SIZE OF FRA DICT ", len(fra_dict)
+    foo=False
     ''' Let's match records '''
     for i, en in enumerate(docs_en):
-        
+       
         en_title=en[0]
-        
+           
         # Now find this in french 
         try:   
-             matched.append(fra_dict[en_title])  # match first before appending english record so both fail and ENG / FRA sequence does not get broken       
+             check = fra_dict[en_title]# match first before appending english record so both fail and ENG / FRA sequence does not get broken       
              matched.append(en[1])
-             
+             matched.append(fra_dict[en_title])
              cnt["matched"]+=1
         except KeyError:
             
@@ -195,19 +197,29 @@ def split_xml_files(pilot_file):
         except:
             raise      
 
-    print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
+    #print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
     
     '''  Now we can build the new XML document '''
     root = etree.Element("XML")
-    
+    print "<XML>"
     for record in matched:
-        root.append(record)
+        #if foo:
+        print etree.tostring(record), "\n"
+            #foo = False
+        
+    print "</XML>"
+        #root.append(record)
+#        if foo:
+#      
+#            print etree.tostring(root)
+#            sys.exit()
+#            
 
     #outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
     
     #with open(outfile,'w') as f:
       #f.write(etree.tostring(root))
-
+'''
     pprint(cnt.items())
     print "Bilingual Records", cnt["Bilingual"]
     print "Matched Records", cnt["matched"]*2
@@ -219,10 +231,11 @@ def split_xml_files(pilot_file):
                            cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
                            cnt['NO SPLIT']   #
                            )
+    '''
  
 if __name__ == "__main__":
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     
     split_xml_files(pilot_file)
-    #match_eng_fra()
+
    

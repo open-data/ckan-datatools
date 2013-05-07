@@ -19,8 +19,7 @@ from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
-pilot_file =  "/Users/peder/dev/OpenData/Pilot/OpenData_Feb13_extract-1.xml"  
-output_file =  "/Users/peder/dev/OpenData/Pilot/april_15.jl"
+
 
 pilot_frequency_list = {'annual':u'Annually | Annuel',
                         'quarterly':u'Quarterly | Trimestriel',
@@ -29,7 +28,7 @@ pilot_frequency_list = {'annual':u'Annually | Annuel',
                         'weekly':u'Weekly | Hebdomadaire',
                         'daily': u'Daily | Quotidien',
                         'hourly':u'Continual | Continue',
-                        '':u'As needed | Au besoin'}
+                        '':'Unknown | Inconnu'}
 
 
 
@@ -53,13 +52,18 @@ language_markers=[
                     (' (English Version)',' (French Version)')
                     ]
 
+validation_override=True
+
 def check_date(date):
     # Get rid of eg. 2008-06-26T08:30:00
+
     if "T" in date:
         date=date.split("T")[0]
-            
-    elif date=='':
-        return date
+    elif date == "Varies by indicator":
+        return ''
+
+    elif "00:00:00" in date:
+        date=date.split('00:00:00')[0]
     try:
         valid_date = time.strptime(date, '%Y-%m-%d')
         return date
@@ -90,6 +94,7 @@ class Transform:
     
     last_id=''
     def __init__(self):
+
         pass       
     def strip_title(self, title):
 
@@ -101,7 +106,7 @@ class Transform:
         
         return title
     
-    def node_resources(self,node):   
+    def node_resources(self,node, language):   
         resources=[]
         ''' Special fields that contain documents that must be added to resources, 
             but are not yet listed in the schema  
@@ -136,9 +141,7 @@ class Transform:
                 resources.append(resource_dict)
             except:
                 "EMPTY SUPPLEMENTAL VALUE"
-        
-        
-       
+
         dataset_links=['dataset_link_en_%d' % n for n in range(1,5)]
         #if count>1000:sys.exit()
         for i, dl in enumerate(dataset_links):
@@ -155,6 +158,9 @@ class Transform:
                
                 link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
                 format=''
+                #language = u'eng; CAN | fra; CAN'
+                
+                
 
                 try:
                     format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
@@ -168,7 +174,7 @@ class Transform:
                 resource_dict = {'url':link, 
                                          'format':format,
                                          'resource_type': 'file',
-                                         'language':u'eng; CAN | fra; CAN'} 
+                                         'language':language} 
                 resources.append(resource_dict)
             except:
                 pass
@@ -177,11 +183,12 @@ class Transform:
             
         return resources
         
-    def process_node(self,count, node):
+    def process_node(self,count, node, language):
         
         package_dict = {'resources': []}
         
-        package_dict['resources']  = self.node_resources(node)
+        package_dict['resources']  = self.node_resources(node,language)
+
         #print package_dict['resources']
        
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
@@ -201,7 +208,6 @@ class Transform:
                 elif ckan_name == 'title':
 
                     t = node.xpath("FORM[NAME='title_en']/A/text()")[0]
-
 
                     package_dict['title'] =  self.strip_title(t)
                     if t == None: raise "No English Title", t
@@ -246,8 +252,9 @@ class Transform:
                     if pilot_name == 'frequency':
                         if value:
                             package_dict['maintenance_and_update_frequency'] = pilot_frequency_list[value]
-#                        print package_dict['maintenance_and_update_frequency']
-#                        sys.exit()
+                        else:
+                            package_dict['maintenance_and_update_frequency'] = pilot_frequency_list['']
+                        break
                     else:
 
                         package_dict[ckan_name] = value
@@ -269,22 +276,30 @@ class Transform:
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
         #Override validation
-        package_dict['validation_override']=True
+        package_dict['validation_override']=validation_override
         #Fix dates
-        t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
-        package_dict['time_period_coverage_start'] =common.timefix(t[0])
-        package_dict['time_period_coverage_end'] = common.timefix(t[1])
+        try:
+            t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
+            package_dict['time_period_coverage_start'] =common.timefix(t[0])
+            package_dict['time_period_coverage_end'] = common.timefix(t[1])
+        except KeyError:
+            ''' Times were never set '''
+            package_dict['time_period_coverage_start'] ="1000-01-01"
+            package_dict['time_period_coverage_end']  ="3000-01-01"
+            
+      
         package_dict['date_published'] = str(package_dict['date_published']).replace("/", "-")
         package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
+        package_dict['license_id']='add ca-ogl-lgo'
         #if count>1200:sys.exit()
         
-        key_eng = package_dict['keywords'].replace("/","-")
-        key_fra = package_dict['keywords_fra'].replace("'","-").replace("/","-")
+        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-")
+        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-")
         package_dict['keywords'] = key_eng
-        package_dict['keywords_fra'] = key_fra        
-        #pprint(package_dict['title_fra'])
+        package_dict['keywords_fra'] = key_fra  
+
         
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
@@ -296,7 +311,7 @@ class TransformDelegator:
         self.outfile = open(outfile,"a")
         self.data = XmlStreamReader("RECORD",datafile)
         for i,node in enumerate(self.data.elements()):
-            package = Transform().process_node(i,node)
+            package = Transform().process_node(i,node,u"eng; CAN | fra; CAN")
             print "--- Bilingual -----", i
             print package['title']
             print package['title_fra']
@@ -314,17 +329,11 @@ class TransformDelegator:
         for i, pair in enumerate(self.data.combined_elements()):
             node_en = pair[0]
             node_fr = pair[1]
-  
 
-            #print i,node_en, node_fr
-            package_en = Transform().process_node(i,node_en)
-            package_fr = Transform().process_node(i,node_fr)
-            
-            
-            
 
-            
-            
+            package_en = Transform().process_node(i,node_en, "eng; CAN")
+            package_fr = Transform().process_node(i,node_fr,u"fra; CAN")
+
             # Transfer French Data to English Package
             for pack in  package_fr['resources']:
                 if pack['format'] != "HTML":
@@ -333,26 +342,22 @@ class TransformDelegator:
             print "--- MERGED -----", i
             print package_en['title']
             print package_en['title_fra']
+
             self.outfile.write(json.dumps(package_en) + "\n")
            
         self.outfile.close()
    
          
 if __name__ == "__main__":
-
-    #PilotReport(pilot_file).number_of_records()
+    
+    validation_override=True
     outputdir = '/Users/peder/dev/goc/LOAD'
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
-    #matched_file = "/Users/peder/dev/goc/matched-pilot-records.xml"
-    matched_file="/Users/peder/dev/goc/pilot-matched-{}.xml".format('2013-05-05')
+    #matched_file="/Users/peder/dev/goc/pilot-matched.xml"
+    matched_file="/Users/peder/temp/pilot-matched.xml"
     bi_file = "/Users/peder/temp/bilingual-pilot.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
-    #Transform(matched_file,output_file).write_jl_file()
-    #TransformBilingual(bi_file,bi_output_file).write_jl_file()
     TransformDelegator().process_doubles(matched_file,output_file)
     print "PROCESSING BILINGUAL FILES"
     TransformDelegator().process_singles(bi_file,output_file)
-    #Transform().structure()   
-    #Transform().replace()
-    #process_pilot_xml('data/tables_20120815.xml')
+
