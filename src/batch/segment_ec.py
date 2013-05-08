@@ -83,7 +83,25 @@ def split_xml_files(pilot_file):
             # Document instances of records that do not have one.
             language=None
             langcode=None
-            
+            try:
+                dict_en = child.xpath("FORM[NAME='dictionary_list:_en']/A")
+                dict_fr = child.xpath("FORM[NAME='data_dictionary_fr']/A")
+                
+                if dict_en[0].text:
+                    print dict_en[0].text.lstrip()
+                    dept= child.xpath("FORM[NAME='department']/A")[0].text
+                    cnt["Dictionary List:EN"]+=1
+                    cnt[dept]+=1
+                if dict_fr[0].text:
+                    print dict_fr[0].text.lstrip()
+                    dept= child.xpath("FORM[NAME='department']/A")[0].text
+                    cnt["Dictionary List:FR"]+=1
+                    cnt[dept]+=1
+
+            except:
+                pass
+                #print "NO SCRIPT TAG"
+            continue
             try:
                 language__ = child.xpath("FORM[NAME='language__']/A") 
                
@@ -200,14 +218,14 @@ def split_xml_files(pilot_file):
     #print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
     
     '''  Now we can build the new XML document '''
-    root = etree.Element("XML")
-    print "<XML>"
-    for record in matched:
-        #if foo:
-        print etree.tostring(record), "\n"
-            #foo = False
-        
-    print "</XML>"
+#    root = etree.Element("XML")
+#    print "<XML>"
+#    for record in matched:
+#        #if foo:
+#        print etree.tostring(record), "\n"
+#            #foo = False
+#        
+#    print "</XML>"
         #root.append(record)
 #        if foo:
 #      
@@ -219,8 +237,9 @@ def split_xml_files(pilot_file):
     
     #with open(outfile,'w') as f:
       #f.write(etree.tostring(root))
-'''
+
     pprint(cnt.items())
+'''
     print "Bilingual Records", cnt["Bilingual"]
     print "Matched Records", cnt["matched"]*2
     print "Total Processed", cnt["Bilingual"]+(cnt["matched"]*2)

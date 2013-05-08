@@ -151,7 +151,9 @@ language_markers_fra = [
                          u' - version anglaise [AAFC',
                          u' - version anglaise',
                          u' - version française',
-                        
+                         u' (en anglais)', 
+                         u'- version anglaise',
+                         u' (version anglaise)',
                        ]
 
 foobared_title_filters=['(French verison)', '(Fench version)']

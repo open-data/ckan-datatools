@@ -140,7 +140,8 @@ class Transform:
                 
                 resources.append(resource_dict)
             except:
-                "EMPTY SUPPLEMENTAL VALUE"
+                pass
+                #print "EMPTY SUPPLEMENTAL VALUE"
 
         dataset_links=['dataset_link_en_%d' % n for n in range(1,5)]
         #if count>1000:sys.exit()
@@ -159,14 +160,16 @@ class Transform:
                 link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
                 format=''
                 #language = u'eng; CAN | fra; CAN'
-                
-                
 
                 try:
                     format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
                     format_code = node.xpath(format_path)
-                    format_uuid = format_code[0].split("|")[1]
-                    format = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][format_uuid]['key']
+                    if format_code:
+                        format_uuid = format_code[0].split("|")[1]
+                        format = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][format_uuid]['key']
+                    else:
+                       format = ''
+                    
                 except:
                     
                     raise
@@ -322,7 +325,7 @@ class TransformDelegator:
 
         
     def process_doubles(self, datafile, outfile):
-        self.outfile = open(outfile,"w")
+        #self.outfile = open(outfile,"w")
         self.data = DoubleXmlStreamReader("RECORD",datafile)
         #self.data = XmlStreamReader("RECORD",datafile)
 
@@ -342,8 +345,17 @@ class TransformDelegator:
             print "--- MERGED -----", i
             print package_en['title']
             print package_en['title_fra']
-
-            self.outfile.write(json.dumps(package_en) + "\n")
+            if package_en['resources'] == []:
+                raise Exception
+            if u'française' in package_en['title_fra']:
+                print "----------STOP-------"
+                sys.exit()
+#            print "::::", package_en['keywords']
+#            if package_en['keywords'] == '\n' or package_en['keywords'] ==' ':
+#                print "BAD KEYWORD", package_en['keywords']
+#           
+#                sys.exit()
+            #self.outfile.write(json.dumps(package_en) + "\n")
            
         self.outfile.close()
    
