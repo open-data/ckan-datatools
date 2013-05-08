@@ -127,11 +127,12 @@ class Transform:
                 #format = schema_description.resource_field_by_id['format']['choices_by_key']['html']['key']
                 #print format
                 # Create resource from this
-                
+                print sup_value
                 if "_en" in sup_field:
                     lang="eng; CAN"
                 else:
                     lang = "fra; CAN"
+
                 
                 resource_dict = {'url':sup_value, 
                                          'format':'HTML',
@@ -157,7 +158,11 @@ class Transform:
             
             try:
                
-                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
+                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)
+                if link==[]:
+                    continue
+                else:
+                    link = link[0]
                 format=''
                 #language = u'eng; CAN | fra; CAN'
 
@@ -170,8 +175,10 @@ class Transform:
                     else:
                        format = ''
                     
+                except IndexError:
+                    pass
+                    #raise
                 except:
-                    
                     raise
                     
                 resource_dict = {'url':link, 
@@ -182,12 +189,19 @@ class Transform:
             except:
                 pass
                 #print "Log No Resources here"
-                #raise  
+                raise  
             
         return resources
         
     def process_node(self,count, node, language):
-        
+        # First makes sure there is an ID
+        try:
+            print str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+        except:
+            print "======NO ID========="
+            #print etree.tostring(node)
+            #sys.exit()
+            
         package_dict = {'resources': []}
         
         package_dict['resources']  = self.node_resources(node,language)
@@ -202,8 +216,7 @@ class Transform:
                     package_dict['id'] =  str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
                     
                     continue
-#                elif ckan_name in dataset_links:
-#                    continue
+
                 elif ckan_name == 'name':
                     continue
                 elif ckan_name== 'tags':
@@ -295,23 +308,24 @@ class Transform:
         package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
-        package_dict['license_id']='add ca-ogl-lgo'
+        package_dict['license_id']='ca-ogl-lgo'
         #if count>1200:sys.exit()
         
-        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-")
-        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-")
-        package_dict['keywords'] = key_eng
-        package_dict['keywords_fra'] = key_fra  
+        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").split(",")
+        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
+        package_dict['keywords'] = [k.strip() for k in key_eng if len(k)<100]
+        package_dict['keywords_fra'] = [k.strip() for k in key_fra if len(k)<100]
 
         
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
 
 class TransformDelegator:
-    def __init__(self):
-        pass
-    def process_singles(self,datafile,outfile):
-        self.outfile = open(outfile,"a")
+    def __init__(self, outfile):
+        self.outfile = open(outfile,"w")
+     
+    def process_singles(self,datafile):
+
         self.data = XmlStreamReader("RECORD",datafile)
         for i,node in enumerate(self.data.elements()):
             package = Transform().process_node(i,node,u"eng; CAN | fra; CAN")
@@ -319,13 +333,17 @@ class TransformDelegator:
             print package['title']
             print package['title_fra']
 
-            self.outfile.write(json.dumps(package) + "\n")
+            if not package['id']:
+                "############ NO ID ###########",package['id']
+                
+            else:
+                print package['id']
+                self.outfile.write(json.dumps(package) + "\n")
            
         self.outfile.close()
 
         
-    def process_doubles(self, datafile, outfile):
-        #self.outfile = open(outfile,"w")
+    def process_doubles(self, datafile):
         self.data = DoubleXmlStreamReader("RECORD",datafile)
         #self.data = XmlStreamReader("RECORD",datafile)
 
@@ -347,17 +365,17 @@ class TransformDelegator:
             print package_en['title_fra']
             if package_en['resources'] == []:
                 raise Exception
-            if u'française' in package_en['title_fra']:
-                print "----------STOP-------"
+ 
+
+            if not package_en['id']:
+                "############ NO ID ###########",package_en['id']
                 sys.exit()
-#            print "::::", package_en['keywords']
-#            if package_en['keywords'] == '\n' or package_en['keywords'] ==' ':
-#                print "BAD KEYWORD", package_en['keywords']
-#           
-#                sys.exit()
-            #self.outfile.write(json.dumps(package_en) + "\n")
+            else:
+                print package_en['id']
+                self.outfile.write(json.dumps(package_en) + "\n")
+            
            
-        self.outfile.close()
+        
    
          
 if __name__ == "__main__":
@@ -369,7 +387,9 @@ if __name__ == "__main__":
     bi_file = "/Users/peder/temp/bilingual-pilot.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
-    TransformDelegator().process_doubles(matched_file,output_file)
+    transform = TransformDelegator(output_file)
+    print "PROCESSING MERGED FILES"
+    transform.process_doubles(matched_file)
     print "PROCESSING BILINGUAL FILES"
-    TransformDelegator().process_singles(bi_file,output_file)
+    transform.process_singles(bi_file)
 

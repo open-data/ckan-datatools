@@ -27,6 +27,7 @@ langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
 def split_xml_files(pilot_file):
 
     cnt = Counter()
+    dept_cnt = Counter()
     tree = etree.parse(pilot_file)
     root = tree.getroot()
     special_title_numbers=[]
@@ -40,12 +41,14 @@ def split_xml_files(pilot_file):
 
     for i,child in enumerate(root):
         # TOTAL RECORDS
-        cnt['TotalRecords']+=1
+        
 
         #print i+1,child.tag
         if "CVReferenceCountByFormtype" in etree.tostring(child):
             cnt['CVReferenceCountByFormtype']+=1
             continue  
+        else:
+            cnt['TotalRecords']+=1
         # Throw out any records that are incomplete
         # Count number of FORM elements   
   
@@ -83,25 +86,36 @@ def split_xml_files(pilot_file):
             # Document instances of records that do not have one.
             language=None
             langcode=None
+            'count departments'
             try:
-                dict_en = child.xpath("FORM[NAME='dictionary_list:_en']/A")
-                dict_fr = child.xpath("FORM[NAME='data_dictionary_fr']/A")
-                
-                if dict_en[0].text:
-                    print dict_en[0].text.lstrip()
-                    dept= child.xpath("FORM[NAME='department']/A")[0].text
-                    cnt["Dictionary List:EN"]+=1
-                    cnt[dept]+=1
-                if dict_fr[0].text:
-                    print dict_fr[0].text.lstrip()
-                    dept= child.xpath("FORM[NAME='department']/A")[0].text
-                    cnt["Dictionary List:FR"]+=1
-                    cnt[dept]+=1
 
+                dept_code=child.xpath("FORM[NAME='department']/A/text()")[0].split('|')[1]
+                print dept_code
+                dept= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
+                dept_cnt[dept]+=1
+                dept_cnt["TOTAL DEPARTMENTAL RECORDS"]+=1
             except:
-                pass
-                #print "NO SCRIPT TAG"
-            continue
+                dept_cnt['No Department']+=1
+                raise
+#            try:
+#                dict_en = child.xpath("FORM[NAME='dictionary_list:_en']/A")
+#                dict_fr = child.xpath("FORM[NAME='data_dictionary_fr']/A")
+#                
+#                if dict_en[0].text:
+#                    print dict_en[0].text.lstrip()
+#                    dept= child.xpath("FORM[NAME='department']/A")[0].text
+#                    cnt["Dictionary List:EN"]+=1
+#                    cnt[dept]+=1
+#                if dict_fr[0].text:
+#                    print dict_fr[0].text.lstrip()
+#                    dept= child.xpath("FORM[NAME='department']/A")[0].text
+#                    cnt["Dictionary List:FR"]+=1
+#                    cnt[dept]+=1
+#
+#            except:
+#                pass
+#                #print "NO SCRIPT TAG"
+
             try:
                 language__ = child.xpath("FORM[NAME='language__']/A") 
                
@@ -238,8 +252,12 @@ def split_xml_files(pilot_file):
     #with open(outfile,'w') as f:
       #f.write(etree.tostring(root))
 
-    pprint(cnt.items())
-'''
+    #pprint(cnt.items())
+    
+    for item in dept_cnt.items().sort():
+        print item[0], item[1]
+    print "Total Number of Departments ", len(dept_cnt)-1
+
     print "Bilingual Records", cnt["Bilingual"]
     print "Matched Records", cnt["matched"]*2
     print "Total Processed", cnt["Bilingual"]+(cnt["matched"]*2)
@@ -250,11 +268,12 @@ def split_xml_files(pilot_file):
                            cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
                            cnt['NO SPLIT']   #
                            )
-    '''
+    
  
 if __name__ == "__main__":
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
-    
+    #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    pilot_file="/Users/peder/dev/goc/PublishedOpendata-0.xml"
+    #pilot_file="/Users/peder/dev/goc/PendingOpendata-0.xml"
     split_xml_files(pilot_file)
 
    
