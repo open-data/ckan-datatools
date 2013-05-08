@@ -20,6 +20,7 @@ from ckanext.canada.metadata_schema import schema_description
 # add filemode="w" to overwrite
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
 
+#remove leading spaces from URLs
 
 pilot_frequency_list = {'annual':u'Annually | Annuel',
                         'quarterly':u'Quarterly | Trimestriel',
@@ -29,7 +30,6 @@ pilot_frequency_list = {'annual':u'Annually | Annuel',
                         'daily': u'Daily | Quotidien',
                         'hourly':u'Continual | Continue',
                         '':'Unknown | Inconnu'}
-
 
 
 # Don't generated this[(item['eng'],item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices']]
