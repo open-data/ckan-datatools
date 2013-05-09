@@ -52,6 +52,12 @@ language_markers=[
                     (' (English Version)',' (French Version)')
                     ]
 
+bilingual_markers =[
+                    (' - Bilingual version',
+                     ' - version bilingue'),
+                    
+                    ]
+
 validation_override=True
 
 def check_date(date):
@@ -97,12 +103,16 @@ class Transform:
 
         pass       
     def strip_title(self, title):
-
+        if " - Bilingual version" in title:
+            title.replace(" - Bilingual version","")
+        if " - version bilingue" in title:
+            title.replace(" - version bilingue","")    
         for marker in common.language_markers:
             if marker[0] in title:
                 return title.split(marker[0])[0]
             elif marker[1] in title:
                 return title.split(marker[1])[0]
+        
         
         return title
     
@@ -206,10 +216,16 @@ class Transform:
         
         package_dict['resources']  = self.node_resources(node,language)
 
-        #print package_dict['resources']
-       
+#        #print package_dict['resources']
+#        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+#            print ckan_name, pilot_name
+#            if ckan_name=="time_period_coverage_start":
+#                print "WE HAVE TIME"
+#                print node.xpath("FORM[NAME='time_period_start']/A/text()") 
+#                print "OK"
+#       
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-
+            print ">>>>>>>>>>>>", ckan_name, pilot_name
             try:
                      
                 if ckan_name == "id":
@@ -218,13 +234,15 @@ class Transform:
                     continue
 
                 elif ckan_name == 'name':
+                
                     continue
+
                 elif ckan_name== 'tags':
                     continue
                 elif ckan_name == 'title':
 
                     t = node.xpath("FORM[NAME='title_en']/A/text()")[0]
-
+                    
                     package_dict['title'] =  self.strip_title(t)
                     if t == None: raise "No English Title", t
                     continue
@@ -270,7 +288,7 @@ class Transform:
                             package_dict['maintenance_and_update_frequency'] = pilot_frequency_list[value]
                         else:
                             package_dict['maintenance_and_update_frequency'] = pilot_frequency_list['']
-                        break
+                        continue
                     else:
 
                         package_dict[ckan_name] = value
@@ -278,7 +296,7 @@ class Transform:
                package_dict[ckan_name] = ''
 
                continue
-               #print count, "INDEX ERROR ", ckan_name, pilot_name,package_dict[pilot_name]
+               print count, "INDEX ERROR ", ckan_name, pilot_name,package_dict[pilot_name]
                
             except KeyError as e:
                 print "KEY ERROR : ", ckan_name, pilot_name, e 
@@ -295,9 +313,12 @@ class Transform:
         package_dict['validation_override']=validation_override
         #Fix dates
         try:
+
             t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
+           
             package_dict['time_period_coverage_start'] =common.timefix(t[0])
             package_dict['time_period_coverage_end'] = common.timefix(t[1])
+             
         except KeyError:
             ''' Times were never set '''
             package_dict['time_period_coverage_start'] ="1000-01-01"
