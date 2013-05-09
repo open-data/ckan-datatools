@@ -189,7 +189,7 @@ def timefix(str_time):
                 
 def time_coverage_fix(str_time1,str_time2):
     # Check to see if the start time and end time are different formats
-    if len(str_time2) < str_time1:
+    if len(str_time2) != len(str_time1):
         # make end time equal to start time
         return (str_time1, str_time1)
     else:

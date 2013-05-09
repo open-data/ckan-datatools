@@ -1,10 +1,17 @@
+# coding=utf-8
 import sys
+import csv
 from datetime import date
 from lxml import etree
 from pprint import pprint
 from collections import Counter
 import common
+import pickle
 from ckanext.canada.metadata_schema import schema_description
+from prettytable import PrettyTable, from_csv
+
+
+
 
 
 """
@@ -23,21 +30,24 @@ langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
            'FA6486B4-8A2A-4DA4-A727-E4EA3D29BF71':'French',
            '790CE47F-0B49-4D1F-9CE0-50EC57517981':'Bilingual'
            }
+cnt = Counter()
+dept_cnt = Counter()
+tree = None
+root =None
+special_title_numbers=[]
+docs_en=[]
+fra_dict={}
+docs_unsplit_titles=[]
+docs_bilingual=[]
+matched=[]
+unmatched=[]
+agri_cnt=Counter()
 
 def split_xml_files(pilot_file):
 
-    cnt = Counter()
-    dept_cnt = Counter()
+    
     tree = etree.parse(pilot_file)
     root = tree.getroot()
-    special_title_numbers=[]
-    docs_en=[]
-    fra_dict={}
-    docs_unsplit_titles=[]
-    docs_bilingual=[]
-    matched=[]
-    unmatched=[]
-
     print "<XML>"
     for i,child in enumerate(root):
         # TOTAL RECORDS
@@ -70,7 +80,13 @@ def split_xml_files(pilot_file):
             continue
         try:
             # GET THE TITLE
-            title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
+            title=None
+            title_elem = child.xpath("FORM[NAME='title_en']/A/text()")
+            if title_elem:
+                title = title_elem[0]
+                
+            else:
+                cnt["Title Element Missing"]
             #keywords  =child.xpath("FORM[NAME='title_fr']/A/text()")[0]
            
               
@@ -93,10 +109,17 @@ def split_xml_files(pilot_file):
                 #print dept_code
                 dept= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
                 dept_cnt[dept]+=1
-                dept_cnt["TOTAL DEPARTMENTAL RECORDS"]+=1
+#                if dept == "Agriculture and Agri-Food Canada":
+#                    
+#                    first = title.split(" ")[0]
+#                    print first
+#                    agri_cnt[first]+=1
+#                    title_fr = child.xpath("FORM[NAME='title_fr']/A/text()")
+#                    print title_fr
+                cnt["Total Records with Department"]+=1
             except:
-                dept_cnt['No Department']+=1
-                raise
+                cnt['No Department Found']+=1
+                #raise
 #            try:
 #                dict_en = child.xpath("FORM[NAME='dictionary_list:_en']/A")
 #                dict_fr = child.xpath("FORM[NAME='data_dictionary_fr']/A")
@@ -153,7 +176,10 @@ def split_xml_files(pilot_file):
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
                 if language == u'Bilingual': 
-                     print etree.tostring(child)
+                    if 'lingual' in title:
+                        print title
+                     
+                     #print etree.tostring(child)
 #                    print "-----------"
 #                    print formid, language
 #                    print child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
@@ -225,25 +251,27 @@ def split_xml_files(pilot_file):
             unmatched.append(en)
             cnt["unmatched"]+=1
         except:
-            raise      
+            raise     
+         
+    def write_xml():
 
-    #print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
-    
-    '''  Now we can build the new XML document '''
-#    root = etree.Element("XML")
-#    print "<XML>"
-#    for i,record in enumerate(unmatched):
-#        if i>40000: break
-#        print etree.tostring(record[1]), "\n"
-#            #foo = False
-#        
-#    print "</XML>"
-        #root.append(record)
-#        if foo:
-#      
-#            print etree.tostring(root)
-#            sys.exit()
-#            
+        print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
+        
+        '''  Now we can build the new XML document '''
+        root = etree.Element("XML")
+        print "<XML>"
+        for i,record in enumerate(unmatched):
+            if i>40000: break
+            print etree.tostring(record[1]), "\n"
+                #foo = False
+            
+        print "</XML>"
+            #root.append(record)
+#            if foo:
+#          
+#                print etree.tostring(root)
+#                sys.exit()
+            
 
     #outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
     
@@ -251,26 +279,83 @@ def split_xml_files(pilot_file):
       #f.write(etree.tostring(root))
 
     #pprint(cnt.items())
-    print "</XML>"
-    '''
-    for item in dept_cnt.items().sort():
-        print item[0], item[1]
-    print "Total Number of Departments ", len(dept_cnt)-1
+    #print "</XML>"
+    print list(agri_cnt.iterkeys())
+        
+    def report():
 
-    print "Bilingual Records", cnt["Bilingual"]
-    print "Matched Records", cnt["matched"]*2
-    print "Total Processed", cnt["Bilingual"]+(cnt["matched"]*2)
+      
+        #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
+  
+        pending_departments = pickle.load(open('pending_departments.pkl','rb'))
+        print pending_departments
+        f = open('departments.csv', 'wt')
+        
+        writer = csv.writer(f)
+       
+        
+        x=PrettyTable()
+        dept_column = [item[0] for item in pending_departments.items()]
+        x.add_column("Department Name", dept_column, 'l', 't')
+        
+        print x  
+        writer.writerow(['Department Name','Pending XML','Online'])
+        ''' Create table to add data to  '''
+       
+        #print u'\u2019'.encode('utf-8') .replace(u'\u2019','') #Fix bad windows chars
+        for department, count in sorted(pending_departments.items()):
+            writer.writerow([department,
+                     count,
+                     '',
+                     ])
+            
+        
+        f.close()    
+        print writer
+        
+        fp = open('departments.csv', 'r')
+        
+        pt = from_csv(fp)
+        pt.align['Department Name'] = "l" # Left align city names
+        pt.padding_width = 1 # One space between column edges and contents (default)
+        print pt
+        '''
+        print "Department Counts"
+        print "-----------------"
+        print "Total Number of Departments ", len(dept_cnt)
+        print "\n"
+        for department, count in sorted(dept_cnt.items()):
+            print count
+        
+        print 
+        print "Raw Report"
+        print "----------"
+        for i,n in cnt.items():
+            print i,n
+        print "\n"    
+        print "Summary"
+        print "-------"
+        
     
-    print "Total Records", (cnt["TotalRecords"]-  # Total number of <RECORD> Elements in the file
-                           cnt['CVReferenceCountByFormtype']-  #5 of these are irrelevant
-                           cnt['no langcode']-    # Some don't have any language code
-                           cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
-                           cnt['NO SPLIT']   #
-                           )
+        print "Bilingual Records", cnt["Bilingual"]
+        print "Matched Records", cnt["matched"]*2
+        print "Total Processed", cnt["Bilingual"]+(cnt["matched"]*2)
+        
+        print "Total Records", (cnt["TotalRecords"]-  # Total number of <RECORD> Elements in the file
+                               cnt['CVReferenceCountByFormtype']-  #5 of these are irrelevant
+                               cnt['no langcode']-    # Some don't have any language code
+                               cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
+                               cnt['NO SPLIT']   #
+                               )
     '''
- 
+    #report()
+    
+    
+    def load_report_data():
+        pass
+
 if __name__ == "__main__":
-    #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+    #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
     pilot_file="/Users/peder/dev/goc/PublishedOpendata-0.xml"
     #pilot_file="/Users/peder/dev/goc/PendingOpendata-0.xml"
     split_xml_files(pilot_file)
