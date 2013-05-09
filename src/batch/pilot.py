@@ -35,10 +35,10 @@ pilot_frequency_list = {'annual':u'Annually | Annuel',
 # Don't generated this[(item['eng'],item['key']) for item in schema_description.dataset_field_by_id['maintenance_and_update_frequency']['choices']]
 
 supplemental_info_fields=[
-            'data_series_url_en',
+            #'data_series_url_en',
             'dictionary_list:_en', # note: different than French
             'supplementary_documentation_en',
-            'data_series_url_fr',
+            #'data_series_url_fr',
             'data_dictionary_fr',
             'supplementary_documentation_fr',
                             ]
@@ -55,8 +55,9 @@ language_markers=[
 bilingual_markers =[
                     (' - Bilingual version',
                      ' - version bilingue'),
-                    
                     ]
+
+agriculture_title_markers = ['060 - ', '031N', '101 - ', '072 - ','072', '073 - ', '070 - ', '066 - ', '050P', 'A009E', 'A009A', '003 - ', '003', '109 - ', 'D035', '077/078/082 - ', '075/081 - ', 'D019M']
 
 validation_override=True
 
@@ -160,6 +161,7 @@ class Transform:
             '''
             supplementary_documentation_en
             supplementary_documentation_fr
+            data_dictionary
             number_datasets
             dataset_link_en_6
             dataset_size_en_6
@@ -183,7 +185,7 @@ class Transform:
                         format_uuid = format_code[0].split("|")[1]
                         format = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][format_uuid]['key']
                     else:
-                       format = ''
+                       format = 'Unknown | Inconnu'
                     
                 except IndexError:
                     pass
@@ -216,16 +218,9 @@ class Transform:
         
         package_dict['resources']  = self.node_resources(node,language)
 
-#        #print package_dict['resources']
-#        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-#            print ckan_name, pilot_name
-#            if ckan_name=="time_period_coverage_start":
-#                print "WE HAVE TIME"
-#                print node.xpath("FORM[NAME='time_period_start']/A/text()") 
-#                print "OK"
-#       
+
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
-            print ">>>>>>>>>>>>", ckan_name, pilot_name
+          
             try:
                      
                 if ckan_name == "id":
@@ -280,7 +275,7 @@ class Transform:
                     package_dict[ckan_name] = rval['key']
                     
                     if pilot_name == "department":
-                        package_dict['owner_org'] = split_value
+                        package_dict['owner_org'] = field['choices_by_pilot_uuid'][split_value]['key']
                     
                 else:
                     if pilot_name == 'frequency':
@@ -336,7 +331,19 @@ class Transform:
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
         package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
-
+        if package_dict['owner_org']=='aafc-aac':
+            for marker in agriculture_title_markers:
+                if marker in package_dict['title']:
+                    new = package_dict['title'].split(marker)[1]
+                    package_dict['title']=new.lstrip(" ")
+            
+                if marker in package_dict['title_fra']:
+                    new = package_dict['title_fra'].split(marker)[1]
+                    package_dict['title_fra']=new.lstrip(" ")
+                    
+    
+                    
+                    
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
 
@@ -386,8 +393,7 @@ class TransformDelegator:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
             
-            print package_en['title']
-            print package_en['title_fra']
+
             if package_en['resources'] == []:
                 raise Exception
 
@@ -404,6 +410,8 @@ class TransformDelegator:
                 #sys.exit()
             else:
                 print i, "OK",package_en['id']
+                
+               
                 self.outfile.write(json.dumps(package_en) + "\n")
             
    
