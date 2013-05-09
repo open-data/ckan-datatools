@@ -38,7 +38,7 @@ def split_xml_files(pilot_file):
     matched=[]
     unmatched=[]
 
-
+    print "<XML>"
     for i,child in enumerate(root):
         # TOTAL RECORDS
         
@@ -86,11 +86,11 @@ def split_xml_files(pilot_file):
             # Document instances of records that do not have one.
             language=None
             langcode=None
-            'count departments'
+            '''count departments'''
             try:
 
                 dept_code=child.xpath("FORM[NAME='department']/A/text()")[0].split('|')[1]
-                print dept_code
+                #print dept_code
                 dept= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
                 dept_cnt[dept]+=1
                 dept_cnt["TOTAL DEPARTMENTAL RECORDS"]+=1
@@ -129,8 +129,6 @@ def split_xml_files(pilot_file):
                     if language: 
                        cnt['language']+=1
                        language__=language
-                    
-
 
                 langcode=language__[0].text
                 if langcode: 
@@ -146,16 +144,16 @@ def split_xml_files(pilot_file):
                 
                 #langcode=language[0].text
                 continue
-            
-            
-                 
+   
             try:
                 # NUMBER OF BILINGUAL RECORDS
                 language = langcodes[langcode]
+                
                 cnt[language]+=1
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
-#                if language == u'Bilingual': 
+                if language == u'Bilingual': 
+                     print etree.tostring(child)
 #                    print "-----------"
 #                    print formid, language
 #                    print child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
@@ -223,7 +221,7 @@ def split_xml_files(pilot_file):
              matched.append(fra_dict[en_title])
              cnt["matched"]+=1
         except KeyError:
-            
+           
             unmatched.append(en)
             cnt["unmatched"]+=1
         except:
@@ -234,9 +232,9 @@ def split_xml_files(pilot_file):
     '''  Now we can build the new XML document '''
 #    root = etree.Element("XML")
 #    print "<XML>"
-#    for record in matched:
-#        #if foo:
-#        print etree.tostring(record), "\n"
+#    for i,record in enumerate(unmatched):
+#        if i>40000: break
+#        print etree.tostring(record[1]), "\n"
 #            #foo = False
 #        
 #    print "</XML>"
@@ -253,7 +251,8 @@ def split_xml_files(pilot_file):
       #f.write(etree.tostring(root))
 
     #pprint(cnt.items())
-    
+    print "</XML>"
+    '''
     for item in dept_cnt.items().sort():
         print item[0], item[1]
     print "Total Number of Departments ", len(dept_cnt)-1
@@ -268,7 +267,7 @@ def split_xml_files(pilot_file):
                            cnt['no formid']-   # Some are missing the formid (UUID), so they should be exluded
                            cnt['NO SPLIT']   #
                            )
-    
+    '''
  
 if __name__ == "__main__":
     #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 

@@ -313,10 +313,9 @@ class Transform:
         
         key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").split(",")
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
-        package_dict['keywords'] = [k.strip() for k in key_eng if len(k)<100]
-        package_dict['keywords_fra'] = [k.strip() for k in key_fra if len(k)<100]
+        package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
+        package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
 
-        
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
 
@@ -329,17 +328,24 @@ class TransformDelegator:
         self.data = XmlStreamReader("RECORD",datafile)
         for i,node in enumerate(self.data.elements()):
             package = Transform().process_node(i,node,u"eng; CAN | fra; CAN")
-            print "--- Bilingual -----", i
-            print package['title']
-            print package['title_fra']
-
-            if not package['id']:
-                "############ NO ID ###########",package['id']
+#            print "--- Bilingual -----", i
+#            print "TITLE", package['title']
+#            print "TITLE FR", package['title_fra']
+            
+            if not package['title']:
+                print "########   NO TITLE ########"
+                #print etree.tostring(node)
+                #sys.exit()
+            elif not package['owner_org']:
+                print "############### NO ORGANIZATION ###########"
+            elif not package['id']:
+                print "############ NO ID ###########",package['id']
+                #sys.exit()
                 
             else:
-                print package['id']
+                print i, "OK", package['id']
                 self.outfile.write(json.dumps(package) + "\n")
-           
+               
         self.outfile.close()
 
         
@@ -351,7 +357,6 @@ class TransformDelegator:
             node_en = pair[0]
             node_fr = pair[1]
 
-
             package_en = Transform().process_node(i,node_en, "eng; CAN")
             package_fr = Transform().process_node(i,node_fr,u"fra; CAN")
 
@@ -360,31 +365,34 @@ class TransformDelegator:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
             
-            print "--- MERGED -----", i
             print package_en['title']
             print package_en['title_fra']
             if package_en['resources'] == []:
                 raise Exception
- 
 
-            if not package_en['id']:
+            if not package_en['owner_org']:
+                print "############### NO ORGANIZATION ###########"
+            
+            elif not package_en['title']:
+                print "############### NO TITLE ###########"
+#                print pair[0]
+#                print pair[1]
+
+            elif not package_en['id']:
                 "############ NO ID ###########",package_en['id']
-                sys.exit()
+                #sys.exit()
             else:
-                print package_en['id']
+                print i, "OK",package_en['id']
                 self.outfile.write(json.dumps(package_en) + "\n")
             
-           
-        
    
-         
 if __name__ == "__main__":
     
     validation_override=True
     outputdir = '/Users/peder/dev/goc/LOAD'
     #matched_file="/Users/peder/dev/goc/pilot-matched.xml"
     matched_file="/Users/peder/temp/pilot-matched.xml"
-    bi_file = "/Users/peder/temp/bilingual-pilot.xml"
+    bi_file = "/Users/peder/temp/pilot-bilingual.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
     transform = TransformDelegator(output_file)
