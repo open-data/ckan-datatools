@@ -57,7 +57,7 @@ bilingual_markers =[
                      ' - version bilingue'),
                     ]
 
-agriculture_title_markers = ['060 - ', '031N', '101 - ', '072 - ','072', '073 - ', '070 - ', '066 - ', '050P', 'A009E', 'A009A', '003 - ', '003', '109 - ', 'D035', '077/078/082 - ', '075/081 - ', 'D019M']
+agriculture_title_markers = ['060','060 - ', '031N', '101 - ', '072 - ','072 ','073 - ', '073 - ', '070','070 - ', '066 - ', '050P', 'A009E', 'A009A', '003 - ', '003', '109 - ', 'D035', '077/078/082 - ', '075/081 - ', 'D019M']
 
 validation_override=True
 
@@ -336,10 +336,14 @@ class Transform:
                 if marker in package_dict['title']:
                     new = package_dict['title'].split(marker)[1]
                     package_dict['title']=new.lstrip(" ")
-            
+                    break
+                    
+            for marker in agriculture_title_markers:
                 if marker in package_dict['title_fra']:
-                    new = package_dict['title_fra'].split(marker)[1]
-                    package_dict['title_fra']=new.lstrip(" ")
+                    new_fr = package_dict['title_fra'].split(marker)[1]
+                    package_dict['title_fra']=new_fr.lstrip(" ")
+                    break
+                   
                     
     
                     
@@ -356,9 +360,9 @@ class TransformDelegator:
         self.data = XmlStreamReader("RECORD",datafile)
         for i,node in enumerate(self.data.elements()):
             package = Transform().process_node(i,node,u"eng; CAN | fra; CAN")
-#            print "--- Bilingual -----", i
-#            print "TITLE", package['title']
-#            print "TITLE FR", package['title_fra']
+            print "--- Bilingual -----", i
+            print "TITLE", package['title']
+            print "TITLE FR", package['title_fra']
             
             if not package['title']:
                 print "########   NO TITLE ########"
@@ -410,10 +414,12 @@ class TransformDelegator:
                 #sys.exit()
             else:
                 print i, "OK",package_en['id']
+                print package_en['title']
+                print package_en['title_fra']
                 
                
                 self.outfile.write(json.dumps(package_en) + "\n")
-            
+                if i>100000: sys.exit()
    
 if __name__ == "__main__":
     
