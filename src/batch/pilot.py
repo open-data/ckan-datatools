@@ -43,15 +43,6 @@ supplemental_info_fields=[
             'supplementary_documentation_fr',
                             ]
 
-language_markers=[
-                    (' - English Version',' - French Version'),
-                    (' (in English)', ' (in French)'),
-                    (' (In English)', ' (In French)'),
-                    ('(- English)', '(- French)'),  
-                     (' (English version)',' (French version)'),
-                    (' (English Version)',' (French Version)')
-                    ]
-
 bilingual_markers =[
                     (' - Bilingual version',
                      ' - version bilingue'),
@@ -412,8 +403,8 @@ class TransformDelegator:
                 
             else:
                 pass
-#                print i, "OK", package['id']
-#                self.outfile.write(json.dumps(package) + "\n")
+                print i, "OK", package['id']
+                self.outfile.write(json.dumps(package) + "\n")
                
         self.outfile.close()
 
@@ -456,9 +447,9 @@ class TransformDelegator:
                 "############ NO ID ###########",package_en['id']
                 #sys.exit()
             else:
-#                print i, "OK",package_en['id']
-#                print package_en['title']
-#                print package_en['title_fra']
+                print i, "OK",package_en['id']
+                print package_en['title']
+                print package_en['title_fra']
                 
                
                 self.outfile.write(json.dumps(package_en) + "\n")
@@ -469,7 +460,7 @@ if __name__ == "__main__":
     validation_override=True
     outputdir = '/Users/peder/dev/goc/LOAD'
     #matched_file="/Users/peder/dev/goc/pilot-matched.xml"
-    matched_file="/Users/peder/temp/pilot-matched.xml"
+    matched_file="/Users/peder/dev/goc/LOAD/pilot-matched.xml"
     bi_file = "/Users/peder/temp/pilot-bilingual.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
     bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 

@@ -44,11 +44,19 @@ unmatched=[]
 agri_cnt=Counter()
 pending_departments = pickle.load(open('pending_departments.pkl','rb'))
 
+
+def meat_fix(title):
+    
+    meat_title = title.replace("Lamb, Bison, Beef, Goat, Mutton, Pork, Veal, Horsemeat","Beef, Bison, Goat, Horsemeat, Lamb, Mutton, Pork, Veal")
+    chicken_title = meat_title.replace('Turkey, Chicken, Mature Chicken','Chicken, Mature Chicken, Turkey')
+    if 'Chicken, Mature Chicken, Turkey' in chicken_title: print chicken_title
+    return meat_title
+
 def split_xml_files(pilot_file):
 
     tree = etree.parse(pilot_file)
     root = tree.getroot()
-    print "<XML>"
+
     for i,child in enumerate(root):
         # TOTAL RECORDS
         
@@ -84,6 +92,7 @@ def split_xml_files(pilot_file):
             title_elem = child.xpath("FORM[NAME='title_en']/A/text()")
             if title_elem:
                 title = title_elem[0]
+                title = meat_fix(title)
                 
             else:
                 cnt["Title Element Missing"]
@@ -149,15 +158,7 @@ def split_xml_files(pilot_file):
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
                 
-                     
-                     #print etree.tostring(child)
-#                    print "-----------"
-#                    print formid, language
-#                    print child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
-#                    print child.xpath("FORM[NAME='dataset_link_fr_1']/A/text()")
-#                    print "-----------"
-#                    #docs_bilingual.append(child)         
-#                continue
+                
                 
                 
                 ''' collect titles that have a langauge, but no langauge marker '''
@@ -222,7 +223,9 @@ def split_xml_files(pilot_file):
             unmatched.append(en)
             cnt["unmatched"]+=1
         except:
-            raise     
+            raise 
+        
+       
          
     def write_xml():
 
@@ -230,27 +233,23 @@ def split_xml_files(pilot_file):
         
         '''  Now we can build the new XML document '''
         root = etree.Element("XML")
-        print "<XML>"
-        for i,record in enumerate(unmatched):
-            if i>40000: break
-            print etree.tostring(record[1]), "\n"
-                #foo = False
-            
-        print "</XML>"
-            #root.append(record)
+
+        for i, record in enumerate(matched):
+            #print i, record
+            root.append(record)
 #            if foo:
 #          
 #                print etree.tostring(root)
 #                sys.exit()
             
 
-    #outfile =  "/Users/peder/dev/goc/pilot-matched-{}.xml".format((date.today()))
+        outfile =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
     
-    #with open(outfile,'w') as f:
-      #f.write(etree.tostring(root))
+        with open(outfile,'w') as f:
+            f.write(etree.tostring(root))
+    
+    write_xml() 
 
-    #pprint(cnt.items())
-    #print "</XML>"
  
         
     def report():
@@ -360,7 +359,7 @@ def split_xml_files(pilot_file):
                                cnt['NO SPLIT']   #
                                )
     '''
-    report()
+    #report()
     
     
     def load_report_data():
