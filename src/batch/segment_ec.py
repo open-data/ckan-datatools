@@ -42,10 +42,10 @@ docs_bilingual=[]
 matched=[]
 unmatched=[]
 agri_cnt=Counter()
+pending_departments = pickle.load(open('pending_departments.pkl','rb'))
 
 def split_xml_files(pilot_file):
 
-    
     tree = etree.parse(pilot_file)
     root = tree.getroot()
     print "<XML>"
@@ -87,10 +87,7 @@ def split_xml_files(pilot_file):
                 
             else:
                 cnt["Title Element Missing"]
-            #keywords  =child.xpath("FORM[NAME='title_fr']/A/text()")[0]
-           
-              
-                
+  
             ''' Sadly there is no discernable pattern in this title element
             if "[AAFC-AIMIS-RP" in title: 
                 cnt["[AAFC-AIMIS-RP-"]+=1
@@ -109,35 +106,11 @@ def split_xml_files(pilot_file):
                 #print dept_code
                 dept= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
                 dept_cnt[dept]+=1
-#                if dept == "Agriculture and Agri-Food Canada":
-#                    
-#                    first = title.split(" ")[0]
-#                    print first
-#                    agri_cnt[first]+=1
-#                    title_fr = child.xpath("FORM[NAME='title_fr']/A/text()")
-#                    print title_fr
+
                 cnt["Total Records with Department"]+=1
             except:
                 cnt['No Department Found']+=1
-                #raise
-#            try:
-#                dict_en = child.xpath("FORM[NAME='dictionary_list:_en']/A")
-#                dict_fr = child.xpath("FORM[NAME='data_dictionary_fr']/A")
-#                
-#                if dict_en[0].text:
-#                    print dict_en[0].text.lstrip()
-#                    dept= child.xpath("FORM[NAME='department']/A")[0].text
-#                    cnt["Dictionary List:EN"]+=1
-#                    cnt[dept]+=1
-#                if dict_fr[0].text:
-#                    print dict_fr[0].text.lstrip()
-#                    dept= child.xpath("FORM[NAME='department']/A")[0].text
-#                    cnt["Dictionary List:FR"]+=1
-#                    cnt[dept]+=1
-#
-#            except:
-#                pass
-#                #print "NO SCRIPT TAG"
+       
 
             try:
                 language__ = child.xpath("FORM[NAME='language__']/A") 
@@ -175,9 +148,7 @@ def split_xml_files(pilot_file):
                 cnt[language]+=1
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
-                if language == u'Bilingual': 
-                    if 'lingual' in title:
-                        print title
+                
                      
                      #print etree.tostring(child)
 #                    print "-----------"
@@ -247,7 +218,7 @@ def split_xml_files(pilot_file):
              matched.append(fra_dict[en_title])
              cnt["matched"]+=1
         except KeyError:
-           
+
             unmatched.append(en)
             cnt["unmatched"]+=1
         except:
@@ -280,13 +251,36 @@ def split_xml_files(pilot_file):
 
     #pprint(cnt.items())
     #print "</XML>"
-    print list(agri_cnt.iterkeys())
+ 
         
     def report():
+        f = open('unmatched.csv', 'wt')
+        
+        writer = csv.writer(f)
+        writer.writerow(['No.','Department','ID','Name','Language'])
+        
+       
+        for i,item in enumerate(unmatched):
+            #print item[0]
+            child = item[1]
+            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+            title = item[0]
+            try:
+                dept_code=child.xpath("FORM[NAME='department']/A/text()")[0].split('|')[1]
+                department= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
+            except:
+                department = None
+            language = "English"
+            writer.writerow([i,department, formid.lower(), title, language])
+            
 
+    def dept_tables():
         #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
         
-        pending_departments = pickle.load(open('pending_departments.pkl','rb'))
+        #pending_departments = pickle.load(open('pending_departments.pkl','rb'))
+                
+        print "Pending", sum(pending_departments.values())
+        print "Published", sum(dept_cnt.values())
         #print set(pending_departments.items())
         #print list(set(pending_departments.items()) & set(dept_cnt.items()))
         #print [d for d in pending_departments.items()]
@@ -317,7 +311,7 @@ def split_xml_files(pilot_file):
         x.add_column("Published",published_column,'r')
         x.add_column("Pending",pending_departments.values(),'r')
         print x  
-        sys.exit()   
+  
         writer.writerow(['Department Name','Pending XML','Online'])
         ''' Create table to add data to  '''
        

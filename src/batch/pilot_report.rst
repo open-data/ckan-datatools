@@ -8,13 +8,16 @@ Pilot Data Report
 
 
 
-"Published" Data Dump Summary
+Data Dump Summary
 -----------------------------
+Total Number of Departments in Published 	22		
+Total Number of Departments in Pending 		25
+Total Number of records in Published XML 	12795
+Total Number of records in Pending XML		12872
 
 Department Counts
 -----------------
-Total Number of Departments  22						Total Number of Departments  25
-                                                    
+                                            
 +------------------------------------------------+-----------+---------+
 | Department Name                                | Published | Pending |
 +------------------------------------------------+-----------+---------+
@@ -45,6 +48,28 @@ Total Number of Departments  22						Total Number of Departments  25
 | Human Resources and Skills Development Canada  |         0 |      36 |
 +------------------------------------------------+-----------+---------+
 
+Records Count Details
+---------------------
+
+Total Records: 12799
+Total Records with department IDs: 12795
+Configuration Records:  5
+Records without department listed: 1
+Records without language identifier: 7
+Records Marked Bilingual:  1499
+Records Marked English:  5594
+Records Marked French: 5577
+Number of English Records with language identifier in title: 5550
+Number of French Records with language identifier in title:  5573
+Number of records that were matched by language identifier: 5304
+Records with language identifier that could not be matched: 241
+
+
+Conclusion:
+
+Less than 300 records requires further work (perhaps manual) to be included in new portal
+
+
 
 Raw Report								Raw Report
 ----------                              ----------
@@ -66,71 +91,4 @@ no langcode 7                           no langcode 10
 Total Records with Department 12795     No Department Found 1
                                         Total Records with Department 12872
                                         
-Summary
--------
-Bilingual Records 1449			Bilingual Records 1453
-Matched Records 10618           Matched Records 10598
-Total Processed 12067           Total Processed 12051
-Total Records 11287             Total Records 11311
-                                
-"Pending" Data Dump Summary
----------------------------
 
-Department Counts
------------------
-Total Number of Departments  25
-
-
-Agriculture and Agri-Food Canada 3198
-Atlantic Canada Opportunities Agency 2
-Canada Border Services Agency 2
-Canada Revenue Agency 3
-Canadian International Development Agency 44
-Canadian Space Agency 1
-Citizenship and Immigration Canada 74
-Department of Finance Canada 259
-Environment Canada 247
-Fisheries and Oceans Canada 26
-Foreign Affairs and International Trade Canada 5
-Health Canada 56
-Human Resources and Skills Development Canada 36
-Industry Canada 26
-Library and Archives Canada 8
-Library of Parliament 2
-National Defence 2
-National Research Council Canada 6
-Natural Resources Canada 46
-Public Safety Canada 3
-Public Works and Government Services Canada 2
-Statistics Canada 8757
-The Federal Bridge Corporation Limited 1
-Transport Canada 3
-Treasury Board of Canada Secretariat 63
-
-Raw Report
-----------
-NO SPLIT 1547
-no formid 3
-matched 5299
-language__ 12669
-French 5588
-formid 12873
-TotalRecords 12876
-unmatched 245
-EN SPLIT 5544
-Bilingual 1453
-English 5618
-FR SPLIT 5567
-CVReferenceCountByFormtype 5
-no langcode 10
-61 12876
-No Department Found 1
-Total Records with Department 12872
-
-
-Summary
--------
-Bilingual Records 1453
-Matched Records 10598
-Total Processed 12051
-Total Records 11311
