@@ -143,6 +143,7 @@ class Transform:
         for sup_field in supplemental_info_fields:
             try:
                 sup_value = node.xpath("FORM[NAME='%s']/A/text()" % sup_field)[0]
+
                 #format = schema_description.resource_field_by_id['format']['choices_by_key']['html']['key']
                 #print format
                 # Create resource from this
@@ -156,6 +157,8 @@ class Transform:
                 resource_dict = {'url':sup_value, 
                                          'format':'HTML',
                                          'resource_type': 'doc',
+                                         'name':'Data Dictionary',
+                                         'name_fra':'Dictionaire de données',
                                          'language':lang}
                 
                 resources.append(resource_dict)
@@ -205,6 +208,8 @@ class Transform:
                 resource_dict = {'url':link, 
                                          'format':format,
                                          'resource_type': 'file',
+                                         'name':'Dataset',
+                                         'name_fra':'Ensemble de données',
                                          'language':language} 
                 resources.append(resource_dict)
             except:
