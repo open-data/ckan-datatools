@@ -45,23 +45,27 @@ agri_cnt=Counter()
 pending_departments = pickle.load(open('pending_departments.pkl','rb'))
 
 
+
 def meat_fix(title):
     
-    meat_title = title.replace("Lamb, Bison, Beef, Goat, Mutton, Pork, Veal, Horsemeat","Beef, Bison, Goat, Horsemeat, Lamb, Mutton, Pork, Veal")
-    chicken_title = meat_title.replace('Turkey, Chicken, Mature Chicken','Chicken, Mature Chicken, Turkey')
-    if 'Chicken, Mature Chicken, Turkey' in chicken_title: print chicken_title
-    return meat_title
+    return title.replace("Lamb, Bison, Beef, Goat, Mutton, Pork, Veal, Horsemeat","Beef, Bison, Goat, Horsemeat, Lamb, Mutton, Pork, Veal").replace('Turkey, Chicken, Mature Chicken','Chicken, Mature Chicken, Turkey')
+
+
+def matched_ids():
+    fp = open('wayward.csv', 'r')
+    with open('wayward.csv', 'rb') as csvfile:
+        return [(row[0].upper(),row[1].strip()) for row in csv.reader(csvfile, delimiter=',')]
+
 
 def split_xml_files(pilot_file):
 
     tree = etree.parse(pilot_file)
     root = tree.getroot()
-
+    
+    
     for i,child in enumerate(root):
-        # TOTAL RECORDS
         
-
-        #print i+1,child.tag
+        # Ignore these 5 records, they are for configuration
         if "CVReferenceCountByFormtype" in etree.tostring(child):
             cnt['CVReferenceCountByFormtype']+=1
             continue  
@@ -86,13 +90,14 @@ def split_xml_files(pilot_file):
         except IndexError:
             cnt['no formid']+=1   
             continue
+        
+        
         try:
             # GET THE TITLE
             title=None
             title_elem = child.xpath("FORM[NAME='title_en']/A/text()")
-            if title_elem:
-                title = title_elem[0]
-                title = meat_fix(title)
+            if title_elem: 
+                title = meat_fix(title_elem[0])
                 
             else:
                 cnt["Title Element Missing"]
@@ -157,20 +162,18 @@ def split_xml_files(pilot_file):
                 cnt[language]+=1
                 #print i,language, title
                 '''Skip language matching for  Bilingual Records; TODO: write to separate file '''        
-                
-                
-                
+
                 
                 ''' collect titles that have a langauge, but no langauge marker '''
                 split_marker=False
                 split_title=None
                 ''' Split the titles so they can be matched '''
                 for marker in common.language_markers:
-                    
-                    
+                                 
                     if language=="English" and marker[0] in title:
                         split_title = title.split(marker[0])[0]
                         split_marker=True
+                        break
                     elif language =="French" and marker[1] in title:
                         split_title = title.split(marker[1])[0]
                         split_marker=True
@@ -184,13 +187,14 @@ def split_xml_files(pilot_file):
 
                 elif language== "English" and "French" not in title:
                     #print i,"EN SPLIT", title
-                    docs_en.append((split_title,child))
+                    docs_en.append((split_title,child,formid))
                     cnt['EN SPLIT']+=1
                 elif language=="French" and "English" not in title:
                     #print i,"FR SPLIT", title
                     fra_dict[split_title] =child
                     cnt['FR SPLIT']+=1
-
+                else:
+                    unmatched.append((title,child, formid))
             except Exception as e:
                print  e
                raise
@@ -225,8 +229,19 @@ def split_xml_files(pilot_file):
         except:
             raise 
         
-       
-         
+        
+    print len(matched)
+    manually_matched=matched_ids()
+    for m in manually_matched:
+        print "Searching for ", m
+        e = "//FORM[NAME='thisformid'][A/text()='{}']".format(m[0])
+        matched.append(root.xpath(e)[0].getparent())
+        f = "//FORM[NAME='thisformid'][A/text()='{}']".format(m[1])        
+        matched.append(root.xpath(f)[0].getparent())   
+            
+    print len(matched)
+   
+    
     def write_xml():
 
         print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
@@ -248,10 +263,9 @@ def split_xml_files(pilot_file):
         with open(outfile,'w') as f:
             f.write(etree.tostring(root))
     
-    write_xml() 
-
- 
-        
+    write_xml()  
+       
+  
     def report():
         f = open('unmatched.csv', 'wt')
         
@@ -272,7 +286,7 @@ def split_xml_files(pilot_file):
             language = "English"
             writer.writerow([i,department, formid.lower(), title, language])
             
-
+    report()   
     def dept_tables():
         #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
         
@@ -366,6 +380,7 @@ def split_xml_files(pilot_file):
         pass
 
 if __name__ == "__main__":
+
     #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
     pilot_file="/Users/peder/dev/goc/PublishedOpendata-0.xml"
     #pilot_file="/Users/peder/dev/goc/PendingOpendata-0.xml"
