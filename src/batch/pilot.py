@@ -57,7 +57,21 @@ bilingual_markers =[
                      ' - version bilingue'),
                     ]
 
-agriculture_title_markers = ['060','060 - ', '031N', '101 - ', '072 - ','072 ','073 - ', '073 - ', '070','070 - ', '066 - ', '050P', 'A009E', 'A009A', '003 - ', '003', '109 - ', 'D035', '077/078/082 - ', '075/081 - ', 'D019M']
+agriculture_title_markers = ['D035 ',
+                             '109 - ',
+                             '075/081 - ',
+                             '077/078/082 -', 
+                             '060','060 - ', '031N', '101 - ', 
+                             '072 - ','072 ',
+                             '073 ', '073 - ', 
+                             '070','070 - ', 
+                             '066 - ', '050P', 
+                             'A009E', 
+                             'A009A', 
+                             '003 - ', '003',  
+                             '077/078/082 - ', 
+                             '075/081 - ', 
+                             'D019M']
 
 validation_override=True
 
@@ -75,7 +89,7 @@ def check_date(date):
         valid_date = time.strptime(date, '%Y-%m-%d')
         return date
     except ValueError:
-        print 'Invalid date!', date
+        #print 'Invalid date!', date
         return ''
 
 class DoubleXmlStreamReader(XmlStreamReader):
@@ -88,6 +102,9 @@ class DoubleXmlStreamReader(XmlStreamReader):
         http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
         FIXME: Need to skip every other one for this to work with i%2, 
         and can no longer clear element in parent
+        
+        
+        DANGER DANGER : This seems to be broken!
     '''
     def combined_elements(self):
         for i,element in enumerate(self._iter_open()):
@@ -206,14 +223,28 @@ class Transform:
         return resources
         
     def process_node(self,count, node, language):
-        # First makes sure there is an ID
+
         try:
-            print str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+            id = str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
         except:
-            print "======NO ID========="
+            print "======NO ID=========", node.xpath("DC.TITLE")[0].text
             #print etree.tostring(node)
             #sys.exit()
+        # look for geographic bounding boxes
+        
+        try:
             
+            geo_lower_left = node.xpath("FORM[NAME=' geo_lower_left']/A/text()")
+            geo_upper_right = node.xpath("FORM[NAME='geo_upper_right']/A/text()") 
+           
+            if geo_lower_left:
+                 print ">>>>>>>", geo_lower_left
+                 sys.exit()
+        except:
+            print "NO GEO"
+            sys.exit()
+            
+        if count > 10000:sys.exit()
         package_dict = {'resources': []}
         
         package_dict['resources']  = self.node_resources(node,language)
@@ -276,7 +307,7 @@ class Transform:
                     
                     if pilot_name == "department":
                         package_dict['owner_org'] = field['choices_by_pilot_uuid'][split_value]['key']
-                    
+                        
                 else:
                     if pilot_name == 'frequency':
                         if value:
@@ -331,6 +362,8 @@ class Transform:
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
         package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
+        if package_dict['id'] == '6582e176-0930-41c6-bd90-3a405563642c':
+            print package_dict['title'],package_dict['owner_org']
         if package_dict['owner_org']=='aafc-aac':
             for marker in agriculture_title_markers:
                 if marker in package_dict['title']:
@@ -343,6 +376,8 @@ class Transform:
                     new_fr = package_dict['title_fra'].split(marker)[1]
                     package_dict['title_fra']=new_fr.lstrip(" ")
                     break
+                
+        
                    
                     
     
@@ -356,39 +391,47 @@ class TransformDelegator:
         self.outfile = open(outfile,"w")
      
     def process_singles(self,datafile):
-
-        self.data = XmlStreamReader("RECORD",datafile)
-        for i,node in enumerate(self.data.elements()):
+        tree = etree.parse(datafile)
+        root = tree.getroot()
+        
+        for i,node in enumerate(root):
             package = Transform().process_node(i,node,u"eng; CAN | fra; CAN")
             print "--- Bilingual -----", i
             print "TITLE", package['title']
             print "TITLE FR", package['title_fra']
             
             if not package['title']:
-                print "########   NO TITLE ########"
+                print "########   NO TITLE ########",package['id']
                 #print etree.tostring(node)
                 #sys.exit()
             elif not package['owner_org']:
-                print "############### NO ORGANIZATION ###########"
+                print "############### NO ORGANIZATION ###########",package['id']
             elif not package['id']:
                 print "############ NO ID ###########",package['id']
                 #sys.exit()
                 
             else:
-                print i, "OK", package['id']
-                self.outfile.write(json.dumps(package) + "\n")
+                pass
+#                print i, "OK", package['id']
+#                self.outfile.write(json.dumps(package) + "\n")
                
         self.outfile.close()
 
+    def combined_elements(self, root):
+        for i,element in enumerate(root):
+            if element.getprevious() is not None:
+                if i%2==0:continue
+                yield (element.getprevious(),element) 
         
     def process_doubles(self, datafile):
-        self.data = DoubleXmlStreamReader("RECORD",datafile)
-        #self.data = XmlStreamReader("RECORD",datafile)
+         tree = etree.parse(datafile)
+         root = tree.getroot()
 
-        for i, pair in enumerate(self.data.combined_elements()):
+         for i,pair in enumerate(self.combined_elements(root)):
+
             node_en = pair[0]
             node_fr = pair[1]
-
+     
             package_en = Transform().process_node(i,node_en, "eng; CAN")
             package_fr = Transform().process_node(i,node_fr,u"fra; CAN")
 
@@ -402,10 +445,10 @@ class TransformDelegator:
                 raise Exception
 
             if not package_en['owner_org']:
-                print "############### NO ORGANIZATION ###########"
+                print "############### NO ORGANIZATION ###########", package_en['id']
             
             elif not package_en['title']:
-                print "############### NO TITLE ###########"
+                print "############### NO TITLE ###########", package_en['id']
 #                print pair[0]
 #                print pair[1]
 
@@ -413,9 +456,9 @@ class TransformDelegator:
                 "############ NO ID ###########",package_en['id']
                 #sys.exit()
             else:
-                print i, "OK",package_en['id']
-                print package_en['title']
-                print package_en['title_fra']
+#                print i, "OK",package_en['id']
+#                print package_en['title']
+#                print package_en['title_fra']
                 
                
                 self.outfile.write(json.dumps(package_en) + "\n")
