@@ -284,21 +284,40 @@ def split_xml_files(pilot_file):
         
     def report():
 
-      
         #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
-  
+        
         pending_departments = pickle.load(open('pending_departments.pkl','rb'))
+        #print set(pending_departments.items())
+        #print list(set(pending_departments.items()) & set(dept_cnt.items()))
+        #print [d for d in pending_departments.items()]
+        
+        # create a list of tuples 
+        #[(key, value)]
+        
+        published_column = []
+        for department in pending_departments:
+            print ">>",department
+            if dept_cnt.has_key(department):
+                published_column.append(dept_cnt[department])
+            else:
+                published_column.append(0)
+        
+        print published_column 
+        
+        
+            
         print pending_departments
         f = open('departments.csv', 'wt')
         
         writer = csv.writer(f)
        
-        
         x=PrettyTable()
         dept_column = [item[0] for item in pending_departments.items()]
-        x.add_column("Department Name", dept_column, 'l', 't')
-        
+        x.add_column("Department Name", pending_departments.keys(), 'l', 't')
+        x.add_column("Published",published_column)
+        x.add_column("Pending",pending_departments.values())
         print x  
+        sys.exit()   
         writer.writerow(['Department Name','Pending XML','Online'])
         ''' Create table to add data to  '''
        
@@ -307,8 +326,7 @@ def split_xml_files(pilot_file):
             writer.writerow([department,
                      count,
                      '',
-                     ])
-            
+                     ])         
         
         f.close()    
         print writer
@@ -348,7 +366,7 @@ def split_xml_files(pilot_file):
                                cnt['NO SPLIT']   #
                                )
     '''
-    #report()
+    report()
     
     
     def load_report_data():

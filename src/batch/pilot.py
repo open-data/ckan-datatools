@@ -185,7 +185,7 @@ class Transform:
                         format_uuid = format_code[0].split("|")[1]
                         format = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][format_uuid]['key']
                     else:
-                       format = 'Unknown | Inconnu'
+                        format = 'other'
                     
                 except IndexError:
                     pass
@@ -419,7 +419,7 @@ class TransformDelegator:
                 
                
                 self.outfile.write(json.dumps(package_en) + "\n")
-                if i>100000: sys.exit()
+     
    
 if __name__ == "__main__":
     
