@@ -314,8 +314,8 @@ def split_xml_files(pilot_file):
         x=PrettyTable()
         dept_column = [item[0] for item in pending_departments.items()]
         x.add_column("Department Name", pending_departments.keys(), 'l', 't')
-        x.add_column("Published",published_column)
-        x.add_column("Pending",pending_departments.values())
+        x.add_column("Published",published_column,'r')
+        x.add_column("Pending",pending_departments.values(),'r')
         print x  
         sys.exit()   
         writer.writerow(['Department Name','Pending XML','Online'])

@@ -18,34 +18,32 @@ Total Number of Departments  22						Total Number of Departments  25
 +------------------------------------------------+-----------+---------+
 | Department Name                                | Published | Pending |
 +------------------------------------------------+-----------+---------+
-| Treasury Board of Canada Secretariat           |     50    |    63   |
-| Canada Revenue Agency                          |     3     |    3    |
-| Public Safety Canada                           |     2     |    3    |
-| Health Canada                                  |     55    |    56   |
-| Department of Finance Canada                   |    258    |   259   |
-| Atlantic Canada Opportunities Agency           |     2     |    2    |
-| Library of Parliament                          |     2     |    2    |
-| Public Works and Government Services Canada    |     1     |    2    |
-| Industry Canada                                |     22    |    26   |
-| Library and Archives Canada                    |     4     |    8    |
-| Transport Canada                               |     3     |    3    |
-| Fisheries and Oceans Canada                    |     26    |    26   |
-| Statistics Canada                              |    8783   |   8757  |
-| Citizenship and Immigration Canada             |     74    |    74   |
-| Environment Canada                             |    217    |   247   |
-| Canadian International Development Agency      |     41    |    44   |
-| National Research Council Canada               |     0     |    6    |
-| The Federal Bridge Corporation Limited         |     0     |    1    |
-| National Defence                               |     2     |    2    |
-| Agriculture and Agri-Food Canada               |    3198   |   3198  |
-| Foreign Affairs and International Trade Canada |     4     |    5    |
-| Canada Border Services Agency                  |     2     |    2    |
-| Canadian Space Agency                          |     1     |    1    |
-| Natural Resources Canada                       |     45    |    46   |
-| Human Resources and Skills Development Canada  |     0     |    36   |
+| Treasury Board of Canada Secretariat           |        50 |      63 |
+| Canada Revenue Agency                          |         3 |       3 |
+| Public Safety Canada                           |         2 |       3 |
+| Health Canada                                  |        55 |      56 |
+| Department of Finance Canada                   |       258 |     259 |
+| Atlantic Canada Opportunities Agency           |         2 |       2 |
+| Library of Parliament                          |         2 |       2 |
+| Public Works and Government Services Canada    |         1 |       2 |
+| Industry Canada                                |        22 |      26 |
+| Library and Archives Canada                    |         4 |       8 |
+| Transport Canada                               |         3 |       3 |
+| Fisheries and Oceans Canada                    |        26 |      26 |
+| Statistics Canada                              |      8783 |    8757 |
+| Citizenship and Immigration Canada             |        74 |      74 |
+| Environment Canada                             |       217 |     247 |
+| Canadian International Development Agency      |        41 |      44 |
+| National Research Council Canada               |         0 |       6 |
+| The Federal Bridge Corporation Limited         |         0 |       1 |
+| National Defence                               |         2 |       2 |
+| Agriculture and Agri-Food Canada               |      3198 |    3198 |
+| Foreign Affairs and International Trade Canada |         4 |       5 |
+| Canada Border Services Agency                  |         2 |       2 |
+| Canadian Space Agency                          |         1 |       1 |
+| Natural Resources Canada                       |        45 |      46 |
+| Human Resources and Skills Development Canada  |         0 |      36 |
 +------------------------------------------------+-----------+---------+
-
-
 
 
 Raw Report								Raw Report
