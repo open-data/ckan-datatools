@@ -80,7 +80,10 @@ def split_xml_files(pilot_file):
         formid = None           
         try: 
             # RECORDS WITH FORM ID
+            
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+            if formid == 'F34DCB32-4845-4E88-B125-5AC03C6E4A7F':
+                print "STOP"
             if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
                 pass
                 #print "ZERO ? or ...", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
@@ -182,8 +185,9 @@ def split_xml_files(pilot_file):
          
                 if split_marker == False:
                     #print i,"NO SPLIT ::",language,"::",title
-                    
-                    cnt['NO SPLIT']+=1
+                    if language!="Bilingual":
+                        unmatched.append((title,child, formid))
+                        cnt['NO SPLIT']+=1
 
                 elif language== "English" and "French" not in title:
                     #print i,"EN SPLIT", title
@@ -194,7 +198,8 @@ def split_xml_files(pilot_file):
                     fra_dict[split_title] =child
                     cnt['FR SPLIT']+=1
                 else:
-                    unmatched.append((title,child, formid))
+                    pass
+                    
             except Exception as e:
                print  e
                raise
