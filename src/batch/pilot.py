@@ -200,7 +200,8 @@ class Transform:
                     #raise
                 except:
                     raise
-                    
+  
+           
                 resource_dict = {'url':link, 
                                          'format':format,
                                          'resource_type': 'file',
@@ -222,18 +223,19 @@ class Transform:
             #print etree.tostring(node)
             #sys.exit()
         # look for geographic bounding boxes
-        
+        if node.xpath("FORM[NAME='thisformid']/A/text()")[0] == 'F34DCB32-4845-4E88-B125-5AC03C6E4A7F':
+            print "STOP"
         try:
             
-            geo_lower_left = node.xpath("FORM[NAME=' geo_lower_left']/A/text()")
+            geo_lower_left = node.xpath("FORM[NAME='geo_lower_left']/A/text()")
             geo_upper_right = node.xpath("FORM[NAME='geo_upper_right']/A/text()") 
-           
+            print geo_lower_left
             if geo_lower_left:
-                 print ">>>>>>>", geo_lower_left
+                 print ">>>>>>>",id, geo_lower_left
                  sys.exit()
         except:
             print "NO GEO"
-            sys.exit()
+            
             
         if count > 10000:sys.exit()
         package_dict = {'resources': []}
@@ -353,8 +355,7 @@ class Transform:
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
         package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
-        if package_dict['id'] == '6582e176-0930-41c6-bd90-3a405563642c':
-            print package_dict['title'],package_dict['owner_org']
+
         if package_dict['owner_org']=='aafc-aac':
             for marker in agriculture_title_markers:
                 if marker in package_dict['title']:
@@ -367,13 +368,12 @@ class Transform:
                     new_fr = package_dict['title_fra'].split(marker)[1]
                     package_dict['title_fra']=new_fr.lstrip(" ")
                     break
-                
-        
-                   
-                    
-    
-                    
-                    
+                       
+        if package_dict['owner_org']=='hc-sc':
+            for resource in package_dict['resources']:
+                if resource['resource_type']=='file':
+                    resource['resource_type']='txt'   
+                            
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
 
@@ -463,7 +463,7 @@ if __name__ == "__main__":
     matched_file="/Users/peder/dev/goc/LOAD/pilot-matched.xml"
     bi_file = "/Users/peder/temp/pilot-bilingual.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
-    bi_output_file =  "{}/bilingual-pilot-records-{}.jl".format(outputdir,date.today()) 
+
     transform = TransformDelegator(output_file)
     print "PROCESSING MERGED FILES"
     transform.process_doubles(matched_file)
