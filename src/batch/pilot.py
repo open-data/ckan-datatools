@@ -146,7 +146,7 @@ class Transform:
                 #format = schema_description.resource_field_by_id['format']['choices_by_key']['html']['key']
                 #print format
                 # Create resource from this
-                print sup_value
+                
                 if "_en" in sup_field:
                     lang="eng; CAN"
                 else:
@@ -327,7 +327,6 @@ class Transform:
         if package_dict['geographic_region'] == "Canada  Canada":package_dict['geographic_region']=''
         package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
-        package_dict['resource_type'] = 'file' #schema_description.dataset_field_by_id['resource_type']['choices']['file']
         #Override validation
         package_dict['validation_override']=validation_override
         #Fix dates
