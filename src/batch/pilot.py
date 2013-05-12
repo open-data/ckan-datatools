@@ -14,7 +14,8 @@ from lxml import etree
 from pprint import pprint
 from datetime import date
 import common
-from common import XmlStreamReader
+#from common import XmlStreamReader
+from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
@@ -82,9 +83,9 @@ def check_date(date):
     except ValueError:
         #print 'Invalid date!', date
         return ''
-
+'''
 class DoubleXmlStreamReader(XmlStreamReader):
-    ''' 
+  
         Sometimes inheritance IS usuful ;)
         Combines stream of english and french records into one RECORD  
         because we are streaming, we cannot use:
@@ -96,12 +97,13 @@ class DoubleXmlStreamReader(XmlStreamReader):
         
         
         DANGER DANGER : This seems to be broken!
-    '''
+ 
     def combined_elements(self):
         for i,element in enumerate(self._iter_open()):
             if element.getprevious() is not None:
                 if i%2==0:continue
                 yield (element.getprevious(),element)  
+'''
                      
 formats = schema_description.resource_field_by_id['format']['choices_by_pilot_uuid']
 
@@ -223,6 +225,8 @@ class Transform:
 
         try:
             id = str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+            if id == "9EA58B9E-3D14-4FFC-9A49-25E9AC840AAF".lower():
+                print "STOP"
         except:
             print "======NO ID=========", node.xpath("DC.TITLE")[0].text
             #print etree.tostring(node)
@@ -348,13 +352,21 @@ class Transform:
             package_dict['time_period_coverage_end']  ="3000-01-01"
             
       
-        package_dict['date_published'] = str(package_dict['date_published']).replace("/", "-")
+        package_dict['date_published'] = package_dict['date_published'].replace("/", "-")
         package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
         package_dict['license_id']='ca-ogl-lgo'
         #if count>1200:sys.exit()
+        def reformat_date(date_string):
+            try:
+                timepoint = datetime.strptime(date_string.strip(), "%m/%d/%Y") 
+            except ValueError:
+                timepoint = datetime.strptime(date_string.strip(), "%Y/%m/%d")
+            day = timepoint.date()
+            return day.isoformat()
         
+        if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
         key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").split(",")
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
@@ -376,7 +388,8 @@ class Transform:
         if package_dict['owner_org']=='hc-sc':
             for resource in package_dict['resources']:
                 if resource['resource_type']=='file':
-                    resource['resource_type']='txt'   
+                    resource['format']='txt'
+            
                             
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   

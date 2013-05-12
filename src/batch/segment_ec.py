@@ -50,12 +50,88 @@ def meat_fix(title):
     
     return title.replace("Lamb, Bison, Beef, Goat, Mutton, Pork, Veal, Horsemeat","Beef, Bison, Goat, Horsemeat, Lamb, Mutton, Pork, Veal").replace('Turkey, Chicken, Mature Chicken','Chicken, Mature Chicken, Turkey')
 
-
 def matched_ids():
     fp = open('wayward.csv', 'r')
     with open('wayward.csv', 'rb') as csvfile:
         return [(row[0].upper(),row[1].strip()) for row in csv.reader(csvfile, delimiter=',')]
 
+def find_pending(pilot_file):
+
+    tree = etree.parse(pilot_file)
+    root = tree.getroot()
+    
+    
+    status_cnt = Counter()
+    pending_records=[]
+    for i,child in enumerate(root):
+        
+        # Ignore these 5 records, they are for configuration
+        if "CVReferenceCountByFormtype" in etree.tostring(child):
+            cnt['CVReferenceCountByFormtype']+=1
+            continue  
+        
+        formid = None           
+        try: 
+            # RECORDS WITH FORM ID
+            
+            #formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+            '''
+                    <STATUS>Complete</STATUS>
+                    <ADMINSTATUS>published</ADMINSTATUS>
+                    <EDITIONSTATUS>draft</EDITIONSTATUS>
+                    <FLOWSTATUS>published</FLOWSTATUS>
+                                
+            
+            '''
+   
+            status = child.find("STATUS")
+            adminstatus = child.find("ADMINSTATUS")
+            editionstatus = child.find("EDITIONSTATUS")
+            flowstatus = child.find("FLOWSTATUS")
+            #if flowstatus.text != 'published': 
+           
+            if flowstatus.text == 'pending':  
+                print etree.tostring(child)  
+                '''
+                
+                dept_code=child.find("DEPARTMENT").text.split("|")[1]
+                dept= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
+             
+                pending_records.append((
+                            i,
+                            dept,  
+                            child.find("FORMID").text,
+                            child.find("DC.TITLE").text,
+                            child.find("FLOWSTATUS").text   
+                            ),)
+            
+            
+            try:
+                status_cnt[status.text]+=1
+                status_cnt[adminstatus.text]+=1
+                status_cnt[editionstatus.text]+=1
+                status_cnt[flowstatus.text]+=1
+#                if status.text=='pending':
+#                    print child.find("DEPARTMENT").text.split("|")[1]
+#                    pending_records.append[(
+#                         i,                 
+#                         child.find("DEPARTMENT").text.split("|")[1],
+#                         child.find("DC.TITLE").text,
+#                         child.find("FORMID").text,                 
+#                                           
+#                                           )]
+                    
+            except:
+                pass
+                #status_cnt['missing_value']+=1
+            '''  
+                
+        except:
+            continue
+            raise
+#    pprint(pending_records)
+#    print len(pending_records)
+#    #pprint(status_cnt.items())
 
 def split_xml_files(pilot_file):
 
@@ -82,8 +158,7 @@ def split_xml_files(pilot_file):
             # RECORDS WITH FORM ID
             
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            if formid == 'F34DCB32-4845-4E88-B125-5AC03C6E4A7F':
-                print "STOP"
+
             if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
                 pass
                 #print "ZERO ? or ...", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
@@ -291,7 +366,7 @@ def split_xml_files(pilot_file):
             language = "English"
             writer.writerow([i,department, formid.lower(), title, language])
             
-    report()   
+    #report()   
     def dept_tables():
         #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
         
@@ -387,8 +462,10 @@ def split_xml_files(pilot_file):
 if __name__ == "__main__":
 
     #pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0-partial.xml" 
-    pilot_file="/Users/peder/dev/goc/PublishedOpendata-0.xml"
-    #pilot_file="/Users/peder/dev/goc/PendingOpendata-0.xml"
-    split_xml_files(pilot_file)
+    published_file="/Users/peder/dev/goc/PublishedOpendata-0.xml"
+    pending_file="/Users/peder/dev/goc/PendingOpendata-0.xml"
+    combined_file="/Users/peder/dev/goc/OpenData-Combined.xml"
+    #find_pending(pending_file)
+    split_xml_files(combined_file)
 
    
