@@ -374,7 +374,7 @@ class Transform:
             return day.isoformat()
         
         if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
-        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").split(",")
+        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").replace("´","'").split(",")
         key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
         package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
