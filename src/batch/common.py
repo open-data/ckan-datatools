@@ -142,7 +142,15 @@ language_markers=[
                     (' - (in english)', ' - (in french)'),
                     (' - (English)', ' - (French)'),  
                     (' - ENGLISH VERSION', ' - FRENCH VERSION'),
-                    (' - English', ' - French'),]
+                    (' - English', ' - French'),
+                    ('_English Version','_French Version'),
+                    ('_English Version','-French Version'),
+                    ( u'-English version',u'-French version'),
+                    ('(English version)','(French verison)'),
+                    ('(English verison)','(French verison)'),
+                    ('(English version)','(French version'),
+                    ('(English version)','(Fench version'),
+                    ('(English version)','(Frech version')]
 
 language_markers_fra = [
                          u' (Version anglaise)',
@@ -158,7 +166,8 @@ language_markers_fra = [
                          u'- anglais',
                          u'- Anglais',
                          u'- française',
-                         u'- Française',
+                         u'- Française'
+                       
                          
                        ]
 

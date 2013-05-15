@@ -225,32 +225,37 @@ class Transform:
 
         try:
             id = str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
-            if id == "9EA58B9E-3D14-4FFC-9A49-25E9AC840AAF".lower():
-                print "STOP"
+
         except:
             print "======NO ID=========", node.xpath("DC.TITLE")[0].text
-            #print etree.tostring(node)
-            #sys.exit()
-        # look for geographic bounding boxes
-        if node.xpath("FORM[NAME='thisformid']/A/text()")[0] == 'F34DCB32-4845-4E88-B125-5AC03C6E4A7F':
-            print "STOP"
+        
         try:
             
             geo_lower_left = node.xpath("FORM[NAME='geo_lower_left']/A/text()")
             geo_upper_right = node.xpath("FORM[NAME='geo_upper_right']/A/text()") 
-            print geo_lower_left
-            if geo_lower_left:
-                 print ">>>>>>>",id, geo_lower_left
-                 sys.exit()
+           
+            spatial=''
+            if geo_lower_left and geo_upper_right:
+
+                 left,bottom = geo_lower_left[0].split(" ")
+                 right, top = tuple(geo_upper_right[0].split(" "))
+                 coordinates = [[left, bottom], [left,top], [right, top], [right, bottom]]
+                 spatial = {'type': 'Polygon', 'coordinates': coordinates}  
+                 print spatial          
+                                
+                                
+                                
+                 
+                 #sys.exit()
         except:
             print "NO GEO"
+            #raise
             
-            
-        if count > 10000:sys.exit()
+
         package_dict = {'resources': []}
         
         package_dict['resources']  = self.node_resources(node,language)
-
+        package_dict['spatial']= spatial
 
         for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
           
@@ -334,6 +339,8 @@ class Transform:
 
         # Filter out things that will not pass validatation
         if package_dict['geographic_region'] == "Canada  Canada":package_dict['geographic_region']=''
+        region = package_dict['geographic_region']
+        package_dict['geographic_region'] = region.replace("Yukon Territory  Territoire du Yukon","Yukon  Yukon" )
         package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
         package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
         #Override validation
@@ -367,8 +374,8 @@ class Transform:
             return day.isoformat()
         
         if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
-        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").split(",")
-        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").replace(")","").split(", ")
+        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").split(",")
+        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(", ")
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
         package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
 
@@ -384,12 +391,12 @@ class Transform:
                     new_fr = package_dict['title_fra'].split(marker)[1]
                     package_dict['title_fra']=new_fr.lstrip(" ")
                     break
-                       
-        if package_dict['owner_org']=='hc-sc':
-            for resource in package_dict['resources']:
-                if resource['resource_type']=='file':
-                    resource['format']='txt'
-            
+         
+            if package_dict['owner_org']=='hc-sc':
+                for resource in package_dict['resources']:
+                    if resource['resource_type']=='file':
+                        resource['format']='TXT'
+
                             
         #print count,package_dict['title'], len(package_dict['resources'])
         return package_dict   
@@ -477,13 +484,13 @@ if __name__ == "__main__":
     validation_override=True
     outputdir = '/Users/peder/dev/goc/LOAD'
     #matched_file="/Users/peder/dev/goc/pilot-matched.xml"
-    matched_file="/Users/peder/dev/goc/LOAD/pilot-matched.xml"
-    bi_file = "/Users/peder/temp/pilot-bilingual.xml"
+    matched_file =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
+    bilingual_file =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
     output_file =  "{}/pilot-{}.jl".format(outputdir,date.today()) 
 
     transform = TransformDelegator(output_file)
     print "PROCESSING MERGED FILES"
     transform.process_doubles(matched_file)
     print "PROCESSING BILINGUAL FILES"
-    transform.process_singles(bi_file)
+    transform.process_singles(bilingual_file)
 
