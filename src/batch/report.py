@@ -395,7 +395,7 @@ def count_occurances(dir, pathlist):
 
 def write_csv(pilot_file):
     
-    csvout = "/Users/peder/dev/goc/pilot.csv"
+    csvout = "/Users/peder/dev/goc/pilot-2013-05-05.csv"
     f = open(csvout, 'wt')
     writer = common.UnicodeWriter(f)#csv.writer(f)
     fields = sorted(tuple(schema_description.all_package_fields ))
@@ -509,7 +509,7 @@ class PilotDelegator:
                 print e.node
                 print "----------Error End---------"
                 self.cnt[e.message]+=1
-        print cnt.items()
+        print self.cnt.items()
         #self.holdings.pickle_it()
     def report(self):
         self.holdings.report('full')
@@ -521,11 +521,11 @@ if __name__ == "__main__":
 
     #/Users/peder/dev/goc/LOAD/
         
-    print "Report"
-    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
-    pilot = PilotDelegator(pilot_file)
-    pilot.report()
-   
+#    print "Report"
+#    pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
+#    pilot = PilotDelegator(pilot_file)
+#    pilot.report()
+#   
     
     #path = os.path.normpath("/Users/peder/dev/goc/nap/en")
     nap_path = os.path.normpath("/Users/peder/dev/goc/nap")
@@ -534,7 +534,7 @@ if __name__ == "__main__":
     parser.add_argument('action', help='What type of report', action='store',choices=['titles', 'short','counts','titles','full','test','csv'])
     parser.add_argument("-p", "--path", help="file or dir", action='store_true')
 
-    #args = parser.parse_args()
+    args = parser.parse_args()
     
     if args.source == 'pilot' and args.action == 'titles':
         PilotReport(pilot_file).biligual_titles()

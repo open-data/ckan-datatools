@@ -32,6 +32,7 @@ class XmlStreamReader():
         self.record_tag = record_tag
     
     def _iter_open(self):
+
         # by using the default 'end' event, you start at the _bottom_ of the tree
         for event, element in etree.iterparse(self.xml_file, events=("start","end")):
             if event == "start" and  element.tag == self.record_tag:
@@ -123,24 +124,73 @@ class XPather:
                 logging.error("{}::{}".format(key,e))
                 return ""
 
-title_langauge_markers=[' - English Version',
-                                ' - French Version', 
-                                ' (in English)',
-                                ' (in French)',
-                                '(- English)',
-                                ' - English',
-                                ' - French',
-                                ' (English Version)',
-                                ' (French Version)']
-        
-title_langauge_markers_fra=[' - version anglaise',
-                                    u' - version française',
-                                    u' (en français)',
-                                    ' (en anglais)']
-        
+''' This could be lowercased to reduce number of hits, but then reporting 
+would be less useful.  THE ORDER OF THIS LIST IS VERY IMPORTANT in order check to return at the right spot.  
+Put cases that can be misunderstood last '''
+language_markers=[
+                   (' - (In English)', ' - (In French)'),
+                    (' (In English)', ' (In French)'),
+                   (' - English Version [AAFC', ' - French Version [AAFC'),
+                   (' - English Version',' - French Version'),
+                   (' - English version',' - French version'),
+                    (' (in English)', ' (in French)'),
+                    (' - (in English)', ' - (in French)'),
+                    (' (English version)', ' (French version)'),
+                    (' (English verison)', ' (French version)'),
+                    (' - (in English)', ' - (in French)'),
+                    (' (in english)', ' (in french)'),
+                    (' - (in english)', ' - (in french)'),
+                    (' - (English)', ' - (French)'),  
+                    (' - ENGLISH VERSION', ' - FRENCH VERSION'),
+                    (' - English', ' - French'),
+                    ('_English Version','_French Version'),
+                    ('_English Version','-French Version'),
+                    ( u'-English version',u'-French version'),
+                    ('(English version)','(French verison)'),
+                    ('(English verison)','(French verison)'),
+                    ('(English version)','(French version'),
+                    ('(English version)','(Fench version'),
+                    ('(English version)','(Frech version')]
+
+language_markers_fra = [
+                         u' (Version anglaise)',
+                         u' (Version française)',
+                         u' - version française [AAFC',
+                         u' - version anglaise [AAFC',
+                         u' - version anglaise',
+                         u' - version française',
+                         u' (en anglais)', 
+                         u'- version anglaise',
+                         u' (version anglaise)',
+                         u' - VERSION ANGLAISE',
+                         u'- anglais',
+                         u'- Anglais',
+                         u'- française',
+                         u'- Française'
+                       
+                         
+                       ]
+
+foobared_title_filters=['(French verison)', '(Fench version)']
+
+'''
+Some fiscal tables are marked bilingual, but infact they are not. Find language in URL.
+Filter out bilingual
+Finance Dat  
+
+Historial Project data set 2005-2006  -   No resources   several records have in withous resources other than HTML.
+Parsing problems with Keywords, sometimes keyword is just a blank box: Historical PRoject Dataset 2005-2006
+Dateset with no keywords should go wihtout keywords.  They should still go in. 
+2008  Public Service Employee Survey (PSES) results   one xsl file marked as 2 different HTML files, this is wrong.
+
+Denis, keywords not filtering.
+'''
+ 
 
 def timefix(str_time):
     # this time only has year, so default to Jan. 1
+    if str_time == "Varies by indicator":return ''
+    if "T" in str_time: raise Exception
     try:
         if len(str_time) == 4:
             return str(datetime.date(datetime(int(str_time),1,1)))
@@ -154,7 +204,7 @@ def timefix(str_time):
                 
 def time_coverage_fix(str_time1,str_time2):
     # Check to see if the start time and end time are different formats
-    if len(str_time2) < str_time1:
+    if len(str_time2) != len(str_time1):
         # make end time equal to start time
         return (str_time1, str_time1)
     else:
