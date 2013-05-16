@@ -1,0 +1,78 @@
+No.,Department,ID,Name,Language
+0,Department of Finance Canada,315f5223-6f1c-4746-a2ab-98939a47942f,Fiscal Reference Tables - October 2010 - Table 10 (English version),English
+1,Environment Canada,2b214f8f-bd88-4f3a-b775-ed24cf440115,Greenhouse Gas Emissions Reporting Program (GHGRP) - Downloadable Emissions Data,English
+2,Environment Canada,269bdce9-f598-43c8-8cf3-e0ba15c20f1f,Real Time Hydrometric Data Tool,English
+3,Environment Canada,70355991-3fa5-4c28-8e72-bbda3e5da36e,Adjusted and Homogenized Canadian Climate Data (AHCCD),English
+4,Environment Canada,f818116c-a5ec-4590-b5f5-83f47fbe5add,Pollution Prevention Planning Database,English
+5,Environment Canada,2dd1a680-4c73-442c-8a2f-32f07496972a,The WMO Volume Report - Canada ,English
+6,Environment Canada,87009320-6e76-439c-b737-0e9e6a36fa0d,Daily Climate Data (From SYNOs),English
+7,Environment Canada,bcb7e946-94d3-4d9c-b39e-fb4f1c9a3196,Hourly Weather Data (from Metars),English
+8,Canadian International Development Agency,fe318a82-2c23-4f10-8d93-98c7c8a74807,Key Government of Canada Commitments for the Allocation of the Aid Budget ,English
+9,Fisheries and Oceans Canada,4348fa39-1838-49c8-b983-dac42ab4afc3,DFO Vertical file collection,English
+10,Fisheries and Oceans Canada,a0bb9d6e-478d-41df-b2dd-2a9ec10bd339,CSAS Electronic Science advisory reports,English
+11,Fisheries and Oceans Canada,3793c09a-48bc-4079-94c5-e03f48a73d37,CSAS Electronic Science responses,English
+12,Fisheries and Oceans Canada,f405a6f7-defb-427f-a6cb-8ff5d3732605,CSAS Electronic Proceedings,English
+13,Fisheries and Oceans Canada,21a64237-f4fe-4de1-92e5-08997ae74b17,CSAS Electronic Research documents 2004-2011,English
+14,Fisheries and Oceans Canada,2deba6ce-fbe2-4c99-bd67-2e42c0644b8d,DFO Documents collection,English
+15,Fisheries and Oceans Canada,c59009d6-539b-47fc-97de-a61c2b9416f4,DFO Map collection,English
+16,Fisheries and Oceans Canada,fb296cc9-e655-4473-906f-f093806ff3c9,DFO Bibliography collection,English
+17,Fisheries and Oceans Canada,2257488f-e228-452d-9ef6-a684a3baacb0,DFO Microfiche collection,English
+18,Fisheries and Oceans Canada,ed3e1328-812c-4a3c-a31e-08d5ecd716db,DFO Reference Collection,English
+19,Fisheries and Oceans Canada,194aa3b0-05ba-4a5e-a700-061754e0497d,DFO Netlibrary eBook collection,English
+20,Fisheries and Oceans Canada,7ec8c8ea-8578-40aa-8661-f4a1e39ab2c7,DFO DVD collection,English
+21,Fisheries and Oceans Canada,de5a9e79-9e42-42f3-8492-0d871e3dc1e8,DFO Rare Books collection,English
+22,Fisheries and Oceans Canada,ec344ea1-ca45-4ec0-af69-81da150a28f5,DFO Video collection,English
+23,Health Canada,249688da-769c-49dc-b0b9-449b8e0666db,Licensed Natural Health Product names (French version),English
+24,Environment Canada,bf6f186b-3a13-4038-a829-f762c94d2765,Municipal Water and Wastewater Survey -Pricing Data,English
+25,Environment Canada,c279da5d-62f0-4942-bfc5-0a5b74f8df65,Municipal Water and Wastewater Survey - Water Use Data,English
+26,Health Canada,cf1a4c53-9e31-46e7-9eb3-247ef35ee1f9,"Patent Register, Submission Certificate (French version)",English
+27,Health Canada,0f1f9599-5057-40d5-b003-8761e85bccc1,"Patent Register, Patent Service (French version)",English
+28,Health Canada,b4923752-866a-4e3c-aabb-3b890c783c5a,Patent Register Drugs (French version),English
+29,Health Canada,d1136fe2-f412-43cc-98d4-c90df98ba1bd,Drug Product Database - Veterinary Species (French version),English
+30,Health Canada,f01123e6-9f8f-4828-b29e-c4a4f2cc66e5,Drug Product Database - Therapeutic Class (French version),English
+31,Health Canada,7d226eef-b7bc-4f44-8828-13b70e33dd1d,Drug Product Database - Status (French version),English
+32,Health Canada,c38247aa-d704-4a2b-bd31-fe8bc7600744,Drug Product Database - Schedule (French version),English
+33,Health Canada,a941f632-8d41-44e5-b34b-b48fe26b1db6,Drug Product Database - Route (French version),English
+34,Health Canada,a6b28655-0113-425b-bce7-98a40827934e,Drug Product Database - Pharmaceutical STD (French version),English
+35,Health Canada,7fc7e06a-7a08-4817-89bc-cf34028aea56,Drug Product Database - Packaging (French version),English
+36,Health Canada,48c2bc61-72c8-401a-a8f7-207710f7b0cc,Drug Product Database - Inactive Products (French version),English
+37,Health Canada,252965f2-c172-4e2a-9410-3a89f7e9a812,Drug Product Database - Form (French version),English
+38,Health Canada,b8df23da-1925-4a9a-99bc-3f99da83b2c2,Drug Product Database - Drug Product (French version),English
+39,Health Canada,9e4f8e40-e390-46ee-8f34-a2719ca65f67,Drug Product Database - Companies (French version),English
+40,Health Canada,6bac7d85-195c-4c82-9076-9d3cd00dafee,Drug Product Database - Active Ingredients (French version),English
+41,Health Canada,0abc785b-ee3d-47a2-9e40-64a3e14b8cd1,Drug Product Database - All Files (French version),English
+42,Canadian Space Agency,06f5e364-6e2c-4d1c-95c2-9fb7d871ca20,CARISMA magnetometer network,English
+43,Public Safety Canada,1b73b22f-1d3b-40b8-9836-31fe4cb3e461,Canadian Disaster Database-French version,English
+44,Public Safety Canada,1c3d15f9-9cfa-4010-8462-0d67e493d9b9,Canadian Disaster Database-English version,English
+45,Environment Canada,f34dcb32-4845-4e88-b125-5ac03c6e4a7f,Anthropogenic disturbance footprint within boreal caribou ranges across Canada - As interpreted from 2008-2010 Landsat satellite imagery (Updated to 2012 range boundaries),English
+46,Canadian International Development Agency,3884cd66-6d2b-410a-af64-7e75e89bdf1b,Key Government of Canada Commitments for the Allocation of the Aid Budget ,English
+47,Human Resources and Skills Development Canada,53754205-1329-41f1-a205-4b462e6a11e5,Monthly Seasonally Adjusted Unemployment Rates by Employment Insurance (EI) Economic Region 1997 ,English
+48,Human Resources and Skills Development Canada,20502beb-0349-4899-96b5-757fd97a2b12,Monthly Seasonally Adjusted Unemployment Rates by Employment Insurance (EI) Economic Region 1996,English
+49,Human Resources and Skills Development Canada,ff5fc47a-f80f-441e-8851-8c5af1c07d19,Monthly Seasonally Adjusted Unemployment Rates by Employment Insurance (EI) Economic Region 2000-French version,English
+50,Human Resources and Skills Development Canada,1cdcc939-5aff-45dc-8a5a-8ac17f5f2ab2,Monthly Seasonally Adjusted Unemployment Rates by EI Economic Region 2012,English
+51,Human Resources and Skills Development Canada,8ddc1e3d-2b49-4e3d-a802-1d547f7e30f8,Monthly Seasonal Adjusted Unemployment Rates by Employment Insurance (EI) Economic Region -1998,English
+52,Human Resources and Skills Development Canada,1e4b5073-f5ca-48bc-bfe5-792b8faf782d,Monthly Seasonal Adjusted Unemployment Rates by EI Economic Region 2003-French Version,English
+53,Human Resources and Skills Development Canada,964801d1-6591-474d-9a30-27ade861aaf3,Monthly Seasonal Adjusted Unemployment Rates by EI Economic Region 2004-French Version,English
+54,Human Resources and Skills Development Canada,ac92b054-1602-4f21-a0d6-1a5e75270454,Canada Pension Plan and Old Age Security - Monthly Statistical Bulletins - February 2013,English
+55,Health Canada,196ad7e2-9f7c-4d56-9795-5d7000cd13da,2012 Baseline Evaluation of Canadian Graphic Health Warning Messages ,English
+56,Statistics Canada,3fb02a19-3c5a-4c9c-b58c-baa06ca34f79,Road Network File - 2009 - Yukon Territory,English
+57,Statistics Canada,70a843b1-5d0d-44c0-94d5-f7fbaa0a5e7f,Road Network File - 2010 - Prince Edward Island,English
+58,Statistics Canada,97db796e-4987-466e-aacf-da26ff55911f,Census Consolidated Subdivision Digital Boundary Files ,English
+59,Health Canada,f9fd2459-a3c3-4f78-8ba5-094b2c7f979b,Data Extracts from the Canada Vigilance Adverse Reaction Online Database,English
+60,Health Canada,6af1adf8-2b73-4770-988c-ddcf07d4417c,Drug Product Database -Packaging,English
+61,Statistics Canada,062480af-2e32-4f89-8d61-55160b8e3625,"Owner households and tenant households by major payments and gross rent as a percentage of 2005 household income, by province and territory (2006 Cens",English
+62,Statistics Canada,159412b0-56c4-4bde-8a76-2fe22b91054d,"Table 075-0005 - Historical statistics, estimates of undercoverage of population with English as a mother tongue",English
+63,Treasury Board of Canada Secretariat,0b3f8d2d-04a3-443b-990f-6ac8853ebf3a,Budgetary Supplementary Estimates by Standard Object of Expenditure Supplementary Estimates (A) 2012-13,English
+64,Treasury Board of Canada Secretariat,c98eb00f-3d08-40f8-b180-19f03fb3d4ee,Summary of Changes to Voted Appropriations - Supplementary Estimates (A) 2012-13,English
+65,Treasury Board of Canada Secretariat,c05e8a2b-4e8b-4da7-b6f3-33f4848d3c09,Inventory of the Government of Canada Organizations- Other Corporate Interests of Canada profiles,English
+66,Treasury Board of Canada Secretariat,6fa088ea-7d93-4f70-91c1-f51a59fc6cc7,Consolidated Statement of Employment and Financial Position,English
+67,Treasury Board of Canada Secretariat,ea72a231-fa4a-48d6-b5fe-df5aba133e5a,Budgetary Supplementary Estimates by Standard object of Expenditure - Supplementary Estimates (B) 2012-13,English
+68,Canadian International Development Agency,99d6ff56-30d6-478b-af74-9a0348cddddb,Statistical Report on International Assistance - by Country Spending 2005-2006,English
+69,Treasury Board of Canada Secretariat,a42a7598-13c3-4226-be1d-499278a5b4a4,Statutory Forecast 2013-14,English
+70,Treasury Board of Canada Secretariat,c30e184d-8882-4085-8398-437369ed84c1,Budgetary Expenditures by Standard Objects 2013-14,English
+71,Human Resources and Skills Development Canada,528b9df5-f583-4851-9306-f32806c1689b,Monthly Seasonal Adjusted Adjusted Unemployment Rates by Former EI Economic Region 2000_Taux de chômage mensuel désaisonnalisé par l'ancienne région économique de l'a.-e. 2000,English
+72,Human Resources and Skills Development Canada,10723cca-3b4b-4b9a-859d-c11c466898e8,Monthly Seasonal Adjusted Adjusted Unemployment Rates by EI Economic Region 2002_Taux de chômage mensuel désaisonnalisé par la région économique de l'a.-e. 2002,English
+73,Human Resources and Skills Development Canada,5748d314-5b7a-4d93-a364-535ff716ff2c,Monthly Seasonal Adjusted Unemployment Rates by EI Economic Region 2003,English
+74,Human Resources and Skills Development Canada,9caf35a1-f782-482a-80ed-18b3bdf86a43,Monthly Seasonal Adjusted Unemployment Rates by EI Economic Region 2004,English
+75,Treasury Board of Canada Secretariat,03d8d9ac-3a11-4566-9922-0559167cccac,Standard Object of Expenditure - Budgetary Supplementary Estimates (C) 2012-13,English
+76,Treasury Board of Canada Secretariat,981963a5-d771-4395-875e-86088073c8ef,Summary of Changes to Vote Appropriations - Supplementary Estimates (C) 2012-13,English

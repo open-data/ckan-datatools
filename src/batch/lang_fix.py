@@ -22,6 +22,15 @@ class PilotDelegator:
     def __init__(self, datafile):
         self.holdings = PilotHoldings()
         self.data = common.XmlStreamReader("RECORD",datafile)
+        for i, node in enumerate(self.data.elements()):
+            #print i,node
+            try:
+                self.holdings.add_record(node)
+            except Exception as e:
+                print e
+                print "Failed to add record to holdings"
+        
+        '''
         for i,node in enumerate(self.data.elements()):          
             try:
                 self.holdings.add_record(node)
@@ -32,11 +41,13 @@ class PilotDelegator:
                 pass
                 
         print self.cnt.items()
+        '''
+   
         #self.holdings.pickle_it()
     #This is cheezy, I should be using a yield statement inside a generator for this
-    brokenfile.write("</XML>\n")
+    #brokenfile.write("</XML>\n")
     
-    def __write_errors(self,error):
+    def _write_errors(self,error):
         # this is where logging belongs
         print "--- {} Error ----".format(error.type)
         print error.message
@@ -73,13 +84,13 @@ class PilotDelegator:
             lang_counts[record.language]+=1               
             for marker in language_markers:
                 if record.language == u'Bilingual (English and French) | Bilingue (Anglais et Fran\xe7ais)':
-                    print i, record.title_en
+                    print i, record.title
                     bifile.write(lxml.etree.tostring(record.node)+"\n")
                     continue
-                elif marker[0] in record.title_en:
+                elif marker[0] in record.title:
                    
                     # Split the marker out of the record
-                    split_title_en = record.title_en.split(marker[0])[0]
+                    split_title_en = record.title.split(marker[0])[0]
                     equivalent_title_french_record = split_title_en + marker[1]
                     #print equivalent_title_french_record
                     # Having this title should enable us to find the french record
@@ -89,8 +100,8 @@ class PilotDelegator:
 
                     try:
                         #print marker
-                        e = str(record.title_en.split(marker[0])[0])
-                        f = str(french_record[0].title_en.split(marker[1])[0])
+                        e = str(record.title.split(marker[0])[0])
+                        f = str(french_record[0].title.split(marker[1])[0])
 #                        print e
 #                        print f
 #                        print i, record.node 
@@ -125,5 +136,5 @@ if __name__ == "__main__":
     print "Report"
     pilot_file =  "/Users/peder/dev/goc/OD_DatasetDump-0.xml" 
     pilot = PilotDelegator(pilot_file)
-    pilot.report()
-    #pilot.match_languages()
+    #pilot.report()
+    pilot.match_languages()
