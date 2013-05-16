@@ -1,0 +1,82 @@
+ccollections
+Counter
+p0
+((dp1
+VHealth Canada
+p2
+I56
+sVCanada Revenue Agency
+p3
+I3
+sVPublic Safety Canada
+p4
+I3
+sVTreasury Board of Canada Secretariat
+p5
+I63
+sVDepartment of Finance Canada
+p6
+I259
+sVAtlantic Canada Opportunities Agency
+p7
+I2
+sVLibrary of Parliament
+p8
+I2
+sVPublic Works and Government Services Canada
+p9
+I2
+sVIndustry Canada
+p10
+I26
+sVLibrary and Archives Canada
+p11
+I8
+sVTransport Canada
+p12
+I3
+sVFisheries and Oceans Canada
+p13
+I26
+sVStatistics Canada
+p14
+I8757
+sVCitizenship and Immigration Canada
+p15
+I74
+sVEnvironment Canada
+p16
+I247
+sVCanadian International Development Agency
+p17
+I44
+sVNational Research Council Canada
+p18
+I6
+sVThe Federal Bridge Corporation Limited
+p19
+I1
+sVNational Defence
+p20
+I2
+sVAgriculture and Agri-Food Canada
+p21
+I3198
+sVForeign Affairs and International Trade Canada
+p22
+I5
+sVCanada Border Services Agency
+p23
+I2
+sVCanadian Space Agency
+p24
+I1
+sVNatural Resources Canada
+p25
+I46
+sVHuman Resources and Skills Development Canada
+p26
+I36
+stp27
+Rp28
+.

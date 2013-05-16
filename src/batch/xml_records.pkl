@@ -1,0 +1,17 @@
+(lp0
+(ccopy_reg
+_reconstructor
+p1
+(clxml.etree
+_ElementStringResult
+p2
+c__builtin__
+str
+p3
+S'249688DA-769C-49DC-B0B9-449B8E0666DB'
+p4
+tp5
+Rp6
+(dp7
+S'_parent'
+p8
