@@ -125,36 +125,39 @@ class XPather:
                 return ""
 
 ''' This could be lowercased to reduce number of hits, but then reporting 
-would be less useful.  THE ORDER OF THIS LIST IS VERY IMPORTANT in order check to return at the right spot.  
+would be less useful.  THE ORDER OF THIS LIST MATTERS in order check to return at the right spot.  
 Put cases that can be misunderstood last '''
-language_markers=[
-                   (' - (In English)', ' - (In French)'),
+language_markers=[  ('(English verison)','(French verison)'),
+                    ('(English verison)','(French version)'),
+                    ('(English version)','(French verison)'),
+                    ('(English version)','(Fench version'),
+                    ('(English version)','(Frech version'),
+                    ('_English Version','_French Version'),
+                    ('_English Version','-French Version'),
+                    ('(English version)','(French version'),
+                    ( u'-English version',u'-French version'),
+                    (' - (In English)', ' - (In French)'),
                     (' (In English)', ' (In French)'),
-                   (' - English Version [AAFC', ' - French Version [AAFC'),
-                   (' - English Version',' - French Version'),
-                   (' - English version',' - French version'),
+                    (' - English Version [AAFC', ' - French Version [AAFC'),
+                    (' - English Version',' - French Version'),
+                    (' - English version',' - French version'),
                     (' (in English)', ' (in French)'),
                     (' - (in English)', ' - (in French)'),
-                    (' (English version)', ' (French version)'),
-                    (' (English verison)', ' (French version)'),
                     (' - (in English)', ' - (in French)'),
                     (' (in english)', ' (in french)'),
                     (' - (in english)', ' - (in french)'),
                     (' - (English)', ' - (French)'),  
                     (' - ENGLISH VERSION', ' - FRENCH VERSION'),
                     (' - English', ' - French'),
-                    ('_English Version','_French Version'),
-                    ('_English Version','-French Version'),
-                    ( u'-English version',u'-French version'),
-                    ('(English version)','(French verison)'),
-                    ('(English verison)','(French verison)'),
-                    ('(English version)','(French version'),
-                    ('(English version)','(Fench version'),
-                    ('(English version)','(Frech version')]
+                    
+                    ]
 
 language_markers_fra = [
                          u' (Version anglaise)',
                          u' (Version française)',
+                         u' (version française)',
+                         u' (version francaise)',
+                         u' (Version francaise)',
                          u' - version française [AAFC',
                          u' - version anglaise [AAFC',
                          u' - version anglaise',
@@ -166,7 +169,8 @@ language_markers_fra = [
                          u'- anglais',
                          u'- Anglais',
                          u'- française',
-                         u'- Française'
+                         u'- Française',
+                         '_version en anglais',
                        
                          
                        ]
