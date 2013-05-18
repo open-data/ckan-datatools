@@ -32,7 +32,8 @@ from ckanext.canada.metadata_schema import schema_description
        
 NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
 LAST_REQUEST =''
-                
+ 
+validation_override=False               
 
 def keywords_by_code(doc,code_value,nspace):
     ''' pass xml and code value, get back a list of keywords  '''
@@ -91,7 +92,7 @@ def gather_products():
         for product in json_response['products']:     
             file.write(product);  
             file.write(",")
-    pass
+ 
 
 
 class NrcanMunge():
@@ -190,7 +191,7 @@ class NrcanMunge():
                 def clean_tag(x):
                     #replace forward slashes and semicolon so keywords will pass validation
                     #Apostrophes in french words causes a proble; temporary fixx
-                    x = x.replace("/"," - ").replace("; ","-").replace("'","-")
+                    x = x.replace("/"," - ").replace("; ","-")
 
                     return x.split(">")[-1].lower().strip().capitalize()
                 
@@ -266,10 +267,12 @@ class NrcanMunge():
 
                 try:
                     frequencyCode = doc.xpath('//gmd:MD_MaintenanceFrequencyCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
-                    package_dict['maintenance_and_update_frequency']=maintenanceFrequencyCodes[540]
+                    print frequencyCode
+                    package_dict['maintenance_and_update_frequency']="As Needed | Au besoin"
+
                     
                 except IndexError, TypeError:
-                    package_dict['maintenance_and_update_frequency']=schema_description.dataset_field_by_id['maintenance_and_update_frequency']['example']['eng']
+                    package_dict['maintenance_and_update_frequency']="As Needed | Au besoin"
                     #print "Eror", package_dict['maintenance_and_update_frequency']
                 #ISO 8061
                 time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
@@ -352,7 +355,8 @@ class NrcanMunge():
                 #package_dict['browse_graphic_url']='http://wms.ess-ws.nrcan.gc.ca/wms/mapserv?map=/export/wms/mapfiles/reference/overview.map&mode=reference&mapext=%s' % package_dict['geographic_region']
                 package_dict['browse_graphic_url']=xpather.query('browse_graphic_url','//MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
                 if package_dict['browse_graphic_url'] == '':
-                    package_dict['browse_graphic_url'] ='http://www.fakeimageurl123.com/foo.jpg'
+                    pass
+                    #package_dict['browse_graphic_url'] ='http://www.fakeimageurl123.com/foo.jpg'
                     
                 
                 #TODO:  gmd:otherCitationDetails for DOI
@@ -382,17 +386,16 @@ class NrcanMunge():
                            
                             format =  formatTypes['Other']
                         
-                        
                         resource_track.append(url)
                         
                         lang = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
                        
                         #TODO :  Need more information on whether we should actually exclude files via the schema
-                        resource={'url':url,'format':format,'language':lang,'resource_type': 'file'}
+                        resource={'url':url,'format':format,'language':lang,'resource_type': 'file', 'name':'Dataset'}
                         '''
                         for schema_format in  common.schema_file_formats:
                             if  format == schema_format:
-                                resource={'url':url,'format':format,'language':lang}
+                                resource={'url':url,'format':format,'language':lang, 'name':'Dataset'}
                         '''
                         resources.append(resource) 
                         #print resource 
@@ -403,6 +406,7 @@ class NrcanMunge():
                         continue
                         
                 #pprint(resources)
+                package_dict['validation_override']=validation_override
                 package_dict['resources'] = resources              
                 #pprint (package_dict)
                 
@@ -456,6 +460,7 @@ def download_nap(linkfile,outpath):
 
            
 if __name__ == "__main__":
+    validation_override=True
 #    NrcanMunge().create_ckan_data(basepath="/Users/peder/dev/goc/nap-sample",
 #                                     jlfile='/Users/peder/dev/goc/LOAD/nrcan-test.jl',start=0,stop=250)
 

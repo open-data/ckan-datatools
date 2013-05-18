@@ -147,10 +147,11 @@ def split_xml_files(pilot_file):
 
     tree = etree.parse(pilot_file)
     root = tree.getroot()
-    force_split=[]
+    force_biling=[]
+   
     with open('force-bilingual.csv', 'rb') as csvfile:
         for row in csv.reader(csvfile):
-            force_split.append(row[0].upper())
+            force_biling.append(row[0].upper())
     
     
     matched_ids_en=[i[0] for i in matched_ids()]
@@ -174,7 +175,7 @@ def split_xml_files(pilot_file):
             # RECORDS WITH FORM ID
             
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            if formid == '270643E1-D03F-4580-8108-44923C34E5D1':
+            if formid.lower() == 'c38247aa-d704-4a2b-bd31-fe8bc7600744':
                 print "STOP"
 
             if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
@@ -204,7 +205,6 @@ def split_xml_files(pilot_file):
                 num= title.split("[AAFC-AIMIS-RP-")[1].split("]")[0]
             '''
 
-                
             # GET ALL RECORDS WITH language or language__ LANGUAGE INDICATORS
             # Document instances of records that do not have one.
 
@@ -225,7 +225,7 @@ def split_xml_files(pilot_file):
                 
                 language = get_language(child)
                 cnt[language]+=1
-                if language=="Bilingual":
+                if language=="Bilingual" or formid in force_biling:
                     docs_bilingual.append(child)
             except:
                 cnt["empty language Element"]
@@ -253,25 +253,14 @@ def split_xml_files(pilot_file):
                         split_title = title.split(marker[1])[0]
                         split_marker=True
                         break
-                    
-                        
-                   
-                
-                if split_marker == False:
-                    
-                    if language!="Bilingual":
-                        
-                        if formid not in force_split and formid not in matched_ids_en and formid not in  matched_ids_fr:
-                            print i,"NO SPLIT ::",formid,language,"::",title
-                            unmatched.append((title,child, formid))
-                            cnt['NO SPLIT']+=1
-                        
 
-                elif language== "English" and "French" not in title:
+
+      
+                if language== "English":
                     #print i,"EN SPLIT", title
                     docs_en.append((split_title,child,formid))
                     cnt['EN SPLIT']+=1
-                elif language=="French" and "English" not in title:
+                elif language=="French":
                     #print i,"FR SPLIT", title
                     fra_dict[split_title] =child
                     cnt['FR SPLIT']+=1
@@ -306,7 +295,7 @@ def split_xml_files(pilot_file):
              matched.append(fra_dict[en_title])
              cnt["matched"]+=1
         except KeyError:
-
+            print "UNMATCHED", en
             unmatched.append(en)
             cnt["unmatched"]+=1
         except:
@@ -315,6 +304,7 @@ def split_xml_files(pilot_file):
  
     print "Matched before", len(matched)
     manually_matched=matched_ids()
+    
     for m in manually_matched:
         print "Searching for ", m
         e = "//FORM[NAME='thisformid'][A/text()='{}']".format(m[0])
@@ -324,6 +314,11 @@ def split_xml_files(pilot_file):
             matched.append(root.xpath(f)[0].getparent())
         except:
             print "FORM ID MISSING?", f  
+        for un in unmatched:
+            if m[0] == un[2]:
+                unmatched.remove(un)
+            if m[0] in force_biling:
+                unmatched.remove(un)
             
     print "Matched after", len(matched)
 
@@ -333,13 +328,13 @@ def split_xml_files(pilot_file):
         print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
         
         '''  Now we can build the new XML document '''
+        unmatched_root = etree.Element("XML")
         matched_root = etree.Element("XML")
         bilingual_root = etree.Element("XML")
         
-        print matched[1]
-        print docs_bilingual[1]
-        print len(matched)
-        print len(docs_bilingual)
+ 
+        print "matched size:", len(matched)
+        print "bilingual " , len(docs_bilingual)
 
         for i, record in enumerate(matched):
             #print i+1, record
@@ -349,13 +344,17 @@ def split_xml_files(pilot_file):
             #print i+1, record
             bilingual_root.append(record)
             
-        print "BILINGUAL ROOT", bilingual_root
+        for i, record in enumerate(unmatched):
+            #print i+1, title, id
+            unmatched_root.append(record[1])
             
-
+        unmatched_outfile = "/Users/peder/dev/goc/LOAD/pilot-unmatched.xml"
         matched_outfile =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
         bilingual_outfile =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
+
     
-       
+        with open(unmatched_outfile,'w') as f:
+            f.write(etree.tostring(unmatched_root))
             
         with open(bilingual_outfile,'w') as f:
             f.write(etree.tostring(bilingual_root))
@@ -373,22 +372,22 @@ def split_xml_files(pilot_file):
         writer.writerow(['No.','Department','ID','Name','Language'])
 
         for i,item in enumerate(unmatched):
+            print item
             #print item[0]
             child = item[1]
             xf.write(etree.tostring(child))
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            duplicates[formid]+=1
             title = item[0]
             try:
                 dept_code=child.xpath("FORM[NAME='department']/A/text()")[0].split('|')[1]
                 department= schema_description.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][dept_code]['eng']
             except:
                 department = None
-            language = "English"
-            writer.writerow([str(i),department, formid.lower(), title, language])
-            print duplicates.most_common()
             
-    #report()   
+            writer.writerow([str(i),department, formid, title])
+            
+            
+    report()   
     def dept_tables():
         #pickle.dump(dept_cnt, open('pending_departments.pkl','wb'))
         
@@ -536,18 +535,7 @@ def force_bilingual():
     with open('force-bilingual.csv', 'rb') as csvfile:
         for row in csv.reader(csvfile):
             bi.append(row[0].upper())
-            
-          
-    tree = etree.parse('unmatched.xml')
-    #tree = etree.parse('put fixed.xml')
-    root = tree.getroot()
-   
-    
-    for i,child in enumerate(root):
-       #print i
-       formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-       if formid in bi:
-          print etree.tostring(child)
+    return bi
             
 def xml_report(file):
 #    newroot = etree.Element("XML")
