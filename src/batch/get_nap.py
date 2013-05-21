@@ -7,11 +7,11 @@ import urllib2
 from pprint import pprint
 import urlparse
 
-NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50"
+NEXT = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?alt=json&max-results=50&start-index=1209637"
 LAST_REQUEST =''
 
 def gather_products():
-    linkfile ="/Users/peder/temp/products.links"
+    linkfile ="/Users/peder/dev/goc/LOAD/products-may17.links"
     file = open(os.path.normpath(linkfile), "a")
     global total_download
     global LAST_REQUEST

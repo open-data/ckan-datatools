@@ -4,6 +4,7 @@ from collections import Counter
 import pickle
 from pprint import pprint
 from data  import registry
+import sys
 xml_records = pickle.load(open('xrecords.pkl','rb'))
 
 def jl_ids(file):
@@ -103,7 +104,14 @@ def compare_with_xml():
     for d in diff:
         print d
     pickle.dump(diff, open('diff.pkl','wb'))
+
+def analyze_keywords(file):
+    for i,record in enumerate(jl_records_dict(file).values()):
+        print record['keywords']
         
+        if i>100:sys.exit()
+        
+      
 def compare_with_registry(file):
     '''
      The titles that seem different between the old and new jl files 
@@ -159,13 +167,26 @@ def compare_with_registry(file):
     print "Difference", len(regset.difference(jlset))
     #pprint(regset.union(jlset) - regset.intersection(jlset))
 
+def repair_jl(file):
+    '''
+     The titles that seem different between the old and new jl files 
+     they need to be checked against what's in the registry ids to ensure 
+    that they are in fact new
+    
+    '''
+    lines = [line.strip() for line in open(file)]
+    for  i,line in enumerate(lines):
+        print json.dumps(eval(line))
 
 if __name__ == "__main__":
     
     load_dir = '/Users/peder/dev/goc/LOAD'
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
-    compare_with_registry(input_file)
+    broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
+    #analyze_keywords(input_file)
+    repair_jl(broken_file)
+    #compare_with_registry(input_file)
     
     #jl_report(input_file)
     #title_diff(base_load_file,input_file)

@@ -12,6 +12,12 @@ from ConfigParser import SafeConfigParser
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
 
+
+''' Update portal_release_data and ready_to_publish '''
+def add_fields_to_registry():
+    print registry_packs("http://localhost:5000")
+    
+
 def packageCount(ckansite):
     print "Package count from ", ckansite, ":    "
     header = '{}'
@@ -22,7 +28,14 @@ def packageCount(ckansite):
     resp = json.loads(r.read())
     
     print len(resp['result'])
-        
+
+def registry_packs(site):
+    header = '{}'
+    req = ckansite + "/api/action/package_list"
+    r = urllib2.urlopen(req, header)
+    return json.loads(r.read())
+     
+
 class DataManager:
     
     def __init__(self, server,apikey,proxy=None):
