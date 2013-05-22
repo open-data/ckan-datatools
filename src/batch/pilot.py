@@ -448,6 +448,12 @@ class TransformDelegator:
          for i,pair in enumerate(self.combined_elements(root)):
 
             node_en = pair[0]
+            lang = common.language(node_en)
+            if lang == "English":
+                continue
+            
+            # MAKE SURE It's english and that the order in pilot-matched.xml has not been broken
+
             node_fr = pair[1]
      
             package_en = Transform().process_node(i,node_en, "eng; CAN")
@@ -457,8 +463,7 @@ class TransformDelegator:
             for pack in  package_fr['resources']:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
-            
-
+              
             if package_en['resources'] == []:
                 raise Exception
 
@@ -477,6 +482,7 @@ class TransformDelegator:
                 print i, "OK",package_en['id']
                 print package_en['title']
                 print package_en['title_fra']
+                
                 #if i>80:sys.exit()
                 if package_en['id']  == "2da1db44-d00f-4764-8524-d42e3b798ce0":
                     print "STOP"

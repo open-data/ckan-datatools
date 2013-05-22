@@ -76,23 +76,19 @@ def id_diff(old,new):
 #    print len(old),len(new)
     i =1
     n=1
-    old=jl_records(old)
-    new=jl_records(new)
+    old=jl_ids(old)
+    new=jl_ids(new)
     print len(old), len(new)
-    for record in new:
-        found=False
-        for orecord in old:
-            
-            if record['id'] == orecord['id']:
-#               print i,record['title']
-               i+=1
-               found=True
-               break
-        if not found:
-            i+=1
-            n+=1
-            print i, record['id'], "Can't find", record['title']
-            print i, n,record['id']
+    for id in new:
+       cnt[id]+=1
+       
+    print len(cnt)
+    for id in old:
+       cnt[id]+=1
+    print len(cnt)
+    for id,count in cnt.items():
+        if count<2:
+            print id, count
 
     
 def compare_with_xml():
@@ -107,9 +103,11 @@ def compare_with_xml():
 
 def analyze_keywords(file):
     for i,record in enumerate(jl_records_dict(file).values()):
+        print "---    {}   ---".format(i)
         print record['keywords']
+        print record['keywords_fra']
         
-        if i>100:sys.exit()
+        if i>300:sys.exit()
         
       
 def compare_with_registry(file):
@@ -184,12 +182,13 @@ if __name__ == "__main__":
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
     broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
+    #repair_jl(broken_file)
     #analyze_keywords(input_file)
-    repair_jl(broken_file)
+    
     #compare_with_registry(input_file)
     
     #jl_report(input_file)
     #title_diff(base_load_file,input_file)
-    #id_diff(base_load_file,input_file)
+    id_diff(base_load_file,input_file)
     
     

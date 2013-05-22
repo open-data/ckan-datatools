@@ -22,10 +22,7 @@ from prettytable import PrettyTable, from_csv
     There are 1445 bilingual records.  Only 1098 made it into the bilingual .jl file due to date errors or other issues.
       
 """
-langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
-           'FA6486B4-8A2A-4DA4-A727-E4EA3D29BF71':'French',
-           '790CE47F-0B49-4D1F-9CE0-50EC57517981':'Bilingual'
-           }
+
 cnt = Counter()
 dept_cnt = Counter()
 tree = None
@@ -126,21 +123,6 @@ def find_pending(pilot_file):
 #    pprint(pending_records)
 #    print len(pending_records)
 #    #pprint(status_cnt.items())
-def get_language(record):
-    
-    try:
-        language__ = record.xpath("FORM[NAME='language__']/A") 
-        if language__:
-            language = language__
-        else:
-            language = record.xpath("FORM[NAME='language']/A")
-
-        langcode=language[0].text
-        if langcode: 
-            langcode = langcode.split('|')[1]
-            return langcodes[langcode]
-    except:
-        raise
 
 
 def split_xml_files(pilot_file):
@@ -175,7 +157,7 @@ def split_xml_files(pilot_file):
             # RECORDS WITH FORM ID
             
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            if formid.lower() == '2da1db44-d00f-4764-8524-d42e3b798ce0':
+            if formid.lower() == 'cf1a4c53-9e31-46e7-9eb3-247ef35ee1f9':
                 print "STOP"
 
             if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
@@ -195,7 +177,8 @@ def split_xml_files(pilot_file):
             title_elem = child.xpath("FORM[NAME='title_en']/A/text()")
             if title_elem: 
                 title = meat_fix(title_elem[0])
-                
+                if "Patent Register, Submission Certificate" in title:
+                    print "STOP"
             else:
                 cnt["Title Element Missing"]
   
@@ -223,7 +206,7 @@ def split_xml_files(pilot_file):
 
             try:
                 
-                language = get_language(child)
+                language = common.language(child)
                 cnt[language]+=1
                 if language=="Bilingual" or formid in force_biling:
                     docs_bilingual.append(child)
@@ -475,23 +458,6 @@ def split_xml_files(pilot_file):
     
     def load_report_data():
         pass
-
-
-def language(record):
-    
-    try:
-        language__ = record.xpath("FORM[NAME='language__']/A") 
-        if language__:
-            language = language__
-        else:
-            language = record.xpath("FORM[NAME='language']/A")
-
-        langcode=language[0].text
-        if langcode: 
-            langcode = langcode.split('|')[1]
-            return langcodes[langcode]
-    except:
-        raise
 
 
 def wrong_lang_fix():
