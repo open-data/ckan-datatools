@@ -2,15 +2,47 @@ import sys
 import os
 import json
 import setup_data
-import time
-import socket 
+#import timecd 
+#import socket 
 import urllib2
-from jsonpath import jsonpath
+import ckanapi
+#from jsonpath import jsonpath
 from pprint import pprint 
 import argparse
 from ConfigParser import SafeConfigParser 
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
+
+def activity_list(ckansite):
+    print "Chekcing activity at  ", ckansite, ":    "
+    print registry_package_list()
+
+    #api_call('user_show')
+    #api_call('user_show',{'id':'12345'})
+    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca/')
+    #activity_list =  registry.action.recently_changed_packages_activity_list()
+    users = registry.action.user_list()
+    user = registry.action.user_show(id='7fff074e-3c3e-4d4c-a2ab-a33391c36f4f')
+    for pack in packs['result']:
+        print pack
+
+
+      
+def registry_package_list():
+    datadir=os.path.dirname("../data/")
+    try:
+        file = open(os.path.normpath(datadir + "/registry_ids.dat"))
+        #if os.stat(file)[6]==0: raise
+    except IOError:
+        file = open(os.path.normpath(datadir + "/registry_ids.dat"), "w")
+        registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca/')
+        packs = registry.action.package_list()
+        for pack in packs['result']:
+            file.write(pack + "\n")
+        
+    return [line.strip() for line in file]
+    
+
 
 def packageCount(ckansite):
     print "Package count from ", ckansite, ":    "
@@ -226,6 +258,10 @@ class CkanClient:
                print  h
   
 if __name__ == "__main__":
+   
+    #activity_list("http://registry.statcan.gc.ca")
+
+
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
@@ -265,3 +301,4 @@ if __name__ == "__main__":
             DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata, int(args.skiplines))
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
+ 
