@@ -120,27 +120,38 @@ def id_diff(old,new):
     baseline_records = jl_records_dict(old)
     latest_records = jl_records_dict(new)
     n=1
-    lost_in_new=[]
+    not_in_old=[]
+    not_in_new=[]
     for item in both_cnt.items():
         if item[1]==1: 
+            
             try:
+                print ">>>>> check  key in old ", item[0]
                 title = baseline_records[item[0]]['title']
                 print n,"IN OLD",title ,item[0]
-                title = baseline_records[item[0]]['title']
-                print "ALSO IN NEW ?" 
-                title2 = latest_records[item[0]]['title']
-                print "YES", title2
                 n+=1
             except KeyError:
-                print n, "NEW", latest_records[item[0]]['title'],item[0]
-                n+=1
-            except:
-                print "SOMETHING ELSE HAPPENED"
-        
+                print "Not found in old"
+                not_in_old.append(item[0])
+
+            
+            try:
+                print ">>>>> check  key in new ", item[0]
+                title = latest_records[item[0]]['title']
+                print n,"IN NEW",title ,item[0]
+            except KeyError:
+                print "Not found in new"
+                #Weed out duplicates before adding
+                if item[0] not in not_in_new:
+                    not_in_new.append(item[0])
+
     
-   
+    print "-------------------------------"
+    print len(not_in_new)
+    pprint(not_in_new)
     
-           
+    print "Conclusion:  In the old file, some records squeeked in  as primary that are actually french id, because the order got mixed up "
+    print "THESE FILES MUST BE REMOVED FROM REGISTRY"
 def compare_with_xml():
     xml_enbi= [i[1].lower() for i in xml_records if i[0] != "French"]
     print len(jl_records),len(xml_records), len(xml_enbi)

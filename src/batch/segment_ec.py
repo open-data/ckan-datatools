@@ -23,6 +23,72 @@ from prettytable import PrettyTable, from_csv
       
 """
 
+skip=['062480AF-2E32-4F89-8D61-55160B8E3625',
+      '99D6FF56-30D6-478B-AF74-9A0348CDDDDB',]
+
+missing_in_new=[u'dafb6413-5dab-45ca-bcd2-8c6ff4b67be5',
+ u'a15918d9-fcf7-4e62-a983-e5965400abd0',
+ u'26ca2ddc-6aaf-4d96-9dc0-26757f9c8a0d',
+ u'9e4f8e40-e390-46ee-8f34-a2719ca65f67',
+ u'7606bc7b-c032-4b57-8706-02ecb71ac7d0',
+ u'dab5596d-dcd3-48e3-8594-b129dc68d5c6',
+ u'8c8dbf45-e706-4120-be22-4aef7635fce5',
+ u'7d226eef-b7bc-4f44-8828-13b70e33dd1d',
+ u'be106be3-5ee0-42f1-8e56-f38a21c5297e',
+ u'8b5d3d07-e00c-4b69-9046-8a2de8450777',
+ u'145a12e9-83f9-4c81-a68a-c213e9a3c05e',
+ u'249688da-769c-49dc-b0b9-449b8e0666db',
+ u'6c19a1c5-a173-463b-a7bd-817c2d35802c',
+ u'bbef9e90-e622-44c7-aa90-a635f5e422a0',
+ u'6bac7d85-195c-4c82-9076-9d3cd00dafee',
+ u'30582c5a-f9d7-4932-ada1-dae4ea4a58e2',
+ u'17c6703f-be6a-42cc-9817-e9779eeba352',
+ u'9a0208f1-dbad-4700-af24-fc8886206b96',
+ u'aa73f174-1fab-4ac7-bc19-79d972044b05',
+ u'b4670f58-8bed-44f5-b41a-b96516cefb8f',
+ u'c20c8d52-4a05-43e0-8075-609cb8dcd85c',
+ u'653e3ade-56a2-489c-97c9-1f7d930cedba',
+ u'0f1f9599-5057-40d5-b003-8761e85bccc1',
+ u'dfb9b20e-c014-4601-9a3b-19a688b203a9',
+ u'602dd153-b61c-46dc-91b2-89cd5b8f8e45',
+ u'53390d03-5a71-40e9-8fa9-4d0572b4cf45',
+ u'97215cfe-504a-4bde-b211-d194751e742a',
+ u'b8df23da-1925-4a9a-99bc-3f99da83b2c2',
+ u'8bf5752a-fd2b-4999-bb65-1182d6f20f2a',
+ u'6e7fb3cf-c3e8-491b-9628-461c2f5aa0be',
+ u'd5024e6d-f261-4acb-abdb-636a9cae5de4',
+ u'a941f632-8d41-44e5-b34b-b48fe26b1db6',
+ u'5a891037-1c83-4483-9137-5e980c8a23b6',
+ u'adfa15c1-7238-4967-be00-1524bbf66b60',
+ u'ee82dff4-8668-470b-8c7d-0de51b338994',
+ u'3f66f90d-90f8-4aec-b369-e744073788ae',
+ u'4d75cf10-92a4-4cb5-8838-a5b745c18359',
+ u'15f677ee-eb80-40f7-b323-c530dae84f18',
+ u'72d5dd81-1c4c-4d31-ad56-8522c6f161aa',
+ u'48c2bc61-72c8-401a-a8f7-207710f7b0cc',
+ u'76f4fbaf-5daf-4006-b3fe-915fae43d589',
+ u'fbd347fe-acb5-4930-95b8-7daf5940e519',
+ u'b3e6feb8-43cd-4a05-8c10-458639d96e51',
+ u'8cb47266-ce22-43eb-81c3-13c6d0f46d6b',
+ u'd4d5fd46-64e8-4acd-b95c-69bfcd99fef6',
+ u'1b404660-a745-4e40-8bf9-7c0df298fc67',
+ u'e1a3bc45-5bae-4bd9-806e-840841c0ba32',
+ u'369865c9-949c-4647-b1f2-822339ba0890',
+ u'47d7de89-e60d-4e2c-a8da-5d6ba70625af',
+ u'ee84c92e-f1e3-4ca1-908b-b9c600bc866f',
+ u'dd84f712-953a-4455-85e9-422c540d33b1',
+ u'86b4e601-8c66-4baa-9257-205e5a864239',
+ u'c38247aa-d704-4a2b-bd31-fe8bc7600744',
+ u'fb89b81f-d64f-4e9b-9464-f1edeb35020e',
+ u'64b450ef-7e30-453f-b245-fbab235d48cf',
+ u'06201991-4f6e-4404-b417-ae83b94e7dc7',
+ u'02071857-fbc4-42e8-adeb-0d0f9b3b562d',
+ u'99d27654-c3f2-48f5-a053-7c772ae6563c',
+ u'632cef40-9de6-47e5-9d16-744d32fc4f0e']
+
+
+
+
 cnt = Counter()
 dept_cnt = Counter()
 tree = None
@@ -43,10 +109,17 @@ def meat_fix(title):
     
     return title.replace("Lamb, Bison, Beef, Goat, Mutton, Pork, Veal, Horsemeat","Beef, Bison, Goat, Horsemeat, Lamb, Mutton, Pork, Veal").replace('Turkey, Chicken, Mature Chicken','Chicken, Mature Chicken, Turkey')
 
-def matched_ids():
-    fp = open('wayward.csv', 'r')
-    with open('wayward.csv', 'rb') as csvfile:
+def force_matched_pairs():
+    with open('wayward.csv', 'r') as csvfile:
         return [(row[0].upper(),row[1].upper()) for row in csv.reader(csvfile, delimiter=',')]
+
+def force_matched_ids():
+    ids=[]
+    for pair in force_matched_pairs():
+        ids.append(pair[0])
+        ids.append(pair[1])
+    return ids
+        
 
 def find_pending(pilot_file):
 
@@ -136,8 +209,8 @@ def split_xml_files(pilot_file):
             force_biling.append(row[0].upper())
     
     
-    matched_ids_en=[i[0] for i in matched_ids()]
-    matched_ids_fr=[i[1] for i in matched_ids()]
+    matched_ids_en=[i[0] for i in force_matched_pairs()]
+    matched_ids_fr=[i[1] for i in force_matched_pairs()]
 
     for i,child in enumerate(root):
         
@@ -154,22 +227,25 @@ def split_xml_files(pilot_file):
 
         formid = None           
         try: 
-            # RECORDS WITH FORM ID
-            
             formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            if formid.lower() == 'cf1a4c53-9e31-46e7-9eb3-247ef35ee1f9':
-                print "STOP"
-
-            if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
-                pass
-                #print "ZERO ? or ...", child.xpath("FORM[NAME='dataset_link_en_1']/A/text()")
+            if formid in missing_in_new:
+                print "STOP Search process"
+            if formid in skip:
+                print "SKIPPING ", formid
+                continue
             
-            #print i,formid[0].text
+            if formid.lower() in missing_in_new: 
+                print "STOP ", formid.lower()
+            if formid in force_matched_ids():
+                continue
+            if len(child.xpath("FORM[NAME='number_datasets']/A/text()")) ==0:
+                cnt['number_datasets_zero']+=1
+
             cnt['formid']+=1
+            
         except IndexError:
             cnt['no formid']+=1   
             continue
-        
         
         try:
             # GET THE TITLE
@@ -177,8 +253,8 @@ def split_xml_files(pilot_file):
             title_elem = child.xpath("FORM[NAME='title_en']/A/text()")
             if title_elem: 
                 title = meat_fix(title_elem[0])
-                if "Patent Register, Submission Certificate" in title:
-                    print "STOP"
+                if "Road Network File - 2011 - Canada" in title:
+                    print "STOP", title
             else:
                 cnt["Title Element Missing"]
   
@@ -202,7 +278,6 @@ def split_xml_files(pilot_file):
                 cnt["Total Records with Department"]+=1
             except:
                 cnt['No Department Found']+=1
-       
 
             try:
                 
@@ -210,6 +285,7 @@ def split_xml_files(pilot_file):
                 cnt[language]+=1
                 if language=="Bilingual" or formid in force_biling:
                     docs_bilingual.append(child)
+                    continue
             except:
                 cnt["empty language Element"]
                 no_langauge_elem.append(child)
@@ -260,33 +336,38 @@ def split_xml_files(pilot_file):
 
 
     #print len(docs_en),len(fra_dict),len(docs_unsplit_titles),len(docs_bilingual)
-    ''' with these lists ready, we can now do some matchin work '''
+    ''' with these lists ready,  do some matching work '''
 
-    #print "SIZE OF FRA DICT ", len(fra_dict)
-    foo=False
-    ''' Let's match records '''
     for i, en in enumerate(docs_en):
-       
-        en_title=en[0]
-           
+
+        formid= en[1].xpath("FORM[NAME='thisformid']/A/text()")[0] 
+        print "Trying to match ", formid
+        if formid in missing_in_new:
+            print "STOP Matching process"
+        if formid.upper() in force_matched_ids():
+            print "----------- FORCE MATCHED FOUND, SKIPPING ---------"
+            continue
+        
         # Now find this in french 
-        try:   
+        try:  
+             en_title=en[0]
              check = fra_dict[en_title]# match first before appending english record so both fail and ENG / FRA sequence does not get broken       
+             print en_title
+             print fra_dict[en_title].xpath("FORM[NAME='title_en']/A/text()")
              matched.append(en[1])
              matched.append(fra_dict[en_title])
              cnt["matched"]+=1
         except KeyError:
-            print "UNMATCHED", en
-            unmatched.append(en)
-            cnt["unmatched"]+=1
+            raise
+           
         except:
             raise 
         
  
     print "Matched before", len(matched)
-    manually_matched=matched_ids()
+
     
-    for m in manually_matched:
+    for m in force_matched_pairs():
         print "Searching for ", m
         e = "//FORM[NAME='thisformid'][A/text()='{}']".format(m[0])
         matched.append(root.xpath(e)[0].getparent())
@@ -305,17 +386,14 @@ def split_xml_files(pilot_file):
 
     
     def write_xml():
-        print "========== BILINGUAL ", len(docs_bilingual)
-        print "========== MATCH: {} == NO MATCH: {} ===========".format(len(matched),len(unmatched))
+        print "BILINGUAL ", len(docs_bilingual)
+        print "MATCH: {} - NO MATCH: {} ".format(len(matched),len(unmatched))
         
-        '''  Now we can build the new XML document '''
+        '''  Build the new XML document '''
         unmatched_root = etree.Element("XML")
         matched_root = etree.Element("XML")
         bilingual_root = etree.Element("XML")
-        
- 
-        print "matched size:", len(matched)
-        print "bilingual " , len(docs_bilingual)
+
 
         for i, record in enumerate(matched):
             #print i+1, record

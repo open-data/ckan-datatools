@@ -135,21 +135,19 @@ language_markers=[  ('(English verison)','(French verison)'),
                     ('_English Version','_French Version'),
                     ('_English Version','-French Version'),
                     ('(English version)','(French version'),
-                    ( u'-English version',u'-French version'),
+                    ( '-English version','-French version'),
                     (' - (In English)', ' - (In French)'),
                     (' (In English)', ' (In French)'),
                     (' - English Version [AAFC', ' - French Version [AAFC'),
                     (' - English Version',' - French Version'),
                     (' - English version',' - French version'),
                     (' (in English)', ' (in French)'),
-                    (' - (in English)', ' - (in French)'),
-                    (' - (in English)', ' - (in French)'),
                     (' (in english)', ' (in french)'),
+                    (' - (in English)', ' - (in French)'),
                     (' - (in english)', ' - (in french)'),
                     (' - (English)', ' - (French)'),  
                     (' - ENGLISH VERSION', ' - FRENCH VERSION'),
                     (' - English', ' - French'),
-                    
                     ]
 
 language_markers_fra = [
@@ -175,8 +173,6 @@ language_markers_fra = [
                          
                        ]
 
-foobared_title_filters=['(French verison)', '(Fench version)']
-
 '''
 Some fiscal tables are marked bilingual, but infact they are not. Find language in URL.
 Filter out bilingual
@@ -187,7 +183,6 @@ Parsing problems with Keywords, sometimes keyword is just a blank box: Historica
 Dateset with no keywords should go wihtout keywords.  They should still go in. 
 2008  Public Service Employee Survey (PSES) results   one xsl file marked as 2 different HTML files, this is wrong.
 
-Denis, keywords not filtering.
 '''
  
 

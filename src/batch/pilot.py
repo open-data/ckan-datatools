@@ -450,7 +450,8 @@ class TransformDelegator:
             node_en = pair[0]
             lang = common.language(node_en)
             if lang == "English":
-                continue
+                pass
+                #continue
             
             # MAKE SURE It's english and that the order in pilot-matched.xml has not been broken
 
@@ -484,7 +485,7 @@ class TransformDelegator:
                 print package_en['title_fra']
                 
                 #if i>80:sys.exit()
-                if package_en['id']  == "2da1db44-d00f-4764-8524-d42e3b798ce0":
+                if package_fr['id']  == "dafb6413-5dab-45ca-bcd2-8c6ff4b67be5":
                     print "STOP"
                 self.outfile.write(json.dumps(package_en) + "\n")
      
