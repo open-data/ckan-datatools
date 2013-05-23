@@ -144,11 +144,13 @@ def id_diff(old,new):
                 #Weed out duplicates before adding
                 if item[0] not in not_in_new:
                     not_in_new.append(item[0])
+                    
 
     
     print "-------------------------------"
     print len(not_in_new)
     pprint(not_in_new)
+    pickle.dump(not_in_new, open('not_in_new.pkl','wb'))
     
     print "Conclusion:  In the old file, some records squeeked in  as primary that are actually french id, because the order got mixed up "
     print "THESE FILES MUST BE REMOVED FROM REGISTRY"

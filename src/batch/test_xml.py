@@ -83,7 +83,7 @@ def find_missing_bilingual(file1,file2):
             print child.xpath("FORM[NAME='title_en']/A/text()")
             #print etree.tostring(child)
         try:
-            lang=language(child)
+            lang=common.language(child)
             if lang=="Bilingual":
                 ids_source.append(formid)
         except:
@@ -98,6 +98,23 @@ def find_missing_bilingual(file1,file2):
     print biset.issubset(fullset)
     diff = fullset.difference(biset)
     print diff
+
+def check_language(file):
+    ''' test to make sure all not_in_new files crept into jl files becaues of order problem
+        because they are actually french (no french ids should be in the .jl file)  
+    '''
+    not_in_new = pickle.load(open('not_in_new.pkl','rb'))
+    final  = etree.parse(file).getroot()
+
+    for i,child in enumerate(final):
+        try:
+            formid = str(child.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower()
+            if formid in not_in_new:
+                print common.language(child)
+        except IndexError:
+            print "SMALL NO FORM ID", child.xpath("FORM[NAME='thisformid']/A/text()")
+            #raise
+    print "Conlusion, all records have french primary ids, and thus must be removed"
     
 if __name__ == "__main__":
 
@@ -117,6 +134,7 @@ if __name__ == "__main__":
 #    print ">>> 'Manual' additions"
 #    xml_report(final)
 #    print ">>> Bilingual XML"
-    find_missing_bilingual(bilingual_file,final)
+#    find_missing_bilingual(bilingual_file,final)
+    check_language(final)
     
     #xml_rescue(combined2)
