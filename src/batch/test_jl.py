@@ -120,11 +120,16 @@ def id_diff(old,new):
     baseline_records = jl_records_dict(old)
     latest_records = jl_records_dict(new)
     n=1
+    lost_in_new=[]
     for item in both_cnt.items():
         if item[1]==1: 
             try:
                 title = baseline_records[item[0]]['title']
-                print n,"OLD",title ,item[0]
+                print n,"IN OLD",title ,item[0]
+                title = baseline_records[item[0]]['title']
+                print "ALSO IN NEW ?" 
+                title2 = latest_records[item[0]]['title']
+                print "YES", title2
                 n+=1
             except KeyError:
                 print n, "NEW", latest_records[item[0]]['title'],item[0]
