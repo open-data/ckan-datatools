@@ -69,28 +69,73 @@ def title_diff(old,new):
             
 
 def id_diff(old,new):
-    #print xml_records
-    cnt=Counter()
-#    old = jl_records(old)
-#    new = jl_records(new)
-#    print len(old),len(new)
-    i =1
-    n=1
-    old=jl_ids(old)
-    new=jl_ids(new)
-    print len(old), len(new)
-    for id in new:
-       cnt[id]+=1
-       
-    print len(cnt)
-    for id in old:
-       cnt[id]+=1
-    print len(cnt)
-    for id,count in cnt.items():
-        if count<2:
-            print id, count
 
+    baseline_cnt=Counter()
+    baseline_file_ids=jl_ids(old)
+    latest_file_ids=jl_ids(new)
+    print "------    Baseline JL File  -------"
+    print "Baseline JL File Size:", len(baseline_file_ids)
     
+    # Look for duplicates
+    for id in baseline_file_ids: baseline_cnt[id]+=1
+       
+    print "Baseline unique ids:", len(baseline_cnt)
+    print "Baseline duplicates:", len([item for item in baseline_cnt.items() if item[1]>1])
+    
+    
+    latest_cnt=Counter()
+    print "------    Latest JL File -------"
+    print "Latest JL File Size:", len(latest_file_ids)
+    
+    # Look for duplicates
+    for id in latest_file_ids: latest_cnt[id]+=1
+       
+    print "New file unique ids:", len(latest_cnt)
+    print "New file duplicates:", len([item for item in latest_cnt.items() if item[1]>1])   
+    
+    '''
+        Ensure that both files have the same ids, 
+        minus 26 duplicates, plus 20 new files 
+        If the numbers don't make sense, something may have 
+        gone wrong.
+        This analysis can be caried out by counting ids in both files with one counter
+    
+    '''
+    both_cnt=Counter()
+    for id in baseline_file_ids: both_cnt[id]+=1
+    print len(both_cnt)
+    for id in latest_file_ids: both_cnt[id]+=1
+    print len(both_cnt)
+    
+    print "Number of unique files the were not doubled in counter:", len([id for id in both_cnt.items() if id[1]==1])
+    total=0
+    for item in both_cnt.items():
+        if item[1]==1: 
+            total+=1
+            print total, item[0] 
+    
+    
+    ''' Which of these wayward files are in the baseline ? '''
+    
+    baseline_records = jl_records_dict(old)
+    latest_records = jl_records_dict(new)
+    n=1
+    for item in both_cnt.items():
+        if item[1]==1: 
+            try:
+                title = baseline_records[item[0]]['title']
+                print n,"OLD",title ,item[0]
+                n+=1
+            except KeyError:
+                print n, "NEW", latest_records[item[0]]['title'],item[0]
+                n+=1
+            except:
+                print "SOMETHING ELSE HAPPENED"
+        
+    
+   
+    
+           
 def compare_with_xml():
     xml_enbi= [i[1].lower() for i in xml_records if i[0] != "French"]
     print len(jl_records),len(xml_records), len(xml_enbi)
