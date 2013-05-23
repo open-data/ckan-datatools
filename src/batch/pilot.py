@@ -53,14 +53,14 @@ agriculture_title_markers = ['D035 ',
                              '109 - ',
                              '075/081 - ',
                              '077/078/082 -', 
-                             '060','060 - ', '031N', '101 - ', 
+                             '060 ','060 - ', '031N', '101 - ', 
                              '072 - ','072 ',
                              '073 ', '073 - ', 
-                             '070','070 - ', 
+                             '070 ','070 - ', 
                              '066 - ', '050P', 
                              'A009E', 
                              'A009A', 
-                             '003 - ', '003',  
+                             '003 - ', '003 ',  
                              '077/078/082 - ', 
                              '075/081 - ', 
                              'D019M']
@@ -225,6 +225,8 @@ class Transform:
 
         try:
             id = str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+#            if id == "2da1db44-d00f-4764-8524-d42e3b798ce0":
+#                print "STOP"
 
         except:
             print "======NO ID=========", node.xpath("DC.TITLE")[0].text
@@ -372,12 +374,13 @@ class Transform:
                 timepoint = datetime.strptime(date_string.strip(), "%Y/%m/%d")
             day = timepoint.date()
             return day.isoformat()
-        
+
         if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
         key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").replace(u"´","'").split(",")
-        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(", ")
+        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(",")
+
         package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
-        package_dict['keywords_fra'] = ",".join([k.strip() for k in key_fra if len(k)<100 and len(k)>1])
+        package_dict['keywords_fra'] = ",".join([k for k in key_fra if len(k)<100 and len(k)>1])
 
         if package_dict['owner_org']=='aafc-aac':
             for marker in agriculture_title_markers:
@@ -445,6 +448,13 @@ class TransformDelegator:
          for i,pair in enumerate(self.combined_elements(root)):
 
             node_en = pair[0]
+            lang = common.language(node_en)
+            if lang == "English":
+                pass
+                #continue
+            
+            # MAKE SURE It's english and that the order in pilot-matched.xml has not been broken
+
             node_fr = pair[1]
      
             package_en = Transform().process_node(i,node_en, "eng; CAN")
@@ -454,8 +464,7 @@ class TransformDelegator:
             for pack in  package_fr['resources']:
                 if pack['format'] != "HTML":
                     package_en['resources'].append(pack)
-            
-
+              
             if package_en['resources'] == []:
                 raise Exception
 
@@ -474,9 +483,10 @@ class TransformDelegator:
                 print i, "OK",package_en['id']
                 print package_en['title']
                 print package_en['title_fra']
-                #if i>80:sys.exit()
                 
-               
+                #if i>80:sys.exit()
+                if package_fr['id']  == "dafb6413-5dab-45ca-bcd2-8c6ff4b67be5":
+                    print "STOP"
                 self.outfile.write(json.dumps(package_en) + "\n")
      
    

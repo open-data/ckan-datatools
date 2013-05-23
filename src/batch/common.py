@@ -135,21 +135,19 @@ language_markers=[  ('(English verison)','(French verison)'),
                     ('_English Version','_French Version'),
                     ('_English Version','-French Version'),
                     ('(English version)','(French version'),
-                    ( u'-English version',u'-French version'),
+                    ( '-English version','-French version'),
                     (' - (In English)', ' - (In French)'),
                     (' (In English)', ' (In French)'),
                     (' - English Version [AAFC', ' - French Version [AAFC'),
                     (' - English Version',' - French Version'),
                     (' - English version',' - French version'),
                     (' (in English)', ' (in French)'),
-                    (' - (in English)', ' - (in French)'),
-                    (' - (in English)', ' - (in French)'),
                     (' (in english)', ' (in french)'),
+                    (' - (in English)', ' - (in French)'),
                     (' - (in english)', ' - (in french)'),
                     (' - (English)', ' - (French)'),  
                     (' - ENGLISH VERSION', ' - FRENCH VERSION'),
                     (' - English', ' - French'),
-                    
                     ]
 
 language_markers_fra = [
@@ -175,8 +173,6 @@ language_markers_fra = [
                          
                        ]
 
-foobared_title_filters=['(French verison)', '(Fench version)']
-
 '''
 Some fiscal tables are marked bilingual, but infact they are not. Find language in URL.
 Filter out bilingual
@@ -187,7 +183,6 @@ Parsing problems with Keywords, sometimes keyword is just a blank box: Historica
 Dateset with no keywords should go wihtout keywords.  They should still go in. 
 2008  Public Service Employee Survey (PSES) results   one xsl file marked as 2 different HTML files, this is wrong.
 
-Denis, keywords not filtering.
 '''
  
 
@@ -213,7 +208,29 @@ def time_coverage_fix(str_time1,str_time2):
         return (str_time1, str_time1)
     else:
         return (str_time1, str_time2)
+
+langcodes={'D892EF88-739B-43DE-BDAF-B7AB01C35B30':'English',
+           'FA6486B4-8A2A-4DA4-A727-E4EA3D29BF71':'French',
+           '790CE47F-0B49-4D1F-9CE0-50EC57517981':'Bilingual'
+           }
             
+def language(record):
+    
+    try:
+        language__ = record.xpath("FORM[NAME='language__']/A") 
+        if language__:
+            language = language__
+        else:
+            language = record.xpath("FORM[NAME='language']/A")
+
+        langcode=language[0].text
+        if langcode: 
+            langcode = langcode.split('|')[1]
+            return langcodes[langcode]
+    except:
+        
+        raise
+
 
 class Resource():
     """

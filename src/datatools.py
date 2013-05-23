@@ -1,9 +1,11 @@
 import sys
 import os
 import json
-import setup_data
-#import timecd 
+import pickle
+#import setup_data
 #import socket 
+import time
+import socket 
 import urllib2
 import ckanapi
 #from jsonpath import jsonpath
@@ -54,7 +56,14 @@ def packageCount(ckansite):
     resp = json.loads(r.read())
     
     print len(resp['result'])
-        
+
+def registry_packs(site):
+    header = '{}'
+    req = ckansite + "/api/action/package_list"
+    r = urllib2.urlopen(req, header)
+    return json.loads(r.read())
+     
+
 class DataManager:
     
     def __init__(self, server,apikey,proxy=None):
@@ -258,13 +267,14 @@ class CkanClient:
                print  h
   
 if __name__ == "__main__":
-   
-    #activity_list("http://registry.statcan.gc.ca")
-
-
+    
+    not_in_new = pickle.load(open('batch/not_in_new.pkl','rb'))
+    delete_packages(not_in_new)
+    '''
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
     ckan_parser = argparse.ArgumentParser(parents=[main_parser])
+
     ckan_parser.add_argument('endpoint', help='The data you wish to operate on', action='store',choices=['ckan','pilot','nrcan'])
     ckan_parser.add_argument('action', help='The Action you wish to perform on the data', action='store',choices=['init','load','list','update','delete','report','test'])
     ckan_parser.add_argument('entity', help='The data entity you wish to operate on', action='store',choices=['org','group','user','pack'])
@@ -301,4 +311,4 @@ if __name__ == "__main__":
             DataManager(args.server,args.apikey,args.proxy).load_data(args.jsondata, int(args.skiplines))
         elif args.action == 'delete':
             DataManager(args.server).delete_by_owner(args.organization)
- 
+    '''
