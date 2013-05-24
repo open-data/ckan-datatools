@@ -3,7 +3,7 @@ import json
 from collections import Counter
 import pickle
 from pprint import pprint
-from data  import registry
+#from data  import registry
 import sys
 xml_records = pickle.load(open('xrecords.pkl','rb'))
 
@@ -149,8 +149,10 @@ def id_diff(old,new):
     
     print "-------------------------------"
     print len(not_in_new)
-    pprint(not_in_new)
+    #pprint(not_in_new)
     pickle.dump(not_in_new, open('not_in_new.pkl','wb'))
+    nni = pickle.load(open('not_in_new.pkl','rb'))
+    for i in nni: print i
     
     print "Conclusion:  In the old file, some records squeeked in  as primary that are actually french id, because the order got mixed up "
     print "THESE FILES MUST BE REMOVED FROM REGISTRY"

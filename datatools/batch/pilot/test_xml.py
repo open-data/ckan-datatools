@@ -2,8 +2,9 @@ from datetime import date
 import json
 from collections import Counter
 from lxml import etree
-import common
+import datatools.batch.common
 import pickle
+from pprint import pprint
 
 
 
@@ -99,6 +100,26 @@ def find_missing_bilingual(file1,file2):
     diff = fullset.difference(biset)
     print diff
 
+def pending_ids(file):
+    
+    tree = etree.parse(file)
+    #tree = etree.parse('put fixed.xml')
+    root = tree.getroot()
+    
+    pending=[]
+    for i,child in enumerate(root):
+       
+       try:
+           formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+           pending.append(formid.lower())
+           
+           #xrecords.append((str(lang),str(formid)))
+           
+       except:
+           raise
+       
+    pprint(pending)
+
 def check_language(file):
     ''' test to make sure all not_in_new files crept into jl files becaues of order problem
         because they are actually french (no french ids should be in the .jl file)  
@@ -135,6 +156,6 @@ if __name__ == "__main__":
 #    xml_report(final)
 #    print ">>> Bilingual XML"
 #    find_missing_bilingual(bilingual_file,final)
-    check_language(final)
-    
+#    check_language(final)
+    pending_ids(pending)
     #xml_rescue(combined2)

@@ -1,0 +1,4 @@
+include README
+recursive-include datatools/batch/ *
+recursive-include datatools/batch/pilot/ *
+include batch/ *
