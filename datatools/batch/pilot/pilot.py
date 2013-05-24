@@ -9,13 +9,12 @@ This module is used for converting various items from in the pilot XML
 import sys
 import logging
 import simplejson as json
+
 import time
 from lxml import etree
 from pprint import pprint
-from datetime import date
-import common
-#from common import XmlStreamReader
-from datetime import datetime
+from datatools.batch import common
+from datetime import datetime,date
 from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
@@ -365,6 +364,11 @@ class Transform:
         package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
+        print node.find("FLOWSTATUS")
+        sys.exit
+        package_dict['ready_to_publish']=True
+        sys.exit()
+        
         package_dict['license_id']='ca-ogl-lgo'
         #if count>1200:sys.exit()
         def reformat_date(date_string):

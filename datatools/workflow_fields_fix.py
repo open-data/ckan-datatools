@@ -33,4 +33,5 @@ def update_all_fields(ckansite):
 
 if __name__ == "__main__":
     #update_all_fields("http://data.statcan.gc.ca/data")
-    update_all_fields("http://registry.statcan.gc.ca")
+    #update_all_fields("http://registry.statcan.gc.ca")
+    update_all_fields("http://localhost:5000")

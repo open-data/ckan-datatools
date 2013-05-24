@@ -100,10 +100,10 @@ class DataManager:
             print item
             
     
-    def bulk_delete(self):
-        packages = self.ckan_client.api3_call('package_list', {})['result']
+    def bulk_delete(self,ids):
         
-        for item in packages:
+        ''' Given a list of ids, remove those packages  '''
+        for id in ids:
             #print json.dumps({'id':item})
             response = self.ckan_client.api3_call('package_delete', {'id':item})
             print response
