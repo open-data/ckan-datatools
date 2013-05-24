@@ -407,7 +407,9 @@ class NrcanMunge():
                         
                 #pprint(resources)
                 package_dict['validation_override']=validation_override
-                package_dict['resources'] = resources              
+                package_dict['resources'] = resources    
+                package_dict['portal_release_date']='2013-05-24'
+                package_dict['ready_to_publish']=True          
                 #pprint (package_dict)
                 
                 if (n % 100) == 0: print n 

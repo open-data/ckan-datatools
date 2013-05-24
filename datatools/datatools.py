@@ -14,10 +14,47 @@ import argparse
 from ConfigParser import SafeConfigParser 
 from datetime import datetime
 from ckanext.canada.metadata_schema import schema_description
+import workflow_fields_fix
+
+
+def update_all_fields(ckansite,apikey, proxy):
+    ckan_client = CkanClient(ckansite,apikey,proxy)
+    print "Working with data at  ", ckansite, ":    "
+    pack_ids = registry_package_list()
+    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca/')
+    for i,pack_id in enumerate(pack_ids):
+        # 1. Get the package
+        pack = registry.action.package_show(id=pack_id)['result']
+        pprint(pack['id'])
+        pprint(pack['ready_to_publish'])
+        #pprint(pack['portal_release_date'])
+        # 2.  Update the fields
+        pack['ready_to_publish']=True
+        pack['portal_relase_date'] = '2013-05-24'
+        if pack_id  in workflow_fields_fix.pending:
+            pack['portal_relase_date'] = ''
+        #pack['
+        #pprint(pack['ready_to_publish'])
+        # 3. Write the package
+        #resp = registry.action.package_update(**pack)
+        resp=ckan_client.api3_call('package_update',pack) 
+        # 4. Get the package as pack_after
+        print resp
+        # 5. Check ensure evething is ok by comparing pack and pack_after
+        '''
+        for key, value in pack.items():
+            print key
+            if key == "resources": continue
+            # deal with that pesky '\u2013' dash char
+            #print key, (u"%s" % value).encode('utf8') 
+        '''
+        sys.exit() 
+ 
+
 
 def activity_list(ckansite):
     print "Chekcing activity at  ", ckansite, ":    "
-    print registry_package_list()
+    #print registry_package_list()
 
     #api_call('user_show')
     #api_call('user_show',{'id':'12345'})
@@ -25,8 +62,7 @@ def activity_list(ckansite):
     #activity_list =  registry.action.recently_changed_packages_activity_list()
     users = registry.action.user_list()
     user = registry.action.user_show(id='7fff074e-3c3e-4d4c-a2ab-a33391c36f4f')
-    for pack in packs['result']:
-        print pack
+    print user['result']['fullname']
 
 
       
@@ -100,13 +136,27 @@ class DataManager:
             print item
             
     
-    def bulk_delete(self):
-        packages = self.ckan_client.api3_call('package_list', {})['result']
-        
-        for item in packages:
-            #print json.dumps({'id':item})
-            response = self.ckan_client.api3_call('package_delete', {'id':item})
-            print response
+    def bulk_delete(self,ids):
+        registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca/')
+        activity_list =  registry.action.recently_changed_packages_activity_list()
+        for item in activity_list['result']:
+            id = item['id']
+            if id in ids:
+                print id
+            else:
+                print "Not found", id
+            
+            
+            
+        ''' Given a list of ids, remove those packages  '''
+        for id in ids:
+            delete_package = {'id':id}
+            #resp = self.ckan_client.api3_call('delete/package_delete',{}) 
+            #resp = self.ckan_client.api3_call('package_show?id'{'id':id}) 
+            resp = self.ckan_client.api3_call('package_delete?id=%s' % '145a12e9-83f9-4c81-a68a-c213e9a3c05e',{}) 
+            #resp = registry.action.package_show(id=id)
+            print resp
+            sys.exit()
         
     def delete_by_owner(self,org):
       pass
@@ -208,10 +258,12 @@ class CkanClient:
     apikey = 'tester'
     proxy = 'http://localhost:8888'
     
-    def __init__(self, server,apikey,proxy):
+    def __init__(self, server,apikey,proxy=None):
+        
         self.server = server
         self.apikey = apikey
         self.proxy = proxy
+        print self.server, self.apikey, self.proxy
     
     def api3_call(self,call,payload): 
            ''' 
@@ -236,7 +288,7 @@ class CkanClient:
                 
            '''
            start = time.time()
-           url = self.server + "/api/action/"
+           url = self.server + "/api/3/action/"
            
            if self.proxy:
                proxy_handler = urllib2.ProxyHandler({'http': self.proxy})
@@ -268,8 +320,13 @@ class CkanClient:
   
 if __name__ == "__main__":
     
-    not_in_new = pickle.load(open('batch/not_in_new.pkl','rb'))
-    delete_packages(not_in_new)
+    not_in_new = pickle.load(open('batch/pilot/not_in_new.pkl','rb'))
+    server='http://registry.statcan.gc.ca'
+    apikey='4c57004e-fe2a-496d-8bef-8dbe98ba91e4'
+    proxy='http://localhost:8888'
+    #activity_list(server)
+    #DataManager(server,apikey,proxy).bulk_delete(not_in_new)
+    update_all_fields("http://registry.statcan.gc.ca",apikey, proxy)
     '''
     main_parser = argparse.ArgumentParser(add_help=False)
     main_parser.add_argument("-v", "--verbose", help="increase output verbosity", action='store_true')
