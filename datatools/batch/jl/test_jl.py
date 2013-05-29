@@ -218,13 +218,7 @@ def compare_with_registry(file):
     for i in cnt.items():
         if i[1]>1:
             print i
-
-#    print regset.issubset(jlset)
-#    print jlset.issubset(regset)
-#    diff = jlset.difference(regset)
-    #pprint(diff)
-    #pprint(regset.difference(jlset))
-    #pprint (regset.intersection(jlset))
+            
     print "Intersection", len(regset.intersection(jlset))
     print "Union", len(regset.union(jlset))
     print "Difference", len(regset.difference(jlset))
@@ -234,26 +228,90 @@ def repair_jl(file):
     '''
      The titles that seem different between the old and new jl files 
      they need to be checked against what's in the registry ids to ensure 
-    that they are in fact new
+     that they are in fact new
     
     '''
     lines = [line.strip() for line in open(file)]
     for  i,line in enumerate(lines):
         print json.dumps(eval(line))
-
+        
+def cansim_summary():
+    file1="/Users/peder/dev/OpenData/cansim/opendcansim08.json"  
+    file2="/Users/peder/dev/OpenData/cansim/opendsumtab08.json"
+    sum_ids=[]
+    
+    def process(file):
+        lines = [line.strip() for line in open(file)]
+        for  i,line in enumerate(lines):
+            package = json.loads(line)
+            sum_ids.append(package['id'])
+            
+    process(file1)
+    process(file2)
+    
+    print len(sum_ids)
+    
+    registry=jl_records('/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl') 
+    
+    
+    patterns=['www5.',
+              'www.statcan.gc.ca/tables-tableaux/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']
+    
+    delete=[]
+    for i,record in enumerate(registry):
+        resources = record['resources']
+        remove=False
+        for r in resources:
+            url = r['url']
+            for pattern in patterns:
+                if pattern in url:
+                    #print url
+                    remove=True
+                    break
+            
+        if remove:delete.append(record['id']) 
+        #print i       
+    print len(delete)
+    
+    print len(set(delete).difference(set(sum_ids)))
+    print len(set(sum_ids).difference(set(delete)))        
+ 
+    
+      
+    '''
+    page url patterns for CANSIM and Summary Tables:
+     
+    CANSIM
+    http://www5.
+     
+    Summary Tables
+    http://www.statcan.gc.ca/tables-tableaux/sum-som
+    
+    Geography Division 2011
+    http://www12.statcan.gc.ca/census-recensement/2011/geo.....
+     
+    Geography Division 2006
+    http://geodepot.statcan.gc.ca.....
+    '''
+            
 if __name__ == "__main__":
+    
+    cansim_summary()
     
     load_dir = '/Users/peder/dev/goc/LOAD'
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
     broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
+    '''
+    
     #repair_jl(broken_file)
     #analyze_keywords(input_file)
-    
     #compare_with_registry(input_file)
-    
     #jl_report(input_file)
     #title_diff(base_load_file,input_file)
-    id_diff(base_load_file,input_file)
+    #id_diff(base_load_file,input_file)
+    '''
     
     
