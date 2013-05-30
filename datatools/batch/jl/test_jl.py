@@ -249,34 +249,47 @@ def cansim_summary():
     process(file1)
     process(file2)
     
-    print len(sum_ids)
+    print "Size of Qibo Load", len(sum_ids)
+    
     
     registry=jl_records('/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl') 
     
-    
-    patterns=['www5.',
-              'www.statcan.gc.ca/tables-tableaux/sum-som',
+
+    patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
+              'www.statcan.gc.ca/cgi-bin/sum-som',
               'www12.statcan.gc.ca/census-recensement/2011/geo',
               'geodepot.statcan.gc.ca']
     
     delete=[]
+    delete_urls=[]
     for i,record in enumerate(registry):
         resources = record['resources']
         remove=False
+        delete_url=''
         for r in resources:
             url = r['url']
             for pattern in patterns:
                 if pattern in url:
                     #print url
+                    delete_url=url
                     remove=True
                     break
             
-        if remove:delete.append(record['id']) 
+        if remove:
+            delete.append(record['id']) 
+            delete_urls.append((record['id'],record['title'],delete_url))
+            
         #print i       
-    print len(delete)
+    print "Files in registry that matches pattern", len(delete)
+    print "Diference", len(sum_ids)-len(delete)
+    unique_dif= set(delete).difference(set(sum_ids))
+    print "Which ones are different from Quibo",len(unique_dif)
+    print len(set(sum_ids).difference(set(delete)))     
     
-    print len(set(delete).difference(set(sum_ids)))
-    print len(set(sum_ids).difference(set(delete)))        
+    
+    for r in delete_urls:
+        if r[0] in unique_dif:
+            print r[0],'\t',r[1],'\t',r[2]
  
     
       
