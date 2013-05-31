@@ -6,9 +6,6 @@ import datatools.batch.common
 import pickle
 from pprint import pprint
 
-
-
-
 def xml_records(file):
     
 

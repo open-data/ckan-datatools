@@ -156,6 +156,7 @@ def id_diff(old,new):
     
     print "Conclusion:  In the old file, some records squeeked in  as primary that are actually french id, because the order got mixed up "
     print "THESE FILES MUST BE REMOVED FROM REGISTRY"
+    
 def compare_with_xml():
     xml_enbi= [i[1].lower() for i in xml_records if i[0] != "French"]
     print len(jl_records),len(xml_records), len(xml_enbi)
@@ -235,6 +236,34 @@ def repair_jl(file):
     for  i,line in enumerate(lines):
         print json.dumps(eval(line))
         
+def find_french_ids():
+    '''the matched XML file will contain french files whose ids have 
+       mistakenly been used as primary ids.  Collect all these ids,
+       then compary them with the list of ids in the base jl load 
+       aka the current registry ids 
+    '''
+    fre=[record[1] for record in xml_records if record[0]=='French']
+    en=[record[1] for record in xml_records if record[0]=='English']  
+    bi=[record[1] for record in xml_records if record[0]=='Bilingual']    
+    print len(fre), len(en), len(bi)
+    ''' Outputs 5691 5655 1499
+    Why is the french bigger than the english?  Are there duplicates?
+    '''
+    
+    ''' If there are duplicates, the set will be a different size than the list, because sets exclude 
+         duplicates '''
+    
+    print len(fre), len(set(fre))
+    ''' Output is 5691 5691, so there appears to be no duplicates.
+    
+        Explantion may be that records with french ids are extras that crept into the load
+        
+    '''
+    ''' Actually, turns out this work has already been done in method above: compare_with_registry() '''
+    nni = pickle.load(open('not_in_new.pkl','rb'))
+    for i,n in enumerate(nni): print n
+        
+        
 def cansim_summary():
     file1="/Users/peder/dev/OpenData/cansim/opendcansim08.json"  
     file2="/Users/peder/dev/OpenData/cansim/opendsumtab08.json"
@@ -311,20 +340,20 @@ def cansim_summary():
             
 if __name__ == "__main__":
     
-    cansim_summary()
+    #cansim_summary()
     
     load_dir = '/Users/peder/dev/goc/LOAD'
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
     broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
-    '''
     
+    find_french_ids()
     #repair_jl(broken_file)
     #analyze_keywords(input_file)
     #compare_with_registry(input_file)
     #jl_report(input_file)
     #title_diff(base_load_file,input_file)
     #id_diff(base_load_file,input_file)
-    '''
+    
     
     
