@@ -9,13 +9,12 @@ This module is used for converting various items from in the pilot XML
 import sys
 import logging
 import simplejson as json
+
 import time
 from lxml import etree
 from pprint import pprint
-from datetime import date
-import common
-#from common import XmlStreamReader
-from datetime import datetime
+from datatools.batch import common
+from datetime import datetime,date
 from ckanext.canada.metadata_schema import schema_description
 
 # add filemode="w" to overwrite
@@ -244,10 +243,6 @@ class Transform:
                  coordinates = [[left, bottom], [left,top], [right, top], [right, bottom]]
                  spatial = {'type': 'Polygon', 'coordinates': coordinates}  
                  print spatial          
-                                
-                                
-                                
-                 
                  #sys.exit()
         except:
             print "NO GEO"
@@ -365,6 +360,13 @@ class Transform:
         package_dict['time_period_coverage_start']=check_date(package_dict['time_period_coverage_start'])
         package_dict['time_period_coverage_end']=check_date(package_dict['time_period_coverage_end'])
         package_dict['date_published']=check_date(package_dict['date_published'])
+        package_dict['portal_release_date']='2013-05-24'
+        if node.find("FLOWSTATUS").text == "pending":
+            package_dict['portal_release_date']=''
+ 
+        package_dict['ready_to_publish']=True
+        
+        
         package_dict['license_id']='ca-ogl-lgo'
         #if count>1200:sys.exit()
         def reformat_date(date_string):
@@ -473,12 +475,11 @@ class TransformDelegator:
             
             elif not package_en['title']:
                 print "############### NO TITLE ###########", package_en['id']
-#                print pair[0]
-#                print pair[1]
+
 
             elif not package_en['id']:
                 "############ NO ID ###########",package_en['id']
-                #sys.exit()
+
             else:
                 print i, "OK",package_en['id']
                 print package_en['title']

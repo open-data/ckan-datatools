@@ -3,7 +3,7 @@ import json
 from collections import Counter
 import pickle
 from pprint import pprint
-from data  import registry
+#from data  import registry
 import sys
 xml_records = pickle.load(open('xrecords.pkl','rb'))
 
@@ -149,11 +149,14 @@ def id_diff(old,new):
     
     print "-------------------------------"
     print len(not_in_new)
-    pprint(not_in_new)
+    #pprint(not_in_new)
     pickle.dump(not_in_new, open('not_in_new.pkl','wb'))
+    nni = pickle.load(open('not_in_new.pkl','rb'))
+    for i in nni: print i
     
     print "Conclusion:  In the old file, some records squeeked in  as primary that are actually french id, because the order got mixed up "
     print "THESE FILES MUST BE REMOVED FROM REGISTRY"
+    
 def compare_with_xml():
     xml_enbi= [i[1].lower() for i in xml_records if i[0] != "French"]
     print len(jl_records),len(xml_records), len(xml_enbi)
@@ -216,13 +219,7 @@ def compare_with_registry(file):
     for i in cnt.items():
         if i[1]>1:
             print i
-
-#    print regset.issubset(jlset)
-#    print jlset.issubset(regset)
-#    diff = jlset.difference(regset)
-    #pprint(diff)
-    #pprint(regset.difference(jlset))
-    #pprint (regset.intersection(jlset))
+            
     print "Intersection", len(regset.intersection(jlset))
     print "Union", len(regset.union(jlset))
     print "Difference", len(regset.difference(jlset))
@@ -232,26 +229,131 @@ def repair_jl(file):
     '''
      The titles that seem different between the old and new jl files 
      they need to be checked against what's in the registry ids to ensure 
-    that they are in fact new
+     that they are in fact new
     
     '''
     lines = [line.strip() for line in open(file)]
     for  i,line in enumerate(lines):
         print json.dumps(eval(line))
+        
+def find_french_ids():
+    '''the matched XML file will contain french files whose ids have 
+       mistakenly been used as primary ids.  Collect all these ids,
+       then compary them with the list of ids in the base jl load 
+       aka the current registry ids 
+    '''
+    fre=[record[1] for record in xml_records if record[0]=='French']
+    en=[record[1] for record in xml_records if record[0]=='English']  
+    bi=[record[1] for record in xml_records if record[0]=='Bilingual']    
+    print len(fre), len(en), len(bi)
+    ''' Outputs 5691 5655 1499
+    Why is the french bigger than the english?  Are there duplicates?
+    '''
+    
+    ''' If there are duplicates, the set will be a different size than the list, because sets exclude 
+         duplicates '''
+    
+    print len(fre), len(set(fre))
+    ''' Output is 5691 5691, so there appears to be no duplicates.
+    
+        Explantion may be that records with french ids are extras that crept into the load
+        
+    '''
+    ''' Actually, turns out this work has already been done in method above: compare_with_registry() '''
+    nni = pickle.load(open('not_in_new.pkl','rb'))
+    for i,n in enumerate(nni): print n
+        
+        
+def cansim_summary():
+    file1="/Users/peder/dev/OpenData/cansim/opendcansim08.json"  
+    file2="/Users/peder/dev/OpenData/cansim/opendsumtab08.json"
+    sum_ids=[]
+    
+    def process(file):
+        lines = [line.strip() for line in open(file)]
+        for  i,line in enumerate(lines):
+            package = json.loads(line)
+            sum_ids.append(package['id'])
+            
+    process(file1)
+    process(file2)
+    
+    print "Size of Qibo Load", len(sum_ids)
+    
+    
+    registry=jl_records('/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl') 
+    
 
+    patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
+              'www.statcan.gc.ca/cgi-bin/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']
+    
+    delete=[]
+    delete_urls=[]
+    for i,record in enumerate(registry):
+        resources = record['resources']
+        remove=False
+        delete_url=''
+        for r in resources:
+            url = r['url']
+            for pattern in patterns:
+                if pattern in url:
+                    #print url
+                    delete_url=url
+                    remove=True
+                    break
+            
+        if remove:
+            delete.append(record['id']) 
+            delete_urls.append((record['id'],record['title'],delete_url))
+            
+        #print i       
+    print "Files in registry that matches pattern", len(delete)
+    print "Diference", len(sum_ids)-len(delete)
+    unique_dif= set(delete).difference(set(sum_ids))
+    print "Which ones are different from Quibo",len(unique_dif)
+    print len(set(sum_ids).difference(set(delete)))     
+    
+    
+    for r in delete_urls:
+        if r[0] in unique_dif:
+            print r[0],'\t',r[1],'\t',r[2]
+ 
+    
+      
+    '''
+    page url patterns for CANSIM and Summary Tables:
+     
+    CANSIM
+    http://www5.
+     
+    Summary Tables
+    http://www.statcan.gc.ca/tables-tableaux/sum-som
+    
+    Geography Division 2011
+    http://www12.statcan.gc.ca/census-recensement/2011/geo.....
+     
+    Geography Division 2006
+    http://geodepot.statcan.gc.ca.....
+    '''
+            
 if __name__ == "__main__":
+    
+    #cansim_summary()
     
     load_dir = '/Users/peder/dev/goc/LOAD'
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
     broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
+    
+    find_french_ids()
     #repair_jl(broken_file)
     #analyze_keywords(input_file)
-    
     #compare_with_registry(input_file)
-    
     #jl_report(input_file)
     #title_diff(base_load_file,input_file)
-    id_diff(base_load_file,input_file)
+    #id_diff(base_load_file,input_file)
+    
     
     
