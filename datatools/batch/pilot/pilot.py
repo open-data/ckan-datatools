@@ -243,10 +243,6 @@ class Transform:
                  coordinates = [[left, bottom], [left,top], [right, top], [right, bottom]]
                  spatial = {'type': 'Polygon', 'coordinates': coordinates}  
                  print spatial          
-                                
-                                
-                                
-                 
                  #sys.exit()
         except:
             print "NO GEO"

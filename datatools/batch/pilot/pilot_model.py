@@ -3,199 +3,96 @@ import sys
 import pickle
 from collections import Counter
 from pprint import pprint
-import common
 from ckanext.canada.metadata_schema import schema_description
 
-class Resource:
-    """
-    A resource has the following fields:
-    
-    'url':
-    'format':
-    'resource_type': 'Dataset',
-    'language':'English | Anglais'
-    
-    Each object should make sure that its internal state is consistent,
-    so validation is best done before the 
-    internal state is modified - in the object's setter methods.
-                   
-    """
-    
-    
-    def __init__(self,url, format, resource_type='Dataset'):
-        self.url=url
-        self.format=format
-        self.resource_type=resource_type
 
-    def set_langauge(self,language):
-        self.language=language
-        
-    def json(self):
-        pass
+class RawPilotResource:
+    ''' Create a new Resource with empty values that can be set later 
+        A resource cannot exist without a dataset parent; UUID 
+        is required by construtor
+    '''
     
-class PilotRecord:
+    def  __init__(self,url,type):
+        self.url = url
+        self.type=type
     
-    """
-    A pilot record can have the following atttributes or states:
-        raw; the raw XML data from the pilot dump
-        id
-        title_en
-        title_fr
-        language__
-        language
-        title_language_indicator
-        sibling 
-        merged 
-        states =[good,bad,questionable,merged]
-        
-        Keep this record simple at the base level, don't put a lot 
-        of logic in it.  It should simply mirror the data that's in the 
-        Pilot XML 
-
-    """
-    lang_marker_cnt = Counter()
-    bad = open('badrecords.xml','w')
-    def __init__(self,node):
-        
-        #This is required so it can be pickled
-        #self.raw = lxml.etree.tostring(node)
-        self.node = node
-        self.title=''
-        self.language=''
-        self.resources=[]
-        try:
-            
-
-
-            self.id = node.xpath("FORM[NAME='thisformid']/A/text()")[0]
-            
-            #[0].lower()
-        except IndexError as ie: #Just in case there is no ID
-            #print lxml.etree.tostring(node)
-            # log this as a broken record and move on
-#            self.bad.write(lxml.etree.tostring(node))
-#            self.bad.write("\n")
-            '''This class needs to know that it can't create itself 
-                without an id, and alert the caller 
-            '''
-#            #print ">>>", ie, lxml.etree.tostring(self.node)
-#            e = Exception()
-#            e.id = None
-#            e.type = 'MissingID'
-#            e.message = "FORM[NAME='thisformid']/A/text() failed to find a value for this RECORD node, so I can't be instantiated."
-#            e.node = node
-            print "failed to get an id"
-
-            
-            #raise e
-        try:
-            ''' Set resources first '''
-            self._title(node.xpath("FORM[NAME='title_en']/A/text()")) 
-            self._resources(node)
-                
-                
-            
-            self._title_fra(node.xpath("FORM[NAME='title_fr']/A/text()"))
-            self._language(node.xpath("FORM[NAME='language__']/A/text()"))
-        
-        except Exception as e: 
-            print "Error setting field values" 
-            print e
-            raise
+    def display(self):
+        pprint (self.__dict__)
         '''
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        self.__title(node.xpath("FORM[NAME='title_en']/A/text()"))
-        '''   
-    def _resources(self,node):
-        
-        dataset_links=['dataset_link_en_%d' % n for n in range(1,5)]
-        for i, dl in enumerate(dataset_links):
-            try:
-                link = node.xpath("FORM[NAME='%s']/A/text()" % dl)[0]
-                format_path = "FORM[NAME='%s']/A/text()" % "dataset_format_%d" % (i+1)
-                format_code = node.xpath(format_path)
-                resource = Resource(link, format_code)
-                self.resources.append(resource)
-                
-                
-                '''
-                If the dataset is not bi-lingual, then get the equivalent
-                french resource. But for now set as is, and handle this later
-                when the entire collection can be searched
-                
-                It may not possible to set langauge for a resource
-                at the resource level
-                
-                
-                '''
+        print "\turl:", self.url
+        print "\ttype:", self.type
+        print "\tformat:", self.format
+        print "\tsize:", self.size
+        '''
+class PilotRecord:
+    ''' Create a new Record with empty values that can be set  later 
+      
+    '''
+    
+    fields={}
+    schema_package_fields=[(ckan_name,pilot_name) for ckan_name, pilot_name, field in schema_description.dataset_all_fields()]
+    def  __init__(self,node):
 
-            except Exception as e:
-                #print "ERROR ", e
-                # gettin to here means no more resources, so break
-                continue
-
-    def _title(self,title): 
         try:
-            self.title = title[0]
- 
-        except IndexError as e: 
-            e.id = None
-            e.type = "TitleError"
-            e.message = "No english title exists for this RECORD node."
-            e.node = self.node
-            raise e
-    def _title_fra(self,title): 
-        #print title[0]
-        try:
-            self.title_fr = title[0]
- 
-        except IndexError as e: 
-            e.id = None
-            e.type = "FrenchTitleError"
-            e.message = "No french title exists for this RECORD node."
-            e.node = self.node
-            raise e
-    def _language(self,lang_element): 
-        try:
-            langcode = lang_element[0].split("|")[1]
-            self.language = schema_description.dataset_field_by_id['language']['choices_by_pilot_uuid'][langcode]['key']
+            self.id=node.xpath("FORM[NAME='thisformid']/A/text()")[0]
+            self.resources=[]
+            self._parse_xml(node)
             
         except:
-            "Langcode missing"
+            raise 
+            self.id=None
             
-    def match(self, filter):
-        '''Determine if this note matches the filter
-        text. Return True if it matches, False otherwise.
-        Search is case sensitive and matches both text and
-        tags.'''
-        return filter in self.title_en or filter in self.title_fr
+    def _parse_xml(self,node):
+        ''' package fields '''
+        for ckan,pilot in self.schema_package_fields:
+            if pilot:
+                path = "FORM[NAME='%s']/A/text()"%pilot
+                value = node.xpath(path)
+                
+                try:
+                    self.fields[pilot]=value[0].strip()
+                except IndexError:
+                    self.fields[pilot]=""
+            else:
+                #Does not belong in this class
+                pass
+        ''' resources'''
+        for i in range(1,5):
+            url = node.xpath("FORM[NAME='dataset_link_en_%d']/A/text()" % i)
+            if url:
+                resource=RawPilotResource(url[0],'data')
+                format = node.xpath("FORM[NAME='dataset_format_%d']/A/text()" % i)
+                size = node.xpath("FORM[NAME='dataset_size_%d']/A/text()" % i)
+                if format:resource.format=format[0]
+                if size:resource.size=size[0]
+                self.resources.append(resource)
+            else:
+                break
+                
+                
+        extras=['supplementary_documentation_en',
+                'supplementary_documentation_fr',
+                'data_dictionary']
+        
+        for extra in extras:
+            url= node.xpath("FORM[NAME='%s']/A/text()"% extra)
+            if url:
+                resource = RawPilotResource(url[0],extra)
+
     
-    def language_in_title(self):
-        language_markers=[' - English Version',
-                          ' - French Version',
-                          ' (in English)', 
-                          ' (in French)',
-                          ' (In English)', 
-                          ' (In French)',
-                          '(- English)', 
-                          '(- French)',  
-                          ' (English version)',
-                          ' (French version)',
-                          ' (English Version)',
-                          ' (French Version)' ] 
-        for marker in language_markers:
-            if marker in self.title:
-               
-                return True
-        return False
+    def display(self,raw=False):
+        print "DATASET"
+        for key,value in sorted(self.fields.items()):
+            if raw:
+                
+                print "{}:{}".format(key,repr(value))
+            else:
+                print "{}:{}".format(key,value.strip())
+        print len(self.resources), "RESOURCES"
+        for resource in self.resources:
+            
+            resource.display()
+
         
 class PilotHoldings:
     

@@ -6,33 +6,26 @@ import datatools.batch.common
 import pickle
 from pprint import pprint
 
-
-
-
-def xml_report(file):
+def xml_records(file):
     
-    cnt=Counter()
+
     tree = etree.parse(file)
-    #tree = etree.parse('put fixed.xml')
     root = tree.getroot()
     
     xrecords=[]
 
-    for i,child in enumerate(root):
+    for child in root:
        try:
            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
            title = child.xpath("FORM[NAME='title_en']/A/text()")[0]
-           lang=language(child)
-           cnt[lang]+=1
-           
-           #xrecords.append((str(lang),str(formid)))
+        
+           xrecords.append(child)
            
        except:
-           cnt['bad record']+=1
+           #raise
+           print "bad record"
            
-    for i in cnt.items():
-        print i
-    #print xrecords
+    return xrecords
 #    pickle.dump(xrecords, open('xrecords.pkl','wb'))
 
 def xml_rescue(file):
@@ -88,11 +81,7 @@ def find_missing_bilingual(file1,file2):
             if lang=="Bilingual":
                 ids_source.append(formid)
         except:
-            print "small NO Language"
-    
-            
-       
-            
+            print "small NO Language"  
         
     biset= set(ids_bi)
     fullset = set(ids_source)
@@ -136,7 +125,78 @@ def check_language(file):
             print "SMALL NO FORM ID", child.xpath("FORM[NAME='thisformid']/A/text()")
             #raise
     print "Conlusion, all records have french primary ids, and thus must be removed"
+
+
+def cansim_summary(xml):
     
+    file1="/Users/peder/dev/OpenData/cansim/opendcansim08.json"  
+    file2="/Users/peder/dev/OpenData/cansim/opendsumtab08.json"
+    sum_ids=[]
+    
+    def process(file):
+        lines = [line.strip() for line in open(file)]
+        for  i,line in enumerate(lines):
+            package = json.loads(line)
+            sum_ids.append(package['id'])
+            
+    process(file1)
+    process(file2)
+    
+    print len(sum_ids)
+    
+    registry=xml_records(xml)
+    
+  
+    patterns=['www5.',
+              'www.statcan.gc.ca/tables-tableaux/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']
+    
+    delete=[]
+    for i,child in enumerate(registry):
+        delete_flag=False
+        formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+        try:
+            program_page_en = child.xpath("FORM[NAME='program_page_en']/A/text()")[0]
+            program_url_fr = child.xpath("FORM[NAME='program_url_fr']/A/text()")[0]
+
+            
+            for p in patterns:
+                if p in program_page_en:
+                    delete.append(formid)
+                    break
+        
+                    
+        except:
+            print i,"--------none ----------"
+
+           
+        
+
+    
+    print len(delete)
+    
+    print len(set(delete).difference(set(sum_ids)))
+    print len(set(sum_ids).difference(set(delete)))        
+ 
+    print "Conlusion:  This report does not work with XML file because it does not have merged files, which is a requisite"
+      
+    '''
+    page url patterns for CANSIM and Summary Tables:
+     
+    CANSIM
+    http://www5.
+     
+    Summary Tables
+    http://www.statcan.gc.ca/tables-tableaux/sum-som
+    
+    Geography Division 2011
+    http://www12.statcan.gc.ca/census-recensement/2011/geo.....
+     
+    Geography Division 2006
+    http://geodepot.statcan.gc.ca.....
+    '''
+  
 if __name__ == "__main__":
 
     load_dir = '/Users/peder/dev/goc/LOAD'
@@ -148,14 +208,4 @@ if __name__ == "__main__":
     combined2 = "/Users/peder/dev/goc/LOAD/pilot-problems/Combine-published-pending-no-duplicates.xml"
     final = "/Users/peder/dev/goc/LOAD/pilot-problems/final-final.xml"
     bilingual_file =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
-#    print ">>> PublishedOpendata-0.xml"
-#    xml_report(published_file)
-#    print ">>> Published with pending"
-#    xml_report(combined2)
-#    print ">>> 'Manual' additions"
-#    xml_report(final)
-#    print ">>> Bilingual XML"
-#    find_missing_bilingual(bilingual_file,final)
-#    check_language(final)
-    pending_ids(pending)
-    #xml_rescue(combined2)
+    cansim_summary(final)
