@@ -17,11 +17,11 @@ from datatools.batch import common
 from datetime import datetime,date
 from ckanext.canada.metadata_schema import schema_description
 
+
 # add filemode="w" to overwrite
 logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/pilot.log", level=logging.INFO)
 
 #remove leading spaces from URLs
-
 pilot_frequency_list = {'annual':u'Annually | Annuel',
                         'quarterly':u'Quarterly | Trimestriel',
                         'monthly'  :u'Monthly | Mensuel', 
@@ -260,7 +260,6 @@ class Transform:
                      
                 if ckan_name == "id":
                     package_dict['id'] =  str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
-                    
                     continue
 
                 elif ckan_name == 'name':

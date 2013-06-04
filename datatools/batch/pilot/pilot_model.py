@@ -6,25 +6,32 @@ from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description
 
 
-class RawPilotResource:
+class PilotResource():
     ''' Create a new Resource with empty values that can be set later 
         A resource cannot exist without a dataset parent; UUID 
         is required by construtor
     '''
     
-    def  __init__(self,url,type):
-        self.url = url
+    def  __init__(self,dict,type):
+        self.fields=dict
+        print dict
         self.type=type
+      
+        self._map()
     
+    def _map(self):
+        if 'dataset_link_en_' in self.type:
+            try:
+                self.fields['format']=schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][self.fields['format']]['key']
+            except KeyError:
+                self.fields['format']=''
+
+            
+        
     def display(self):
-        pprint (self.__dict__)
-        '''
-        print "\turl:", self.url
-        print "\ttype:", self.type
-        print "\tformat:", self.format
-        print "\tsize:", self.size
-        '''
-class PilotRecord:
+        pprint(self.fields)
+
+class PilotRecord(object):
     ''' Create a new Record with empty values that can be set  later 
       
     '''
@@ -32,56 +39,87 @@ class PilotRecord:
     fields={}
     schema_package_fields=[(ckan_name,pilot_name) for ckan_name, pilot_name, field in schema_description.dataset_all_fields()]
     def  __init__(self,node):
-
-        try:
+       self._process_xml(node)
+       
+    def _process_xml(self,node):
+         try:
             self.id=node.xpath("FORM[NAME='thisformid']/A/text()")[0]
             self.resources=[]
-            self._parse_xml(node)
-            
-        except:
+            self._parse_fields(node)
+       
+         except:
             raise 
             self.id=None
-            
-    def _parse_xml(self,node):
+           
+    def _parse_fields(self,node):
         ''' package fields '''
-        for ckan,pilot in self.schema_package_fields:
-            if pilot:
-                path = "FORM[NAME='%s']/A/text()"%pilot
-                value = node.xpath(path)
+        for ckan_name, pilot_name, field in schema_description.dataset_all_fields():
+            if pilot_name:
+                path = "FORM[NAME='%s']/A/text()"%pilot_name
+                element = node.xpath(path)
                 
                 try:
-                    self.fields[pilot]=value[0].strip()
+                    # Deal with Pilot UUID CODES
+                    value = element[0].strip()
+                    if "|" in value:
+                        split_value=value.split("|")[1]
+                        self.fields[pilot_name] = field['choices_by_pilot_uuid'][split_value]['key']
+
+                    else:
+                        self.fields[pilot_name]=value
                 except IndexError:
-                    self.fields[pilot]=""
+                    self.fields[pilot_name]=""
             else:
-                #Does not belong in this class
+                # ckan_name / field does not belong at PilotRecord level.  Process in CanadaRecord
                 pass
+            ''' Grab data that is not defined in schema '''
+            geo_lower_left = node.xpath("FORM[NAME='geo_lower_left']/A/text()")
+            geo_upper_right = node.xpath("FORM[NAME='geo_upper_right']/A/text()") 
+            if geo_lower_left and geo_upper_right and  geo_lower_left[0] != "N/A":
+                print "GEO ", geo_upper_right, geo_lower_left       
+                try:
+                    left,bottom = geo_lower_left[0].split(" ")
+                    right, top = geo_upper_right[0].split(" ")
+                except ValueError:
+                    '''  To catch values that have a dash that should perhaps be a minus  ['84 - 43'] ['41.5 - 141']  '''
+                    left,bottom = geo_lower_left[0].replace(" - "," -").split(" -")
+                    right, top = geo_upper_right[0].replace(" - "," -").split(" -")
+                    
+                coordinates = [[left, bottom], [left,top], [right, top], [right, bottom]]
+                self.fields['spatial']= {'type': 'Polygon', 'coordinates': coordinates}  
+            
+            
         ''' resources'''
         for i in range(1,5):
             url = node.xpath("FORM[NAME='dataset_link_en_%d']/A/text()" % i)
             if url:
-                resource=RawPilotResource(url[0],'data')
+                resource_dict = {}
+                resource_dict['url']=url[0]
                 format = node.xpath("FORM[NAME='dataset_format_%d']/A/text()" % i)
                 size = node.xpath("FORM[NAME='dataset_size_%d']/A/text()" % i)
-                if format:resource.format=format[0]
-                if size:resource.size=size[0]
-                self.resources.append(resource)
-            else:
+                if format:resource_dict['format']=format[0].split("|")[1]
+                self.resources.append(PilotResource(resource_dict,'dataset_link_en_'))
+            else:               
                 break
-                
-                
+ 
         extras=['supplementary_documentation_en',
                 'supplementary_documentation_fr',
-                'data_dictionary']
+                'data_dictionary_fr',
+                'dictionary_list:_en']
+        ''' What about :
+        data_dictionary_fr
+        data_dictionary_en
+        '''
         
         for extra in extras:
             url= node.xpath("FORM[NAME='%s']/A/text()"% extra)
             if url:
-                resource = RawPilotResource(url[0],extra)
+                resource_dict = {}
+                resource_dict['url']=url[0]              
+                self.resources.append(PilotResource(resource_dict,extra))
 
-    
     def display(self,raw=False):
-        print "DATASET"
+        print "-----------  Pilot <RECORD> -----------"
         for key,value in sorted(self.fields.items()):
             if raw:
                 
@@ -90,9 +128,7 @@ class PilotRecord:
                 print "{}:{}".format(key,value.strip())
         print len(self.resources), "RESOURCES"
         for resource in self.resources:
-            
             resource.display()
-
         
 class PilotHoldings:
     
@@ -123,7 +159,7 @@ class PilotHoldings:
             if record.language_in_title() and record.language == u"Bilingual (English and French) | Bilingue (Anglais et Fran\u00e7ais)":
                 print "Bi with marker", record.id
             elif record.language == u"Bilingual (English and French) | Bilingue (Anglais et Fran\u00e7ais)":
-                print "Just Bi", record.title
+                print "Just Bilingual", record.title
                 
         except Exception as e:  
           

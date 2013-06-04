@@ -147,6 +147,7 @@ language_markers=[  ('(English verison)','(French verison)'),
                     (' - (English)', ' - (French)'),  
                     (' - ENGLISH VERSION', ' - FRENCH VERSION'),
                     (' - English', ' - French'),
+                    (' - Bilingual version',' - version bilingue')
                     ]
 
 language_markers_fra = [
@@ -167,8 +168,8 @@ language_markers_fra = [
                          u'- Anglais',
                          u'- française',
                          u'- Française',
-                         '_version en anglais',
-                       
+                         u'_version en anglais',
+                         u" - version bilingue"
                          
                        ]
 
