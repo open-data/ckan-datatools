@@ -1,10 +1,13 @@
 #-*- coding:UTF-8 -*-
 import os
 import sys
+import json
+import geojson
 from lxml import etree
 from pprint import pprint
 from string import Template
 from datatools.batch.common import XPather
+from datetime import date,datetime
 from datatools.batch import common
 from ckanext.canada.metadata_schema import schema_description as schema
 
@@ -60,6 +63,25 @@ spatialRepTypeCodes = dict((choice['id'],choice['key']) for choice in schema.dat
 maintenanceFrequencyCodes = dict((item['id'], item['key']) for item in schema.dataset_field_by_id['maintenance_and_update_frequency']['choices'])
 topicKeys = dict((item['eng'], item['key']) for item in schema.dataset_field_by_id['topic_category']['choices'])
 formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
+geographic_regions=dict((region['eng'],region['key']) for region in schema.dataset_field_by_id['geographic_region']['choices'])
+
+formatTypes['GeoTIFF (Georeferenced Tag Image File Format)']='tiff'
+formatTypes['TIFF (Tag Image File Format)']="tiff"
+formatTypes['GeoTIFF']='tiff'
+formatTypes['Adobe PDF']='PDF'
+formatTypes['PDF - Portable Document Format']="PDF"    
+formatTypes['ASCII (American Standard Code for Information Interchange)']="TXT"
+formatTypes['GML (Geography Markup Language)']="gml"
+formatTypes['Shape']="SHAPE"
+formatTypes['gzip (GNU zip)']="ZIP"
+formatTypes['ZIP']="ZIP"
+formatTypes['ESRI Shapefile']="SHAPE"
+formatTypes['JPEG']="jpg"
+#Hierarchical Data Format (HDF)
+#CorelDraw
+
+pprint(geograpic_regions)
+
 
 
 doc=None
@@ -79,11 +101,14 @@ def get_spatial():
     exteriorRing = doc.xpath('//gml:Polygon/gml:exterior/gml:LinearRing/gml:pos',namespaces=nspace)   
     interiorRing = doc.xpath('//gml:Polygon/gml:interior/gml:LinearRing/gml:pos',namespaces=nspace)   
     extent_template = Template('''{"type": "Polygon", "coordinates": [[[$minx, $miny], [$minx, $maxy], [$maxx, $maxy], [$maxx, $miny], [$minx, $miny]]]}''')
+ 
+    extRingPoints = [map(float,reversed(p.text.split())) for p in  exteriorRing]
 
-    extRingPoints = [map(float,p.text.split()) for p in  exteriorRing]
-    
    
     intRingPoints = [p.text.split(" ") for p in interiorRing]
+    if intRingPoints:print "INTERIOR", intRingPoints
+    
+    
     if extRingPoints:
         return  geojson.dumps(geojson.geometry.Polygon([extRingPoints]))    
                               
@@ -109,10 +134,12 @@ def get_keywords(path):
     def clean_tag(x):
         #replace forward slashes and semicolon so keywords will pass validation
         #Apostrophes in french words causes a proble; temporary fixx
-        x = x.replace("/"," - ").replace("; ","-")
-        return x.split(">")[-1].lower().strip().capitalize() 
+        if x:
+            x = x.replace("/"," - ").replace("; ","-")
+            return x.split(">")[-1].strip()
+        
          
-    tags = [clean_tag(t.text) for t in keywords]  # must remove forward slashes to pass validation          
+    tags = [clean_tag(t.text) for t in keywords if len(t)>0]  # must remove forward slashes to pass validation          
     return ",".join(tags)
 
 def get_time():
@@ -143,7 +170,7 @@ def get_notes(path):
         notes = doc.xpath(path,namespaces=nspace)[0].text
         if 'Abstract not available' in notes:
             notes="Abstract not available."
-        if 'Résumé non disponible' in notes:
+        if u'Résumé non disponible' in notes:
             notes=u"Résumé non disponible."
         return notes
     except:
@@ -173,37 +200,64 @@ def camel_to_label(ccname):
         out.append(b)
     return u''.join(out).title()
 
-def get_subject_from_topic_category(topic_category_code):
+def get_topic_category():
+     topic_category_code = full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode')
+     topic_name_en = camel_to_label(topic_category_code)
+     try:
+         topic = topicKeys[topic_name_en]
+     except KeyError:
+         topic =''
+     
+     return topic
+     
+def get_subject_from_topic_category():
+    topic_category_code = full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode')
+
     subjects=[]
     topic_name_en = camel_to_label(topic_category_code)
-    topic = topicKeys[topic_name_en]
+
+   
+    try:
+         topic = topicKeys[topic_name_en]
+    except KeyError:
+         topic =''
 
     try:
        
         subject_ids = schema.dataset_field_by_id['topic_category']['choices_by_key'][topic]['subject_ids']
         for subject_id in subject_ids:
             subjects.append(schema.dataset_field_by_id['subject']['choices_by_id'][subject_id]['key'])
-        return ", ".join(set(subjects))
+        result= ", ".join(set(subjects))
+        return result
+   
         
     except KeyError as e:
-        raise e
+        return ''
     
     except:
         raise
 
-    
+def get_doi():  
+    doi =  doc.xpath('//gmd:otherCitationDetails/gco:CharacterString',namespaces=nspace)
+    if doi:
+        return doi[0].text.split("doi ")[1]
+    else:
+        return ''
 
 def get_update_frequency():
     try:
         frequencyCode = doc.xpath('//gmd:MD_MaintenanceFrequencyCode',namespaces=nspace)[0].attrib['codeListValue'].split("_")[1]
-        return maintenanceFrequencyCodes[frequencyCode]
+        return maintenanceFrequencyCodes[int(frequencyCode)]
 
-    except KeyError:
+    except IndexError,KeyError:
         return "As Needed | Au besoin"
 
   
 def full_path(path):
-    return doc.xpath((path),namespaces=nspace)[0].text
+    try:
+        return doc.xpath((path),namespaces=nspace)[0].text
+    except:
+        return ''
 
 def charstring_path(key):
     return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
@@ -225,11 +279,36 @@ def keywords_by_code(doc,code_value,nspace):
     except Exception as e:
           print e  
     return keywords
+
+def get_place_keyword():
+    place = doc.xpath('//gmd:MD_KeywordTypeCode[@codeListValue="RI_525"]/../../gmd:keyword[@xsi:type="gmd:PT_FreeText_PropertyType"]/gco:CharacterString', namespaces=nspace)
+    
+    eng=''
+    if place and "> CANADA > " in place[0].text:
+        eng=place[0].text.split("CANADA > ")[1].title()
+        
+    elif place:
+        eng=place[0].text.title()
+   
+    try:
+        #print geographic_regions[eng]
+        return geographic_regions[eng]
+    except KeyError,IndexError:
+        #print "No Region Found"
+        return ''
+        
+def size(): 
+    try:
+        s = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text   
+        return int(round(eval(s)))
+    except:
+        return ''
 package_dict = {'resources': []}  
 
 def resources():
 
     resources = []
+    fileid= package_dict['id']
     path = '//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine'
     online=doc.xpath(path,namespaces=nspace)
     for node in online:
@@ -240,7 +319,7 @@ def resources():
             resource_dict['language']=doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
-            resource_dict['size']=doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text
+            resource_dict['size']=size()
             #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
             format = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
             
@@ -249,18 +328,19 @@ def resources():
                 resource_dict['format'] = formatTypes['Other']
             else:
                 resource_dict['format'] = formatTypes[format]
-
+           
             resources.append(resource_dict)
         except:
             raise
-        
-    fileid = charstring_path('fileIdentifier')
+
     #add 2 resource for Geogratis HTML pages
     resource_dict={}
     resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{}.html".format(fileid)
     resource_dict['language']="eng; CAN"
+    #resource_dict['size']  Size is not required
     resource_dict['name']="GeoGratis Dataset Record"
     resource_dict['name_fra']=u"Record de jeu de données GeoGratis"
+    resource_dict['format']=formatTypes['HTML']
     resources.append(resource_dict)
 
     resource_dict={}
@@ -268,6 +348,7 @@ def resources():
     resource_dict['language']="fra; CAN"
     resource_dict['name']="GeoGratis Dataset Record"
     resource_dict['name_fra']="Record de jeu de données GeoGratis"
+    resource_dict['format']=formatTypes['HTML']
     resources.append(resource_dict)
      
     # Add 2 files for the NAP resources
@@ -276,6 +357,7 @@ def resources():
     resource_dict['language']="eng; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
+    resource_dict['format']=formatTypes['XML']
     resources.append(resource_dict)
     
     resource_dict={}
@@ -283,34 +365,43 @@ def resources():
     resource_dict['language']="fra; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
+    resource_dict['format']=formatTypes['XML']
     resources.append(resource_dict) 
     
     package_dict['resources']=resources      
 
 def data_identification():
     #8 of 33
-    package_dict['id'] ='MISSING' #charstring_path('fileIdentifier')
+    try:
+        fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
+    except IndexError:  
+        fileid = charstring_path('fileIdentifier')
+    package_dict['id'] =fileid #charstring_path('fileIdentifier')
     #package_dict['language']=schema.dataset_field_by_id['language']['example']['eng']
     package_dict['owner_org']='nrcan-rncan'          
-    package_dict['topic_category']=full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode')
-    package_dict['subject']=get_subject_from_topic_category(package_dict['topic_category']) 
+    package_dict['topic_category']=get_topic_category()
+    package_dict['subject']=get_subject_from_topic_category() 
     package_dict['catalog_type']=u"Geo Data | G\xe9o"
     package_dict['license_id']="ca-ogl-lgo"
     package_dict['presentation_form']=get_presentation_code()
-    package_dict['browse_graphic_url']='MISSING'
-    package_dict['digital_object_identifier']='MISSING'
+    try:
+        package_dict['browse_graphic_url']=full_path('//gmd:MD_BrowseGraphic/gmd:fileName/gco:CharacterString')
+    except IndexError:
+        package_dict['browse_graphic_url']=''
+        
+    package_dict['digital_object_identifier']=get_doi()
 
 def time_and_space():
     #10 if 33
     package_dict['date_published']=full_path('//gmd:CI_Date/gmd:date/gco:Date')
-    package_dict['date_modified']='MISSING'
+    package_dict['date_modified']=''
     package_dict['maintenance_and_update_frequency']=get_update_frequency()
     package_dict['portal_release_date']='2013-05-24'
     package_dict['ready_to_publish']=True
     start,end = get_time()
     package_dict['time_period_coverage_start']=start
     package_dict['time_period_coverage_end']=end
-    package_dict['geographic_region']='MISSING'
+    package_dict['geographic_region']=get_place_keyword()
     package_dict['spatial']=get_spatial()
     package_dict['spatial_representation_type']=get_spatial_rep_type()
 
@@ -320,8 +411,8 @@ def bilingual():
     package_dict['data_series_name_fra']=full_path('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString')
     package_dict['data_series_issue_identification']=full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:issueIdentification/gco:CharacterString')
     package_dict['data_series_issue_identification_fra']=package_dict['data_series_issue_identification']
-    #package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-    #package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
+    package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/'
+    package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/'
     package_dict['url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
     package_dict['url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
     package_dict['keywords']=get_keywords('//gmd:keyword/gco:CharacterString')
@@ -349,35 +440,31 @@ def check_structure(dict):
     
     print "Mandatory Fields that are not fixed or calculated"
     pprint(mandatory_fields)
-   
-    
-
- 
             
-def process(dir): 
+def process(dir,outfile): 
     global doc
+    jlfile = open(os.path.normpath(outfile), "w")
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            
+            #print file
             f = open(os.path.join(path,file),"r")
             doc = etree.parse(f)
             data_identification()
             time_and_space()
             bilingual()
             resources()
-            package_dict['validation_override']=False 
-            check_structure(package_dict)
-            pprint(package_dict)
+            package_dict['validation_override']=True
+            #check_structure(package_dict)
+            #pprint(json.dumps(package_dict))
             
-            sys.exit()
             if (n % 100) == 0: print n 
-
-            #jlfile.write(json.dumps(package_dict) + "\n")  
+            #print package_dict['id']
+            jlfile.write(json.dumps(package_dict) + "\n")  
 
 
 if __name__ == "__main__":
-    dir="/Users/peder/dev/OpenData/nrcandump-sample"
-    
+    dir="/Users/peder/dev/OpenData/nrcandump"
+    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
 
-    process(dir)
+    process(dir,outfile)
     #process()

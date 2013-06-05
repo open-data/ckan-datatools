@@ -10,7 +10,7 @@ from pprint import pprint
 import logging
 
 ''' Namespaces required to query .nap files with XPath '''
-nap_namespaces = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml'}
+nap_namespaces = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml','xsi':"http://www.w3.org/2001/XMLSchema-instance" }
 
 schema_file_formats = [c['key'] for c in schema_description.resource_field_by_id['format']['choices']]
 # A dict of list might be easierto use that a list of dicts so  you can pick with langs['eng']
