@@ -81,8 +81,8 @@ formatTypes['JPEG']="jpg"
 #CorelDraw
 
 
-geographic_regions['Yukon Territory']="Yukon  Youkon"
-geographic_regions['Yukon']="Yukon  Youkon"
+geographic_regions['Yukon Territory']="Yukon  Yukon"
+geographic_regions['Yukon']="Yukon  Yukon"
 geographic_regions['Canada']=''
 
 
@@ -294,7 +294,7 @@ def get_place_keyword():
         eng=place[0].text.title()
    
     try:
-        #print geographic_regions[eng]
+       
         return geographic_regions[eng]
     except KeyError,IndexError:
         #print "No Region Found"
@@ -306,6 +306,14 @@ def size():
         return int(round(eval(s)))
     except:
         return ''
+    
+    
+def language():
+    lang = doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
+    if lang=='eng': lang='eng; CAN'
+    if lang=='fra': lang='fra: CAN'
+    return lang
+    
 package_dict = {'resources': []}  
 
 def resources():
@@ -319,7 +327,7 @@ def resources():
         try:
             resource_dict={}
             resource_dict['url'] = node.find('gmd:CI_OnlineResource/gmd:linkage/gmd:URL', nspace).text
-            resource_dict['language']=doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
+            resource_dict['language']=language()
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
             resource_dict['size']=size()
@@ -466,7 +474,7 @@ def process(dir,outfile):
 
 
 if __name__ == "__main__":
-    dir="/Users/peder/dev/OpenData/nrcandump-sample"
+    dir="/Users/peder/dev/OpenData/nrcandump"
     outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
 
     process(dir,outfile)
