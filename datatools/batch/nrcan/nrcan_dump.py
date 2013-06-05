@@ -80,7 +80,10 @@ formatTypes['JPEG']="jpg"
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
-pprint(geograpic_regions)
+
+geographic_regions['Yukon Territory']="Yukon  Youkon"
+geographic_regions['Yukon']="Yukon  Youkon"
+geographic_regions['Canada']=''
 
 
 
@@ -463,7 +466,7 @@ def process(dir,outfile):
 
 
 if __name__ == "__main__":
-    dir="/Users/peder/dev/OpenData/nrcandump"
+    dir="/Users/peder/dev/OpenData/nrcandump-sample"
     outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
 
     process(dir,outfile)
