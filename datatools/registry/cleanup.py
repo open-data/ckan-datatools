@@ -20,10 +20,8 @@ def delete_packs(file):
 
 if __name__ == "__main__":
     
-
     key=sys.argv[1]
 
-    
     ''' Delete 146 old CANSIM records '''
     delete_packs('cansim.delete')
     
