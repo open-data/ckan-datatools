@@ -109,7 +109,7 @@ def get_spatial():
 
    
     intRingPoints = [p.text.split(" ") for p in interiorRing]
-    if intRingPoints:print "INTERIOR", intRingPoints
+    if intRingPoints:print package_dict['id'], " INTERIOR RING", intRingPoints
     
     
     if extRingPoints:
@@ -464,7 +464,7 @@ def process(dir,outfile):
             time_and_space()
             bilingual()
             resources()
-            package_dict['validation_override']=True
+            package_dict['validation_override']=False
             #check_structure(package_dict)
             #pprint(json.dumps(package_dict))
             
@@ -475,7 +475,7 @@ def process(dir,outfile):
 
 if __name__ == "__main__":
     dir="/Users/peder/dev/OpenData/nrcandump"
-    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
+    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-validate-%s.jl' % (date.today())
 
     process(dir,outfile)
     #process()
