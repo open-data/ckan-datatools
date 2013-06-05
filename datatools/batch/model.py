@@ -4,11 +4,6 @@ from lxml import etree
 from collections import namedtuple
 
 
-#FieldMap = namedtuple('FieldMapper', 'ckan','pilot','geogratis','logic')
-#pt1 = Point(1.0, 5.0,4)
-#pt2 = Point(2.5, 1.5,4)
-
-
 class ResourceDict:
     ''' this is cool but useless ?  '''
     def __init__(self,fields):      

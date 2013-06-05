@@ -9,7 +9,138 @@ from datatools.batch import common
 from ckanext.canada.metadata_schema import schema_description as schema
 from pilot_model import PilotRecord
 
-''' 
+
+class PilotRules:
+    
+    bilingual_markers =[(' - Bilingual version',' - version bilingue'),]
+
+    agriculture_title_markers = ['D035 ','109 - ','075/081 - ','077/078/082 -', '060 ','060 - ', '031N', '101 - ', '072 - ','072 ',
+                                 '073 ', '073 - ', '070 ','070 - ', '066 - ', '050P',  'A009E','A009A', '003 - ', '003 ', 
+                                 '077/078/082 - ', '075/081 - ', 'D019M']
+
+    pilot_frequency_list = {'annual':u'Annually | Annuel',
+                        'quarterly':u'Quarterly | Trimestriel',
+                        'monthly'  :u'Monthly | Mensuel', 
+                        'bi-weekly':u'Fortnightly | Quinzomadaire',
+                        'weekly':u'Weekly | Hebdomadaire',
+                        'daily': u'Daily | Quotidien',
+                        'hourly':u'Continual | Continue',
+                        '':'Unknown | Inconnu'}
+    
+    formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
+    print schema.extra_resource_fields
+    print formatTypes
+    print [ckan for ckan, pilot, field in schema.resource_all_fields()]
+   
+    def fix_date(date):
+        # Get rid of eg. 2008-06-26T08:30:00
+        if "T" in date:
+            date=date.split("T")[0]
+        elif date == "Varies by indicator":
+            return ''
+    
+        elif "00:00:00" in date:
+            date=date.split('00:00:00')[0]
+        try:
+            valid_date = time.strptime(date, '%Y-%m-%d')
+            return date
+        except ValueError:
+            #print 'Invalid date!', date
+            return ''
+
+        
+    def region_fix(self):
+        if package_dict['geographic_region'] == "Canada  Canada":package_dict['geographic_region']=''
+        region = package_dict['geographic_region']
+        package_dict['geographic_region'] = region.replace("Yukon Territory  Territoire du Yukon","Yukon  Yukon" )
+        package_dict['author_email'] =  'open-ouvert@tbs-sct.gc.ca'  
+        package_dict['catalog_type'] = schema_description.dataset_field_by_id['catalog_type']['choices'][0]['key']
+        
+    def time_coverage_fix(self,time):
+    #Fix dates
+        try:
+
+            t = common.time_coverage_fix(package_dict['time_period_coverage_start'],package_dict['time_period_coverage_end'])
+            package_dict['time_period_coverage_start'] =common.timefix(t[0])
+            package_dict['time_period_coverage_end'] = common.timefix(t[1])
+             
+        except KeyError:
+            ''' Times were never set '''
+            package_dict['time_period_coverage_start'] ="1000-01-01"
+            package_dict['time_period_coverage_end']  ="3000-01-01"
+            
+    def workflow_fix(self):
+        if node.find("FLOWSTATUS").text == "pending":
+            package_dict['portal_release_date']=''
+            
+    def reformat_date(date_string):
+        try:
+            timepoint = datetime.strptime(date_string.strip(), "%m/%d/%Y") 
+        except ValueError:
+            timepoint = datetime.strptime(date_string.strip(), "%Y/%m/%d")
+        day = timepoint.date()
+        return day.isoformat()
+
+        if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
+ 
+    def keywords(self):
+        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").replace(u"´","'").split(",")
+        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(",")
+
+        package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
+        package_dict['keywords_fra'] = ",".join([k for k in key_fra if len(k)<100 and len(k)>1])
+        
+    def title(self,title,department):
+        if department=='aafc-aac':
+            for marker in agriculture_title_markers:
+                if marker in title:
+                    title = title.split(marker)[1].lstrip(" ")
+
+        for marker in common.language_markers:
+            title.split(marker[0])[0]
+            title.split(marker[1])[0]
+        print title
+        return title
+        
+                
+    def format(self,resource,department):
+        format = resource.fields['format']
+        print "Resource Type", resource.type
+        if department =='hc-sc' and resource.type == 'file': format='TXT'
+        if resource.fields['format'] not in self.formatTypes:
+            return self.formatTypes['Other']
+        else:
+            return self.formatTypes[format]
+        
+class CkanResource:
+    
+    
+    def __init__(self,pilot):
+        self.fields={}
+        self.fields['url']=pilot.fields['url']
+        self._resource_type(pilot)
+    
+    def _resource_type(self, pilot):
+        if 'dataset_link_en_' in pilot.type:
+            self.fields['resource_type']='file'
+            self.fields['name']='Dataset'
+            self.fields['name_fra']='Ensemble de données'
+            self.fields['format']=pilot.fields['format']
+            
+        elif 'dictionary_list:_en' in pilot.type:
+            self.fields['resource_type']='doc'
+            self.fields['name']='Data Dictionary'
+            self.fields['name_fra']='Dictionaire de données'
+            self.fields['format']='HTML'
+                 
+        elif 'supplementary_documentation_' in pilot.type:
+            self.fields['resource_type']='doc'
+            self.fields['name']='Supporting Documentation'
+            self.fields['name_fra']='Documentation de Soutien'
+            self.fields['format']='HTML'
+            
+class CanadaRecord:
+    ''' 
     RESOURCE:
         1 name
         2 name_fra
@@ -52,120 +183,98 @@ from pilot_model import PilotRecord
         31 endpoint_url_fra
         32 ready_to_publish
         33 portal_release_date
-        '''
+    '''
+    
+    rules = PilotRules()
+    
+    def __init__(self,pilotrecord):
 
-
-package_dict = {'resources': []}  
-
-def resources():
-
-    resources = []
-    path = '//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine'
-    online=doc.xpath(path,namespaces=nspace)
-    for node in online:
+        self.id=pilotrecord.id.lower()
+        self.package_dict={'resources':[]}
+        self.data_identification(pilotrecord.fields)
+        self.time_and_space(pilotrecord.fields)
+        self.bilingual(pilotrecord.fields)
+        self.resources(pilotrecord.resources)
         
-        try:
-            resource_dict={}
-            resource_dict['url'] = node.find('gmd:CI_OnlineResource/gmd:linkage/gmd:URL', nspace).text
-            resource_dict['language']=doc.find('//gmd:MD_DataIdentification/gmd:language/gco:CharacterString', nspace).text
-            resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
-            resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
-            resource_dict['size']=doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text
-            #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
-            format = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
+    def data_identification(self,pilot):
+        #8 of 33
+        self.package_dict['id']=self.id
+        self.package_dict['owner_org']=pilot['department'] 
+        self.package_dict['topic_category']=pilot['category'] 
+        self.package_dict['subject']=''
+        self.package_dict['catalog_type']=''
+        self.package_dict['license_id']="ca-ogl-lgo"
+        self.package_dict['presentation_form']=''
+        self.package_dict['browse_graphic_url']=''
+        self.package_dict['digital_object_identifier']=''
+
+    def time_and_space(self, pilot):
+        #10 if 33
+        self.package_dict['date_published']=pilot['date_released']
+        self.package_dict['date_modified']=pilot['date_updated']
+        self.package_dict['maintenance_and_update_frequency']=self.rules.pilot_frequency_list[pilot['frequency']]
+        self.package_dict['portal_release_date']='2013-06-01'
+        self.package_dict['ready_to_publish']=True
+        self.package_dict['time_period_coverage_start']=pilot['time_period_start']
+        self.package_dict['time_period_coverage_end']=pilot['time_period_end']
+        self.package_dict['geographic_region']=pilot['Geographic_Region_Name']
+        self.package_dict['spatial']=''
+        self.package_dict['spatial_representation_type']=''
+
+    def bilingual(self,pilot):
+        #14 of 33
+        self.package_dict['data_series_name']=''
+        self.package_dict['data_series_name_fra']=''
+        self.package_dict['data_series_issue_identification']=''
+        self.package_dict['data_series_issue_identification_fra']=''
+        #package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
+        #package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
+        self.package_dict['url']=pilot['program_page_en']
+        self.package_dict['url_fra']=pilot['program_url_fr']
+        self.package_dict['keywords']=pilot['keywords_en']
+        self.package_dict['keywords_fra']=pilot['keywords_fr']
+        self.package_dict['notes']=pilot['description_en']
+        self.package_dict['notes_fra'] =pilot['description_fr']
+        self.package_dict['title'] = self.rules.title(pilot['title_en'],pilot['department'])
+        self.package_dict['title_fra'] = self.rules.title(pilot['title_fr'],pilot['department'])
+              
+    def resources(self,pilot_resources):
+    
+        for resource in pilot_resources:
+            self.package_dict['resources'].append(CkanResource(resource).fields)
             
-            if format not in formatTypes:
-     
-                resource_dict['format'] = formatTypes['Other']
-            else:
-                resource_dict['format'] = formatTypes[format]
-
-            resources.append(resource_dict)
-        except:
-            raise
+    def check_structure(dict):
+        fields =  [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['type'] not in [u'fixed',u'calculated']] 
+        mandatory = [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['mandatory'] == u'all']  
+        fields.append('resources')  
+        fields.append('validation_override')     
+        missing_fields = set(dict.iterkeys()).symmetric_difference(set(fields)) 
+        
+        mandatory_fields = set(mandatory).intersection(set(fields))
+        print "Missing Mandatory Fields", missing_fields.intersection(mandatory_fields)
+        print "Missing Values ", [key for key,value in dict.items() if value=='MISSING']
+        print "------------- Details ---------------"
+        print "Fields Missing from Package_dict"
+        pprint(list(missing_fields))
+        
+        print "Mandatory Fields that are not fixed or calculated"
+        pprint(mandatory_fields)
    
-
-def data_identification():
-    #8 of 33
-    package_dict['id'] ='MISSING' #charstring_path('fileIdentifier')
-    #package_dict['language']=schema.dataset_field_by_id['language']['example']['eng']
-    package_dict['owner_org']='nrcan-rncan'          
-    package_dict['topic_category']=full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode')
-    package_dict['subject']=get_subject_from_topic_category(package_dict['topic_category']) 
-    package_dict['catalog_type']=u"Geo Data | G\xe9o"
-    package_dict['license_id']="ca-ogl-lgo"
-    package_dict['presentation_form']=get_presentation_code()
-    package_dict['browse_graphic_url']='MISSING'
-    package_dict['digital_object_identifier']='MISSING'
-
-def time_and_space():
-    #10 if 33
-    package_dict['date_published']=full_path('//gmd:CI_Date/gmd:date/gco:Date')
-    package_dict['date_modified']='MISSING'
-    package_dict['maintenance_and_update_frequency']=get_update_frequency()
-    package_dict['portal_release_date']='2013-05-24'
-    package_dict['ready_to_publish']=True
-    start,end = get_time()
-    package_dict['time_period_coverage_start']=start
-    package_dict['time_period_coverage_end']=end
-    package_dict['geographic_region']='MISSING'
-    package_dict['spatial']=get_spatial()
-    package_dict['spatial_representation_type']=get_spatial_rep_type()
-
-def bilingual():
-    #14 of 33
-    package_dict['data_series_name']=full_path('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gco:CharacterString')
-    package_dict['data_series_name_fra']=full_path('//gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:name/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString')
-    package_dict['data_series_issue_identification']=full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:series/gmd:CI_Series/gmd:issueIdentification/gco:CharacterString')
-    package_dict['data_series_issue_identification_fra']=package_dict['data_series_issue_identification']
-    #package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-    #package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
-    package_dict['url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-    package_dict['url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
-    package_dict['keywords']=get_keywords('//gmd:keyword/gco:CharacterString')
-    package_dict['keywords_fra']=get_keywords('//gmd:keyword/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString')
-    package_dict['notes']=get_notes('//gmd:abstract/gco:CharacterString')
-    package_dict['notes_fra'] =get_notes('//gmd:abstract/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString') 
-    package_dict['title'] = full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString')
-    package_dict['title_fra'] = full_path('//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString')
-
-def check_structure(dict):
-    fields =  [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['type'] not in [u'fixed',u'calculated']] 
-    mandatory = [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['mandatory'] == u'all']  
-    fields.append('resources')  
-    fields.append('validation_override')     
-    missing_fields = set(dict.iterkeys()).symmetric_difference(set(fields)) 
-    
-    mandatory_fields = set(mandatory).intersection(set(fields))
-    print "Missing Mandatory Fields", missing_fields.intersection(mandatory_fields)
-    
-
-    print "Missing Values ", [key for key,value in dict.items() if value=='MISSING']
-    print "------------- Details ---------------"
-    print "Fields Missing from Package_dict"
-    pprint(list(missing_fields))
-    
-    print "Mandatory Fields that are not fixed or calculated"
-    pprint(mandatory_fields)
-   
-    
-
- 
+    def display(self):
+        print "------------  Canada Package ------------"
+        pprint(self.package_dict)
             
 def process(file): 
     tree = etree.parse(file)
     root = tree.getroot()
-    records=[]
+    print root
+    precords=[]
         
     for i,node in enumerate(root):
    
-        id = str(node.xpath("FORM[NAME='thisformid']/A/text()")[0]).lower() 
+        precord = PilotRecord(node)
+        precords.append(precord)
 
-        record = PilotRecord(node)
-        records.append(record)
-  
-         
-        
             #data_identification()
 #            time_and_space()
 #            bilingual()
@@ -173,21 +282,25 @@ def process(file):
 #            package_dict['validation_override']=False 
 #            check_structure(package_dict)
 #            pprint(package_dict)
-#            
-#            sys.exit()
-#            if (n % 100) == 0: print n 
-#
-#            #jlfile.write(json.dumps(package_dict) + "\n")  
 
-    for record in records:
-        print record.id
-        print record.display(raw=True)
-        print "--------------------------------------------------"
-        sys.exit()
+        if (i % 100) == 0: print i 
+
+#        jlfile.write(json.dumps(package_dict) + "\n")  
+
+    for precord in precords:
+        precord.display(raw=True)
+        crecord = CanadaRecord(precord)
+        crecord.display()
         
+       
+       
+
+
+      
 if __name__ == "__main__":
     matched_file =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
     bilingual_file =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
-    
+    sample_file=   "/Users/peder/dev/goc/LOAD/sample.xml"
+    print "RUnning"
     process(bilingual_file)
     #process()
