@@ -134,16 +134,22 @@ def get_spatial_rep_type():
         raise
 def get_keywords(path):
     keywords = doc.xpath(path,namespaces=nspace)
+    
     def clean_tag(x):
         #replace forward slashes and semicolon so keywords will pass validation
         #Apostrophes in french words causes a proble; temporary fixx
         if x:
-            x = x.replace("/"," - ").replace("; ","-")
-            return x.split(">")[-1].strip()
+            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ")
+            tag= x.split(">")[-1].strip()
+            if tag:
+                return tag
         
-         
-    tags = [clean_tag(t.text) for t in keywords if len(t)>0]  # must remove forward slashes to pass validation          
-    return ",".join(tags)
+    
+    
+    tags = [clean_tag(t.text) for t in keywords if len(keywords)>0]  # must remove forward slashes to pass validation    
+    # QUICKFIX: TODO clean up this hack
+    keywords = [word for word in tags if word!=None]
+    return ",".join(keywords)
 
 def get_time():
     time = doc.xpath('//gml:begin/gml:TimeInstant/gml:timePosition',namespaces=nspace)
@@ -330,6 +336,7 @@ def resources():
             resource_dict['language']=language()
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
+            resource_dict['resource_type']='file'
             resource_dict['size']=size()
             #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
             format = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
@@ -351,6 +358,7 @@ def resources():
     #resource_dict['size']  Size is not required
     resource_dict['name']="GeoGratis Dataset Record"
     resource_dict['name_fra']=u"Record de jeu de données GeoGratis"
+    resource_dict['resource_type']='doc'
     resource_dict['format']=formatTypes['HTML']
     resources.append(resource_dict)
 
@@ -359,6 +367,7 @@ def resources():
     resource_dict['language']="fra; CAN"
     resource_dict['name']="GeoGratis Dataset Record"
     resource_dict['name_fra']="Record de jeu de données GeoGratis"
+    resource_dict['resource_type']='doc'
     resource_dict['format']=formatTypes['HTML']
     resources.append(resource_dict)
      
@@ -369,6 +378,7 @@ def resources():
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
     resource_dict['format']=formatTypes['XML']
+    resource_dict['resource_type']='file'
     resources.append(resource_dict)
     
     resource_dict={}
@@ -377,6 +387,7 @@ def resources():
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
     resource_dict['format']=formatTypes['XML']
+    resource_dict['resource_type']='file'
     resources.append(resource_dict) 
     
     package_dict['resources']=resources      
@@ -424,8 +435,8 @@ def bilingual():
     package_dict['data_series_issue_identification_fra']=package_dict['data_series_issue_identification']
     package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/'
     package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/'
-    package_dict['url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-    package_dict['url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
+    package_dict['url']='http://geogratis.gc.ca/geogratis/search?lang=en'
+    package_dict['url_fra']='http://geogratis.gc.ca/geogratis/search?lang=fr'
     package_dict['keywords']=get_keywords('//gmd:keyword/gco:CharacterString')
     package_dict['keywords_fra']=get_keywords('//gmd:keyword/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString')
     package_dict['notes']=get_notes('//gmd:abstract/gco:CharacterString')
@@ -464,7 +475,7 @@ def process(dir,outfile):
             time_and_space()
             bilingual()
             resources()
-            package_dict['validation_override']=False
+            package_dict['validation_override']=True
             #check_structure(package_dict)
             #pprint(json.dumps(package_dict))
             
@@ -475,7 +486,7 @@ def process(dir,outfile):
 
 if __name__ == "__main__":
     dir="/Users/peder/dev/OpenData/nrcandump"
-    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-validate-%s.jl' % (date.today())
+    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
 
     process(dir,outfile)
     #process()

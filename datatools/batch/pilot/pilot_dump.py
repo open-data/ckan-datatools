@@ -3,6 +3,7 @@ import os
 import sys
 from lxml import etree
 from pprint import pprint
+from datetime import datetime,date
 from string import Template
 from datatools.batch.common import XPather
 from datatools.batch import common
@@ -28,8 +29,7 @@ class PilotRules:
                         '':'Unknown | Inconnu'}
     
     formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
-    print schema.extra_resource_fields
-    print formatTypes
+
     print [ckan for ckan, pilot, field in schema.resource_all_fields()]
    
     def fix_date(date):
@@ -105,7 +105,6 @@ class PilotRules:
                 
     def format(self,resource,department):
         format = resource.fields['format']
-        print "Resource Type", resource.type
         if department =='hc-sc' and resource.type == 'file': format='TXT'
         if resource.fields['format'] not in self.formatTypes:
             return self.formatTypes['Other']
@@ -116,28 +115,47 @@ class CkanResource:
     
     
     def __init__(self,pilot):
+
         self.fields={}
         self.fields['url']=pilot.fields['url']
         self._resource_type(pilot)
     
     def _resource_type(self, pilot):
+
         if 'dataset_link_en_' in pilot.type:
             self.fields['resource_type']='file'
             self.fields['name']='Dataset'
             self.fields['name_fra']='Ensemble de données'
             self.fields['format']=pilot.fields['format']
+            self.fields['language']=pilot.fields['language']                
             
         elif 'dictionary_list:_en' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Data Dictionary'
             self.fields['name_fra']='Dictionaire de données'
             self.fields['format']='HTML'
+            self.fields['language']='eng; CAN'
+            
+        elif 'dictionary_list_fr' in pilot.type:
+            self.fields['resource_type']='doc'
+            self.fields['name']='Data Dictionary'
+            self.fields['name_fra']='Dictionaire de données'
+            self.fields['format']='HTML'
+            self.fields['language']="fra; CAN"
                  
-        elif 'supplementary_documentation_' in pilot.type:
+        elif 'supplementary_documentation_en' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
             self.fields['name_fra']='Documentation de Soutien'
             self.fields['format']='HTML'
+            self.fields['language']='eng; CAN'
+            
+        elif 'supplementary_documentation_fr' in pilot.type:
+            self.fields['resource_type']='doc'
+            self.fields['name']='Supporting Documentation'
+            self.fields['name_fra']='Documentation de Soutien'
+            self.fields['format']='HTML'
+            self.fields['language']="fra; CAN"
             
 class CanadaRecord:
     ''' 
@@ -263,17 +281,79 @@ class CanadaRecord:
     def display(self):
         print "------------  Canada Package ------------"
         pprint(self.package_dict)
-            
-def process(file): 
-    tree = etree.parse(file)
+
+
+                
+def process_matched(infile, outfile): 
+    jlfile = open(outfile,"w")
+    tree = etree.parse(infile)
     root = tree.getroot()
-    print root
+
+
+    def combined_elements(root):
+        for i,element in enumerate(root):
+            if element.getprevious() is not None:
+                if i%2==0:continue
+                yield (element.getprevious(),element)   
+                     
+    for i,node in enumerate(combined_elements(root)):
+        
+       
+        en_record = PilotRecord(node[0])
+        fr_record = PilotRecord(node[1])
+
+        print len(en_record.resources)
+        '''Transfer french data resources to english record
+           If there is a duplicated, assume that it's bilingual
+           For example: 
+           http://www20.statcan.gc.ca/tables-tableaux/cansim/csv/03030024-eng.zip
+           http://www20.statcan.gc.ca/tables-tableaux/cansim/sdmx/03030024.zip
+           This is a hack
+        '''
+        en_resources = dict((r.fields['url'],r) for r in en_record.resources)
+        for resource in fr_record.resources:
+            if resource.type == "dataset_link_en_":
+                if resource.fields['url'] in en_resources.keys():
+                    en_resources[resource.fields['url']].fields['language']="eng; CAN | fra; CAN"
+                    
+                else:
+                    en_record.resources.append(resource)
+                
+        print len(en_record.resources)       
+        # Create CkanRecord
+        crecord = CanadaRecord(en_record)
+        crecord.display()
+    
+            #data_identification()
+#            time_and_space()
+#            bilingual()
+#            resources()
+#            package_dict['validation_override']=False 
+#            check_structure(package_dict)
+#            pprint(package_dict)
+
+        if i > 0 and (i % 100) == 0: print i 
+
+        #jlfile.write(json.dumps(package_dict) + "\n")  
+
+#    for precord in precords:
+#
+#        crecord = CanadaRecord(precord)
+#        crecord.display()         
+def process_bilingual(infile, outfile): 
+    jlfile = open(outfile,"w")
+    tree = etree.parse(infile)
+    root = tree.getroot()
+
     precords=[]
         
     for i,node in enumerate(root):
-   
+        
         precord = PilotRecord(node)
+        pprint(precord.fields['language'])
+
         precords.append(precord)
+        
 
             #data_identification()
 #            time_and_space()
@@ -285,22 +365,26 @@ def process(file):
 
         if (i % 100) == 0: print i 
 
-#        jlfile.write(json.dumps(package_dict) + "\n")  
+        #jlfile.write(json.dumps(package_dict) + "\n")  
 
-    for precord in precords:
-        precord.display(raw=True)
-        crecord = CanadaRecord(precord)
-        crecord.display()
+#    for precord in precords:
+#
+#        crecord = CanadaRecord(precord)
+#        crecord.display()
         
-       
-       
-
-
-      
+   
 if __name__ == "__main__":
-    matched_file =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
-    bilingual_file =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
-    sample_file=   "/Users/peder/dev/goc/LOAD/sample.xml"
-    print "RUnning"
-    process(bilingual_file)
+    matched_input =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
+    bilingual_input =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
+    sample_input=   "/Users/peder/dev/goc/LOAD/sample.xml"
+    
+    outputdir="/Users/peder/dev/goc/JL/"
+    output_file_bilingual =  "{}/pilot-bilingual-{}.jl".format(outputdir,date.today()) 
+    output_file_matched =  "{}/pilot-matched-{}.jl".format(outputdir,date.today()) 
+    sample_output_file_bilingual =  "{}/pilot-sample-bilingual.jl".format(outputdir,date.today()) 
+    sample_output_file_matched =  "{}/pilot-sample-mathed.jl".format(outputdir,date.today()) 
+    print "Running"
+    process_matched(sample_input,sample_output_file_matched)
+    #process_bilingual(sample_input,sample_output_file_bilingual)
+
     #process()
