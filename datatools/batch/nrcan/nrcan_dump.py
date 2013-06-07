@@ -65,9 +65,9 @@ topicKeys = dict((item['eng'], item['key']) for item in schema.dataset_field_by_
 formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
 geographic_regions=dict((region['eng'],region['key']) for region in schema.dataset_field_by_id['geographic_region']['choices'])
 
-formatTypes['GeoTIFF (Georeferenced Tag Image File Format)']='tiff'
+formatTypes['GeoTIFF (Georeferenced Tag Image File Format)']='geotif'
 formatTypes['TIFF (Tag Image File Format)']="tiff"
-formatTypes['GeoTIFF']='tiff'
+formatTypes['GeoTIFF']='geotif'
 formatTypes['Adobe PDF']='PDF'
 formatTypes['PDF - Portable Document Format']="PDF"    
 formatTypes['ASCII (American Standard Code for Information Interchange)']="TXT"
@@ -77,6 +77,7 @@ formatTypes['gzip (GNU zip)']="ZIP"
 formatTypes['ZIP']="ZIP"
 formatTypes['ESRI Shapefile']="SHAPE"
 formatTypes['JPEG']="jpg"
+
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
@@ -132,6 +133,7 @@ def get_spatial_rep_type():
         print "Spatial Rep Type not in Schema", int(pCode)
     except:
         raise
+    
 def get_keywords(path):
     keywords = doc.xpath(path,namespaces=nspace)
     
