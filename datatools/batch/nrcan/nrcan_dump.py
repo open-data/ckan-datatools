@@ -81,12 +81,12 @@ formatTypes['JPEG']="jpg"
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
+pprint(formatTypes)
+sys.exit()
 
 geographic_regions['Yukon Territory']="Yukon  Yukon"
 geographic_regions['Yukon']="Yukon  Yukon"
 geographic_regions['Canada']=''
-
-
 
 doc=None
 
@@ -341,7 +341,7 @@ def resources():
             resource_dict['resource_type']='file'
             resource_dict['size']=size()
             #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
-            format = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
+            format = node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString',nspace).text
             
             if format not in formatTypes:
      
