@@ -81,8 +81,6 @@ formatTypes['JPEG']="jpg"
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
-pprint(formatTypes)
-sys.exit()
 
 geographic_regions['Yukon Territory']="Yukon  Yukon"
 geographic_regions['Yukon']="Yukon  Yukon"
@@ -375,7 +373,7 @@ def resources():
      
     # Add 2 files for the NAP resources
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{}.nap".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{}.nap".format(fileid)
     resource_dict['language']="eng; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
