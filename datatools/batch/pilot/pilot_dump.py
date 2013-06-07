@@ -3,6 +3,7 @@ import os
 import sys
 from lxml import etree
 from pprint import pprint
+import simplejson as json
 from datetime import datetime,date
 from string import Template
 from datatools.batch.common import XPather
@@ -27,6 +28,22 @@ class PilotRules:
                         'daily': u'Daily | Quotidien',
                         'hourly':u'Continual | Continue',
                         '':'Unknown | Inconnu'}
+    
+    agriculture_title_markers = ['D035 ',
+                             '109 - ',
+                             '075/081 - ',
+                             '077/078/082 -', 
+                             '060 ','060 - ', '031N', '101 - ', 
+                             '072 - ','072 ',
+                             '073 ', '073 - ', 
+                             '070 ','070 - ', 
+                             '066 - ', '050P', 
+                             'A009E', 
+                             'A009A', 
+                             '003 - ', '003 ',  
+                             '077/078/082 - ', 
+                             '075/081 - ', 
+                             'D019M']
     
     formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
 
@@ -92,7 +109,7 @@ class PilotRules:
         
     def title(self,title,department):
         if department=='aafc-aac':
-            for marker in agriculture_title_markers:
+            for marker in self.agriculture_title_markers:
                 if marker in title:
                     title = title.split(marker)[1].lstrip(" ")
 
@@ -113,7 +130,10 @@ class PilotRules:
         
 class CkanResource:
     
-    
+    langmap={'Bilingual':'eng; CAN | fra; CAN',
+             'English':'eng; CAN',
+             'French':'fra; CAN',
+                  }
     def __init__(self,pilot):
 
         self.fields={}
@@ -127,7 +147,7 @@ class CkanResource:
             self.fields['name']='Dataset'
             self.fields['name_fra']='Ensemble de données'
             self.fields['format']=pilot.fields['format']
-            self.fields['language']=pilot.fields['language']                
+            self.fields['language']=self.langmap[pilot.fields['language']]       
             
         elif 'dictionary_list:_en' in pilot.type:
             self.fields['resource_type']='doc'
@@ -298,7 +318,7 @@ def process_matched(infile, outfile):
                      
     for i,node in enumerate(combined_elements(root)):
         
-       
+        
         en_record = PilotRecord(node[0])
         fr_record = PilotRecord(node[1])
 
@@ -314,27 +334,31 @@ def process_matched(infile, outfile):
         for resource in fr_record.resources:
             if resource.type == "dataset_link_en_":
                 if resource.fields['url'] in en_resources.keys():
-                    en_resources[resource.fields['url']].fields['language']="eng; CAN | fra; CAN"
+                    en_resources[resource.fields['url']].fields['language']="Bilingual"
                     
                 else:
                     en_record.resources.append(resource)
                 
-        print len(en_record.resources)       
+        print len(en_record.resources) 
+        
+        ''' Exclude CANSIM Records '''
+        patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
+              'www.statcan.gc.ca/cgi-bin/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']
+        include_record=True
+        for resource in en_record.resources:
+            if resource.type == 'dataset_link_en_':
+                for p in patterns:
+                    if p in resource.fields['url']:include_record=False  
         # Create CkanRecord
-        crecord = CanadaRecord(en_record)
-        crecord.display()
-    
-            #data_identification()
-#            time_and_space()
-#            bilingual()
-#            resources()
-#            package_dict['validation_override']=False 
-#            check_structure(package_dict)
-#            pprint(package_dict)
+        if include_record:
+            crecord = CanadaRecord(en_record)
+            crecord.package_dict['validation_override']=True
 
-        if i > 0 and (i % 100) == 0: print i 
-
-        #jlfile.write(json.dumps(package_dict) + "\n")  
+            if i > 0 and (i % 100) == 0: print i 
+            #print json.dumps(crecord.package_dict)
+            jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
 #    for precord in precords:
 #
@@ -353,19 +377,14 @@ def process_bilingual(infile, outfile):
         pprint(precord.fields['language'])
 
         precords.append(precord)
-        
 
-            #data_identification()
-#            time_and_space()
-#            bilingual()
-#            resources()
 #            package_dict['validation_override']=False 
 #            check_structure(package_dict)
 #            pprint(package_dict)
 
         if (i % 100) == 0: print i 
 
-        #jlfile.write(json.dumps(package_dict) + "\n")  
+        jlfile.write(json.dumps(package_dict) + "\n")  
 
 #    for precord in precords:
 #
@@ -384,7 +403,7 @@ if __name__ == "__main__":
     sample_output_file_bilingual =  "{}/pilot-sample-bilingual.jl".format(outputdir,date.today()) 
     sample_output_file_matched =  "{}/pilot-sample-mathed.jl".format(outputdir,date.today()) 
     print "Running"
-    process_matched(sample_input,sample_output_file_matched)
+    process_matched(matched_input,sample_output_file_matched)
     #process_bilingual(sample_input,sample_output_file_bilingual)
 
     #process()
