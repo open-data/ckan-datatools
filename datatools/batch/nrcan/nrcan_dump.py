@@ -1,5 +1,6 @@
 #-*- coding:UTF-8 -*-
 import os
+import re
 import sys
 import json
 import geojson
@@ -134,18 +135,19 @@ def get_spatial_rep_type():
     
 def get_keywords(path):
     keywords = doc.xpath(path,namespaces=nspace)
-    
+    tagname_match = re.compile('[\w \-.\']*$', re.UNICODE)
     def clean_tag(x):
         #replace forward slashes and semicolon so keywords will pass validation
         #Apostrophes in french words causes a proble; temporary fixx
         if x:
-            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ")
+            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ").replace("ETM+","ETM-Plus").replace(", "," ")
             tag= x.split(">")[-1].strip()
-            if tag:
+            
+            if not tagname_match.match(tag):
+                return
+            else: 
                 return tag
-        
-    
-    
+
     tags = [clean_tag(t.text) for t in keywords if len(keywords)>0]  # must remove forward slashes to pass validation    
     # QUICKFIX: TODO clean up this hack
     keywords = [word for word in tags if word!=None]
@@ -394,10 +396,12 @@ def resources():
 
 def data_identification():
     #8 of 33
+    f = charstring_path('fileIdentifier')
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
     except IndexError:  
         fileid = charstring_path('fileIdentifier')
+
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
     #package_dict['language']=schema.dataset_field_by_id['language']['example']['eng']
     package_dict['owner_org']='nrcan-rncan'          
