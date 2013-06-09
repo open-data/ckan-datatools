@@ -49,7 +49,7 @@ class PilotRules:
     
     topicKeys = dict((item['eng'], item['key']) for item in schema.dataset_field_by_id['topic_category']['choices'])
     formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
-   
+    
     def fix_date(date):
         # Get rid of eg. 2008-06-26T08:30:00
         if "T" in date:
@@ -310,12 +310,12 @@ class CanadaRecord:
         self.package_dict['portal_release_date']='2013-06-01'
         self.package_dict['ready_to_publish']=True
         t = common.time_coverage_fix(pilot['time_period_start'],pilot['time_period_end'])
-        if t[0] or t[1]:
-            print "-----o------"
-            print pilot['time_period_start'],pilot['time_period_end']
-            print t
-            print self.rules.format_date(t[0]),self.rules.format_date(t[1])
-            print "-------d--------"
+#        if t[0] or t[1]:
+#            print "-----o------"
+#            print pilot['time_period_start'],pilot['time_period_end']
+#            print t
+#            print self.rules.format_date(t[0]),self.rules.format_date(t[1])
+#            print "-------d--------"
         #package_dict['time_period_coverage_start'] =common.timefix()
         #package_dict['time_period_coverage_end'] = common.timefix(t[1])
         self.package_dict['time_period_coverage_start']=self.rules.format_date(t[0])
@@ -366,7 +366,14 @@ class CanadaRecord:
     def display(self):
         print "------------  Canada Package ------------"
         pprint(self.package_dict)
-         
+  
+  
+''' Exclude CANSIM Records '''
+exclude_record_patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
+              'www.statcan.gc.ca/cgi-bin/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']     
+  
 def process_matched(infile, outfile): 
     jlfile = open(outfile,"w")
     tree = etree.parse(infile)
@@ -400,16 +407,13 @@ def process_matched(infile, outfile):
                 else:
                     en_record.resources.append(resource)
 
-        ''' Exclude CANSIM Records '''
-        patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
-              'www.statcan.gc.ca/cgi-bin/sum-som',
-              'www12.statcan.gc.ca/census-recensement/2011/geo',
-              'geodepot.statcan.gc.ca']
+        
         include_record=True
         for resource in en_record.resources:
             if resource.type == 'dataset_link_en_':
-                for p in patterns:
-                    if p in resource.fields['url']:include_record=False  
+                for p in exclude_record_patterns:
+                    if p in resource.fields['url']:
+                        include_record=False  
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(en_record)
@@ -428,14 +432,21 @@ def process_bilingual(infile, outfile):
     for i,node in enumerate(root):
         
         precord = PilotRecord(node)
-        crecord = CanadaRecord(precord)
-        crecord.package_dict['validation_override']=True
+        
+        include_record=True
+        for resource in precord.resources:
+            if resource.type == 'dataset_link_en_':
+                for p in exclude_record_patterns:
+                    if p in resource.fields['url']:
+                        include_record=False  
+        # Create CkanRecord
+        if include_record:
+            crecord = CanadaRecord(precord)
+            crecord.package_dict['validation_override']=True
+
+            jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
         if (i % 100) == 0: print i 
-
-        jlfile.write(json.dumps(crecord.package_dict) + "\n")  
-
-
    
 if __name__ == "__main__":
     matched_input =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
