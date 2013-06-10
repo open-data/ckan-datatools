@@ -311,7 +311,8 @@ def get_place_keyword():
 def size(): 
     try:
         s = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text   
-        return int(round(eval(s)))
+        # Convert MB fractions to bytes rounded  2**20 MegaBiByte binary megabyte
+        return int(round(eval(s * (2**20))))
     except:
         return ''
     
@@ -335,8 +336,17 @@ def resources():
         try:
             resource_dict={}
             resource_dict['url'] = node.find('gmd:CI_OnlineResource/gmd:linkage/gmd:URL', nspace).text
-            resource_dict['language']=language()
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
+            resource_dict['language']=language()
+            en_langs=['English','english']
+            fr_langs=['French','french']
+            for e in en_langs:
+                if e in resource_dict['name']:
+                    resource_dict['language']='eng; CAN'
+            for f in fr_langs:
+                if e in resource_dict['name']:
+                    resource_dict['language']='fra; CAN'   
+            
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
             resource_dict['resource_type']='file'
             resource_dict['size']=size()
