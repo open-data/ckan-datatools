@@ -113,9 +113,7 @@ class PilotRules:
             return ",".join(words)
         else:
             return ''
-
-       
-        
+     
     def title(self,title,department):
         if department=='aafc-aac':
             for marker in self.agriculture_title_markers:
@@ -186,6 +184,14 @@ class CkanResource:
              'English':'eng; CAN',
              'French':'fra; CAN',
                   }
+    
+    def format_from_url(self,url):
+        extension =  url.split(".")[-1]
+        if extension == 'txt': return "TXT"
+        elif extension == 'xls': return "XLS"
+        elif extension == 'xml': return "XML"
+        else: return "HTML"
+        
     def __init__(self,pilot):
 
         self.fields={}
@@ -209,28 +215,28 @@ class CkanResource:
             self.fields['resource_type']='doc'
             self.fields['name']='Data Dictionary'
             self.fields['name_fra']='Dictionaire de données'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']='eng; CAN'
             
         elif 'dictionary_list_fr' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Data Dictionary'
             self.fields['name_fra']='Dictionaire de données'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']="fra; CAN"
                  
         elif 'supplementary_documentation_en' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
             self.fields['name_fra']='Documentation de Soutien'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']='eng; CAN'
             
         elif 'supplementary_documentation_fr' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
             self.fields['name_fra']='Documentation de Soutien'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']="fra; CAN"
             
 class CanadaRecord:
@@ -307,17 +313,9 @@ class CanadaRecord:
         self.package_dict['date_published']=self.rules.format_date(pilot['date_released'])
         self.package_dict['date_modified']=self.rules.format_date(pilot['date_updated'])
         self.package_dict['maintenance_and_update_frequency']=self.rules.pilot_frequency_list[pilot['frequency']]
-        self.package_dict['portal_release_date']='2013-06-01'
-        self.package_dict['ready_to_publish']=True
+        self.package_dict['portal_release_date']='2013-06-10'
+        self.package_dict['ready_to_publish']=False #Used to be validation_override=True
         t = common.time_coverage_fix(pilot['time_period_start'],pilot['time_period_end'])
-#        if t[0] or t[1]:
-#            print "-----o------"
-#            print pilot['time_period_start'],pilot['time_period_end']
-#            print t
-#            print self.rules.format_date(t[0]),self.rules.format_date(t[1])
-#            print "-------d--------"
-        #package_dict['time_period_coverage_start'] =common.timefix()
-        #package_dict['time_period_coverage_end'] = common.timefix(t[1])
         self.package_dict['time_period_coverage_start']=self.rules.format_date(t[0])
         self.package_dict['time_period_coverage_end']=self.rules.format_date(t[1])
         self.package_dict['geographic_region']=self.rules.geo_region(pilot['Geographic_Region_Name'])
@@ -387,7 +385,7 @@ def process_matched(infile, outfile):
                 yield (element.getprevious(),element)   
                      
     for i,node in enumerate(combined_elements(root)):
-         
+
         en_record = PilotRecord(node[0])
         fr_record = PilotRecord(node[1])
 
@@ -417,10 +415,9 @@ def process_matched(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(en_record)
-            crecord.package_dict['validation_override']=True
-
-            if i > 0 and (i % 100) == 0: print i 
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
+            
+        if i > 0 and (i % 100) == 0: print i 
    
 def process_bilingual(infile, outfile): 
     jlfile = open(outfile,"w")
@@ -442,8 +439,6 @@ def process_bilingual(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(precord)
-            crecord.package_dict['validation_override']=True
-
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
         if (i % 100) == 0: print i 

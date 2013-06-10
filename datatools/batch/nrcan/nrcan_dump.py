@@ -312,7 +312,7 @@ def size():
     try:
         s = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text   
         # Convert MB fractions to bytes rounded  2**20 MegaBiByte binary megabyte
-        return int(round(eval(s * (2**20))))
+        return round((eval(s) * (2**20)))
     except:
         return ''
     
@@ -432,8 +432,8 @@ def time_and_space():
     package_dict['date_published']=full_path('//gmd:CI_Date/gmd:date/gco:Date')
     package_dict['date_modified']=''
     package_dict['maintenance_and_update_frequency']=get_update_frequency()
-    package_dict['portal_release_date']='2013-05-24'
-    package_dict['ready_to_publish']=True
+    package_dict['portal_release_date']='2013-06-10'
+    package_dict['ready_to_publish']=False #Used to be validation_override=True
     start,end = get_time()
     package_dict['time_period_coverage_start']=start
     package_dict['time_period_coverage_end']=end
@@ -489,7 +489,6 @@ def process(dir,outfile):
             time_and_space()
             bilingual()
             resources()
-            package_dict['validation_override']=True
             #check_structure(package_dict)
             #pprint(json.dumps(package_dict))
             
