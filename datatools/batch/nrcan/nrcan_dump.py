@@ -1,5 +1,6 @@
 #-*- coding:UTF-8 -*-
 import os
+import re
 import sys
 import json
 import geojson
@@ -65,9 +66,9 @@ topicKeys = dict((item['eng'], item['key']) for item in schema.dataset_field_by_
 formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
 geographic_regions=dict((region['eng'],region['key']) for region in schema.dataset_field_by_id['geographic_region']['choices'])
 
-formatTypes['GeoTIFF (Georeferenced Tag Image File Format)']='tiff'
+formatTypes['GeoTIFF (Georeferenced Tag Image File Format)']='geotif'
 formatTypes['TIFF (Tag Image File Format)']="tiff"
-formatTypes['GeoTIFF']='tiff'
+formatTypes['GeoTIFF']='geotif'
 formatTypes['Adobe PDF']='PDF'
 formatTypes['PDF - Portable Document Format']="PDF"    
 formatTypes['ASCII (American Standard Code for Information Interchange)']="TXT"
@@ -77,6 +78,7 @@ formatTypes['gzip (GNU zip)']="ZIP"
 formatTypes['ZIP']="ZIP"
 formatTypes['ESRI Shapefile']="SHAPE"
 formatTypes['JPEG']="jpg"
+
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
@@ -84,8 +86,6 @@ formatTypes['JPEG']="jpg"
 geographic_regions['Yukon Territory']="Yukon  Yukon"
 geographic_regions['Yukon']="Yukon  Yukon"
 geographic_regions['Canada']=''
-
-
 
 doc=None
 
@@ -132,20 +132,22 @@ def get_spatial_rep_type():
         print "Spatial Rep Type not in Schema", int(pCode)
     except:
         raise
+    
 def get_keywords(path):
     keywords = doc.xpath(path,namespaces=nspace)
-    
+    tagname_match = re.compile('[\w \-.\']*$', re.UNICODE)
     def clean_tag(x):
         #replace forward slashes and semicolon so keywords will pass validation
         #Apostrophes in french words causes a proble; temporary fixx
         if x:
-            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ")
+            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ").replace("ETM+","ETM-Plus").replace(", "," ")
             tag= x.split(">")[-1].strip()
-            if tag:
+            
+            if not tagname_match.match(tag):
+                return
+            else: 
                 return tag
-        
-    
-    
+
     tags = [clean_tag(t.text) for t in keywords if len(keywords)>0]  # must remove forward slashes to pass validation    
     # QUICKFIX: TODO clean up this hack
     keywords = [word for word in tags if word!=None]
@@ -309,7 +311,8 @@ def get_place_keyword():
 def size(): 
     try:
         s = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text   
-        return int(round(eval(s)))
+        # Convert MB fractions to bytes rounded  2**20 MegaBiByte binary megabyte
+        return round((eval(s) * (2**20)))
     except:
         return ''
     
@@ -333,20 +336,33 @@ def resources():
         try:
             resource_dict={}
             resource_dict['url'] = node.find('gmd:CI_OnlineResource/gmd:linkage/gmd:URL', nspace).text
-            resource_dict['language']=language()
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
+            resource_dict['language']=language()
+            en_langs=['English','english']
+            fr_langs=['French','french']
+            for e in en_langs:
+                if e in resource_dict['name']:
+                    resource_dict['language']='eng; CAN'
+            for f in fr_langs:
+                if e in resource_dict['name']:
+                    resource_dict['language']='fra; CAN'   
+            
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
             resource_dict['resource_type']='file'
             resource_dict['size']=size()
-            #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
-            format = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace).text
             
-            if format not in formatTypes:
-     
+#            print "Format ", format
+#            global_format = node.find('gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace)
+#            
+#            print "Global Format",global_format
+            try:
+                format = node.find('gmd:CI_OnlineResource/gmd:name/gco:CharacterString',nspace).text
+                if format == format not in formatTypes:
+                    resource_dict['format'] = formatTypes['Other']
+                else:
+                    resource_dict['format'] = formatTypes[format]
+            except AttributeError: 
                 resource_dict['format'] = formatTypes['Other']
-            else:
-                resource_dict['format'] = formatTypes[format]
-           
             resources.append(resource_dict)
         except:
             raise
@@ -373,7 +389,7 @@ def resources():
      
     # Add 2 files for the NAP resources
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{}.nap".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{}.nap".format(fileid)
     resource_dict['language']="eng; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
@@ -394,10 +410,12 @@ def resources():
 
 def data_identification():
     #8 of 33
+    f = charstring_path('fileIdentifier')
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
     except IndexError:  
         fileid = charstring_path('fileIdentifier')
+
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
     #package_dict['language']=schema.dataset_field_by_id['language']['example']['eng']
     package_dict['owner_org']='nrcan-rncan'          
@@ -418,8 +436,8 @@ def time_and_space():
     package_dict['date_published']=full_path('//gmd:CI_Date/gmd:date/gco:Date')
     package_dict['date_modified']=''
     package_dict['maintenance_and_update_frequency']=get_update_frequency()
-    package_dict['portal_release_date']='2013-05-24'
-    package_dict['ready_to_publish']=True
+    package_dict['portal_release_date']='2013-06-10'
+    package_dict['ready_to_publish']=False #Used to be validation_override=True
     start,end = get_time()
     package_dict['time_period_coverage_start']=start
     package_dict['time_period_coverage_end']=end
@@ -475,7 +493,6 @@ def process(dir,outfile):
             time_and_space()
             bilingual()
             resources()
-            package_dict['validation_override']=True
             #check_structure(package_dict)
             #pprint(json.dumps(package_dict))
             
