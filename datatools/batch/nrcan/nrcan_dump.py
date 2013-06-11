@@ -350,15 +350,19 @@ def resources():
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
             resource_dict['resource_type']='file'
             resource_dict['size']=size()
-            #protocol = node.find('gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString',nspace).text
-            format = node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString',nspace).text
             
-            if format not in formatTypes:
-     
+#            print "Format ", format
+#            global_format = node.find('gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString',nspace)
+#            
+#            print "Global Format",global_format
+            try:
+                format = node.find('gmd:CI_OnlineResource/gmd:name/gco:CharacterString',nspace).text
+                if format == format not in formatTypes:
+                    resource_dict['format'] = formatTypes['Other']
+                else:
+                    resource_dict['format'] = formatTypes[format]
+            except AttributeError: 
                 resource_dict['format'] = formatTypes['Other']
-            else:
-                resource_dict['format'] = formatTypes[format]
-           
             resources.append(resource_dict)
         except:
             raise
