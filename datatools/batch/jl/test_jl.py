@@ -279,6 +279,7 @@ def cansim_summary():
     process(file2)
     
     print "Size of Qibo Load", len(sum_ids)
+    pickle.dump(sum_ids, open('qibo.pkl','wb'))
     
     
     registry=jl_records('/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl') 
@@ -340,14 +341,14 @@ def cansim_summary():
             
 if __name__ == "__main__":
     
-    #cansim_summary()
+    cansim_summary()
     
     load_dir = '/Users/peder/dev/goc/LOAD'
     base_load_file = '/Users/peder/source/ckan-datatools/data/pilot-2013-05-14.jl'
     input_file =  "{}/pilot-{}.jl".format(load_dir,date.today()) 
     broken_file="/Users/peder/dev/goc/LOAD/new_records_may_17.jl"
     
-    find_french_ids()
+    #find_french_ids()
     #repair_jl(broken_file)
     #analyze_keywords(input_file)
     #compare_with_registry(input_file)

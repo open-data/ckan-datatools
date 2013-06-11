@@ -1,6 +1,8 @@
 #-*- coding:UTF-8 -*-
 import os
+import re
 import sys
+import time
 from lxml import etree
 from pprint import pprint
 import simplejson as json
@@ -45,10 +47,9 @@ class PilotRules:
                              '075/081 - ', 
                              'D019M']
     
+    topicKeys = dict((item['eng'], item['key']) for item in schema.dataset_field_by_id['topic_category']['choices'])
     formatTypes=dict((item['eng'], item['key']) for item in schema.resource_field_by_id['format']['choices'])
-
-    print [ckan for ckan, pilot, field in schema.resource_all_fields()]
-   
+    
     def fix_date(date):
         # Get rid of eg. 2008-06-26T08:30:00
         if "T" in date:
@@ -100,13 +101,19 @@ class PilotRules:
 
         if "/" in package_dict['date_modified']: package_dict['date_modified']=reformat_date(package_dict['date_modified'])
  
-    def keywords(self):
-        key_eng = package_dict['keywords'].replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").replace(u"´","'").split(",")
-        key_fra = package_dict['keywords_fra'].replace("\n"," ").replace("/","-").replace('"','').replace("(","").  replace(":","-").replace(")","").split(",")
-
-        package_dict['keywords'] = ",".join([k.strip() for k in key_eng if len(k)<100 and len(k)>1])
-        package_dict['keywords_fra'] = ",".join([k for k in key_fra if len(k)<100 and len(k)>1])
+    def clean_keywords(self,keywords):
+        keywords = keywords.replace("\n"," ").replace("/","-").replace("(","").replace(")","").replace(":","-").replace(u"´","'").replace(".","").split(",")
+        words = [k.strip() for k in keywords if len(k)<100 and len(k)>1]
         
+        for w in words:
+            tagname_match = re.compile('[\w \'-.]*$', re.UNICODE)
+            if not tagname_match.match(w):
+                words.remove(w)
+        if words:
+            return ",".join(words)
+        else:
+            return ''
+     
     def title(self,title,department):
         if department=='aafc-aac':
             for marker in self.agriculture_title_markers:
@@ -114,13 +121,50 @@ class PilotRules:
                     title = title.split(marker)[1].lstrip(" ")
 
         for marker in common.language_markers:
-            title.split(marker[0])[0]
-            title.split(marker[1])[0]
-        print title
+
+            title = title.split(marker[0])[0]
+            title = title.split(marker[1])[0]
+        
+        for marker in common.language_markers_fra:
+            title = title.split(marker)[0]
+
         return title
         
-                
-    def format(self,resource,department):
+    def geo_region(self,region):
+        if region == "Canada  Canada": 
+            return  ""
+        else:
+            return region
+        
+    def  format_date(self, date):  
+        # Get rid of eg. 2008-06-26T08:30:00
+        self.date = date
+        if "T" in self.date:
+            self.date=date.split("T")[0]
+        elif self.date == "Varies by indicator":
+            return ''
+    
+        elif "00:00:00" in self.date:
+            self.date=date.split('00:00:00')[0]
+            
+        elif self.date == "Every 5-10 minutes":
+           return ''
+        try:
+            if ", " in self.date:
+                self.valid_date = datetime.strptime(self.date, "%B %d,  %Y")
+            elif "/" in self.date:
+                self.valid_date = datetime.strptime(self.date, "%Y/%m/%d")
+            elif len(date)==4:
+                self.valid_date = datetime.strptime(self.date, "%Y")
+            else:
+                self.valid_date = datetime.strptime(self.date, '%Y-%m-%d')           
+
+            return str(self.valid_date.date())
+        except ValueError:
+            return ''
+    
+
+    def get_format(self,resource,department):
         format = resource.fields['format']
         if department =='hc-sc' and resource.type == 'file': format='TXT'
         if resource.fields['format'] not in self.formatTypes:
@@ -128,16 +172,34 @@ class PilotRules:
         else:
             return self.formatTypes[format]
         
+    def get_topic_category(self,topic_name):
+        try:
+            topic = self.topicKeys[topic_name]
+        except KeyError:
+            topic =''
+        
 class CkanResource:
     
     langmap={'Bilingual':'eng; CAN | fra; CAN',
              'English':'eng; CAN',
              'French':'fra; CAN',
                   }
+    
+    def format_from_url(self,url):
+        extension =  url.split(".")[-1]
+        if extension == 'txt': return "TXT"
+        elif extension == 'xls': return "XLS"
+        elif extension == 'xml': return "XML"
+        else: return "HTML"
+        
     def __init__(self,pilot):
 
         self.fields={}
-        self.fields['url']=pilot.fields['url']
+        url = pilot.fields['url'].strip()
+        if url.startswith('http://registry.data.gc.ca/commonwebsol'):
+            url = url.replace('registry.data.gc.ca', 'data.gc.ca')
+            url = url.split('|')[0]
+        self.fields['url'] = url
         self._resource_type(pilot)
     
     def _resource_type(self, pilot):
@@ -153,28 +215,28 @@ class CkanResource:
             self.fields['resource_type']='doc'
             self.fields['name']='Data Dictionary'
             self.fields['name_fra']='Dictionaire de données'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']='eng; CAN'
             
         elif 'dictionary_list_fr' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Data Dictionary'
             self.fields['name_fra']='Dictionaire de données'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']="fra; CAN"
                  
         elif 'supplementary_documentation_en' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
             self.fields['name_fra']='Documentation de Soutien'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']='eng; CAN'
             
         elif 'supplementary_documentation_fr' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
             self.fields['name_fra']='Documentation de Soutien'
-            self.fields['format']='HTML'
+            self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']="fra; CAN"
             
 class CanadaRecord:
@@ -238,7 +300,7 @@ class CanadaRecord:
         #8 of 33
         self.package_dict['id']=self.id
         self.package_dict['owner_org']=pilot['department'] 
-        self.package_dict['topic_category']=pilot['category'] 
+        self.package_dict['topic_category']=self.rules.get_topic_category(pilot['category'])
         self.package_dict['subject']=''
         self.package_dict['catalog_type']=''
         self.package_dict['license_id']="ca-ogl-lgo"
@@ -248,14 +310,15 @@ class CanadaRecord:
 
     def time_and_space(self, pilot):
         #10 if 33
-        self.package_dict['date_published']=pilot['date_released']
-        self.package_dict['date_modified']=pilot['date_updated']
+        self.package_dict['date_published']=self.rules.format_date(pilot['date_released'])
+        self.package_dict['date_modified']=self.rules.format_date(pilot['date_updated'])
         self.package_dict['maintenance_and_update_frequency']=self.rules.pilot_frequency_list[pilot['frequency']]
-        self.package_dict['portal_release_date']='2013-06-01'
-        self.package_dict['ready_to_publish']=True
-        self.package_dict['time_period_coverage_start']=pilot['time_period_start']
-        self.package_dict['time_period_coverage_end']=pilot['time_period_end']
-        self.package_dict['geographic_region']=pilot['Geographic_Region_Name']
+        self.package_dict['portal_release_date']='2013-06-10'
+        self.package_dict['ready_to_publish']=False #Used to be validation_override=True
+        t = common.time_coverage_fix(pilot['time_period_start'],pilot['time_period_end'])
+        self.package_dict['time_period_coverage_start']=self.rules.format_date(t[0])
+        self.package_dict['time_period_coverage_end']=self.rules.format_date(t[1])
+        self.package_dict['geographic_region']=self.rules.geo_region(pilot['Geographic_Region_Name'])
         self.package_dict['spatial']=''
         self.package_dict['spatial_representation_type']=''
 
@@ -269,8 +332,8 @@ class CanadaRecord:
         #package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
         self.package_dict['url']=pilot['program_page_en']
         self.package_dict['url_fra']=pilot['program_url_fr']
-        self.package_dict['keywords']=pilot['keywords_en']
-        self.package_dict['keywords_fra']=pilot['keywords_fr']
+        self.package_dict['keywords']=self.rules.clean_keywords(pilot['keywords_en'])
+        self.package_dict['keywords_fra']=self.rules.clean_keywords(pilot['keywords_fr'])
         self.package_dict['notes']=pilot['description_en']
         self.package_dict['notes_fra'] =pilot['description_fr']
         self.package_dict['title'] = self.rules.title(pilot['title_en'],pilot['department'])
@@ -301,9 +364,14 @@ class CanadaRecord:
     def display(self):
         print "------------  Canada Package ------------"
         pprint(self.package_dict)
-
-
-                
+  
+  
+''' Exclude CANSIM Records '''
+exclude_record_patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
+              'www.statcan.gc.ca/cgi-bin/sum-som',
+              'www12.statcan.gc.ca/census-recensement/2011/geo',
+              'geodepot.statcan.gc.ca']     
+  
 def process_matched(infile, outfile): 
     jlfile = open(outfile,"w")
     tree = etree.parse(infile)
@@ -317,12 +385,10 @@ def process_matched(infile, outfile):
                 yield (element.getprevious(),element)   
                      
     for i,node in enumerate(combined_elements(root)):
-        
-        
+
         en_record = PilotRecord(node[0])
         fr_record = PilotRecord(node[1])
 
-        print len(en_record.resources)
         '''Transfer french data resources to english record
            If there is a duplicated, assume that it's bilingual
            For example: 
@@ -338,32 +404,21 @@ def process_matched(infile, outfile):
                     
                 else:
                     en_record.resources.append(resource)
-                
-        print len(en_record.resources) 
+
         
-        ''' Exclude CANSIM Records '''
-        patterns=['www20.statcan.gc.ca/tables-tableaux/cansim/csv',
-              'www.statcan.gc.ca/cgi-bin/sum-som',
-              'www12.statcan.gc.ca/census-recensement/2011/geo',
-              'geodepot.statcan.gc.ca']
         include_record=True
         for resource in en_record.resources:
             if resource.type == 'dataset_link_en_':
-                for p in patterns:
-                    if p in resource.fields['url']:include_record=False  
+                for p in exclude_record_patterns:
+                    if p in resource.fields['url']:
+                        include_record=False  
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(en_record)
-            crecord.package_dict['validation_override']=True
-
-            if i > 0 and (i % 100) == 0: print i 
-            #print json.dumps(crecord.package_dict)
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
-
-#    for precord in precords:
-#
-#        crecord = CanadaRecord(precord)
-#        crecord.display()         
+            
+        if i > 0 and (i % 100) == 0: print i 
+   
 def process_bilingual(infile, outfile): 
     jlfile = open(outfile,"w")
     tree = etree.parse(infile)
@@ -374,23 +429,19 @@ def process_bilingual(infile, outfile):
     for i,node in enumerate(root):
         
         precord = PilotRecord(node)
-        pprint(precord.fields['language'])
-
-        precords.append(precord)
-
-#            package_dict['validation_override']=False 
-#            check_structure(package_dict)
-#            pprint(package_dict)
+        
+        include_record=True
+        for resource in precord.resources:
+            if resource.type == 'dataset_link_en_':
+                for p in exclude_record_patterns:
+                    if p in resource.fields['url']:
+                        include_record=False  
+        # Create CkanRecord
+        if include_record:
+            crecord = CanadaRecord(precord)
+            jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
         if (i % 100) == 0: print i 
-
-        jlfile.write(json.dumps(package_dict) + "\n")  
-
-#    for precord in precords:
-#
-#        crecord = CanadaRecord(precord)
-#        crecord.display()
-        
    
 if __name__ == "__main__":
     matched_input =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
@@ -403,7 +454,7 @@ if __name__ == "__main__":
     sample_output_file_bilingual =  "{}/pilot-sample-bilingual.jl".format(outputdir,date.today()) 
     sample_output_file_matched =  "{}/pilot-sample-mathed.jl".format(outputdir,date.today()) 
     print "Running"
-    process_matched(matched_input,sample_output_file_matched)
-    #process_bilingual(sample_input,sample_output_file_bilingual)
+    process_matched(matched_input,output_file_matched)
+    process_bilingual(bilingual_input,output_file_bilingual)
 
     #process()

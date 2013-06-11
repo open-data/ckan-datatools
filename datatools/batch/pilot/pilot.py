@@ -9,7 +9,6 @@ This module is used for converting various items from in the pilot XML
 import sys
 import logging
 import simplejson as json
-
 import time
 from lxml import etree
 from pprint import pprint
@@ -151,7 +150,7 @@ class Transform:
                 
                 if "_en" in sup_field:
                     lang="eng; CAN"
-                else:
+                elif _fr:
                     lang = "fra; CAN"
 
                 
