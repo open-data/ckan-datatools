@@ -1,4 +1,5 @@
 import sys
+import pickle
 import ckanapi  
 from datetime import datetime, date, time
 from pprint import pprint
@@ -27,8 +28,7 @@ def activities_for_user(endpoint,user):
     # makus user id is ac12cb42-117d-4d68-8098-66a942d1c17f
     activity_list =  endpoint.action.user_activity_list(id=user,limit=2000)
     ids=[]
-    for i,result in enumerate(activity_list['result']):
-        print i
+    for result in activity_list['result']:
         try:
             pack = result['data']['package']
 
@@ -103,30 +103,17 @@ def activities(endpoint,user):
 if __name__ == "__main__":
     work_dir="/Users/peder/dev/goc/makus-report/"
     registry_ids=work_dir + "registry-june10"
-#    f = open(registry_ids,'r') # open in read mode
-#    data = f.read()
-#    ids = eval(data)
-#    print len(ids)
+
     
     registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca')
     new_ids=[]
     users=standard_users(registry)
-    print "USERS", users
+    
     for user in users:
         ids = activities_for_user(registry,user)
         new_ids.extend(ids)
         print len(new_ids)
-    
-    #all_activity_for_user(registry,'makuand')
-    #activities(registry,'makuand')
-    
+    # Dump the ids so it can be used for analysis on laptop
+    pickle.dump(new_ids, open('new_in_registry.pkl','wb'))
 
-
-    '''
-    for result in activity_list['result']:
-        
-        pack = result['data']['package']
-        print pack['title']
-        print pack['id']
-        print schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid'][pack['owner_org']]['eng']
-    '''
+    
