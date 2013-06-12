@@ -1,0 +1,117 @@
+admin   		None    			1
+makuand 		Andrew Makus    	164
+sinkand 		Andrew Sinkinson    45
+audreyleclaire  Audrey Leclaire 	6
+bwolfe  		Brad Wolfe      	1
+charleschang    Charles Chang   	2
+charpat         					0
+dtan    		Darlene Tan     	0
+falvarez        Fabian Alvarez  	0
+fbinard 		Franck Binard   	2
+gmichaud        Genevieve Michaud   0
+hprosper        Hantz Prosper   	0
+hiltala         					4
+seskian 		Ian Sesk        	0
+jakoped         					0
+aultjam 		James Ault      	2
+doyljam 		James Doyle     	0
+jfraser 		Janet Fraser    	2
+joycjas 		Jason Joyce     	0
+jeamced 		None    			0
+jannable        Jeff Annable    	4
+jrose   		Jeff Rose       	1
+jcleary 		Jennifer Cleary 	0
+robejes 		Jessica Robertson   0
+kburke  		Kathryn Burke   	0
+levemar None    					0
+lgouliquer      Linda Gouliquer 	0
+logged_in       None    			0
+lmireault       Lucie Mireault  	0
+lnguyen 		Luli Nguyen     	0
+mmonette        Manon Monette   	0
+marieevecote    Marie-Eve Cote  	1
+mouellet        Mathieu Ouellet 	0
+mfletcher       Merideth Fletcher   0
+mwarbanski      Michael Warbanski   11
+gendmic 		Michel Gendron  	0
+mroussel        Michel Roussel  	0
+moyerry 		None    			0
+mmossa  		Musema Mossa    	8
+od20    		None    			194218
+opendata        Open Data       	1
+benipas 		Pascale Benicy  	0
+pmcdermott      Pat McDermott   	0
+plebrun 		Patrick Lebrun  	0
+travelgc        Paul Wisenberg  	0
+pennlor 		None    			0
+ross    		None    			0
+rtondevold      Ryan Tondevold  	14
+sjones  		Sean Jones      	0
+smitand 		None    			0
+sbwalker        Stephen Walker  	0
+ssmith  		Steven Smith    	0
+syang   		Suhong Yang     	8
+visitor 		None    			0
+wardian 		None    			0
+wharrison       William Harrison 	4
+williamso       William So      	0
+
+-------------------------------------
+
+admin,64c919b6-a26e-414e-b5f8-12a167a6e863,None,1
+makuand,ac12cb42-117d-4d68-8098-66a942d1c17f,Andrew Makus,164
+sinkand,fb852254-4b4a-4c66-a809-406e817ee1d1,Andrew Sinkinson,45
+audreyleclaire,87c9eaef-7b2a-48b4-a30a-e1f6d5d3c7b6,Audrey Leclaire,6
+bwolfe,170dcf0f-ec77-4230-989b-c903e79a6699,Brad Wolfe,1
+charleschang,0efc638e-95dc-4501-a491-8b48a144567e,Charles Chang,2
+charpat,7668aa96-0278-41cf-b6e5-97bec64df862,,0
+dtan,3b8cb194-b9a5-4978-bded-826f57c1771e,Darlene Tan,0
+falvarez,abdfa7d1-008f-4d50-b2ae-ffb16f919b4e,Fabian Alvarez,0
+fbinard,f43e66c4-133c-4a90-8181-1325ef4b36c1,Franck Binard,2
+gmichaud,cf6b234d-79ca-4b2a-8d8b-4f47bc57af82,Genevieve Michaud,0
+hprosper,a745cc17-a165-4412-b59c-3628a4784b81,Hantz Prosper,0
+hiltala,638a5543-c7ba-40a9-b44a-d0453048c9d6,,4
+seskian,6e00a66c-750c-4224-883b-dbf9092d5f09,Ian Sesk,0
+jakoped,0d7b8b90-ff99-47ca-b9e6-0334b55ab4a1,,0
+aultjam,7fff074e-3c3e-4d4c-a2ab-a33391c36f4f,James Ault,2
+doyljam,3f7a02c1-5474-48de-940a-dad56f7e5920,James Doyle,0
+jfraser,1714e241-1382-4c75-b35a-9694f0a7fa0a,Janet Fraser,2
+joycjas,754b4eee-48cc-4884-8e68-ac157fb22e1c,Jason Joyce,0
+jeamced,ea50146f-04eb-45af-9781-10fadcc2b30a,None,0
+jannable,c91765cf-20bb-42db-a81e-e1b12aed6cf4,Jeff Annable,4
+jrose,92d32455-58ac-4d56-90a8-7ed197dbb7a5,Jeff Rose,1
+jcleary,9b87b3e7-2d1a-4efd-9ef2-d839a1d75ae0,Jennifer Cleary,0
+robejes,dd2f3095-3edd-4dc5-b84b-7b9d44c727ae,Jessica Robertson,0
+kburke,87c10d3a-862d-4103-838a-094cb4280175,Kathryn Burke,0
+levemar,99ae129b-f801-4b53-abaa-862a83288db2,None,0
+lgouliquer,e649eb4c-f1c8-4230-9e93-84afb8e2d687,Linda Gouliquer,0
+logged_in,83a41784-587b-4009-ad41-4f9504466487,None,0
+lmireault,2f8b2700-3d61-4649-9db8-59f9899f8232,Lucie Mireault,0
+lnguyen,c8c57129-263f-4528-bfeb-377b9aad9b76,Luli Nguyen,0
+mmonette,625c4579-b8a3-4852-a868-c25823bf5b34,Manon Monette,0
+marieevecote,b5175d06-ac12-43b0-93fe-1847b3e43a1e,Marie-Eve Cote,1
+mouellet,f4ca1ec7-0e09-42e6-850c-a24426fae09e,Mathieu Ouellet,0
+mfletcher,5d20c4a6-8a75-4e22-aa70-c2d366b2523b,Merideth Fletcher,0
+mwarbanski,74be5a04-d4dc-44c2-b57e-45cfa819711c,Michael Warbanski,11
+gendmic,bd446851-9d60-40fe-9982-d22bd95ddace,Michel Gendron,0
+mroussel,0fe94c94-b584-4811-ade6-3e97d921314e,Michel Roussel,0
+moyerry,436ab5ec-9de3-4291-ac64-f3c5ab5999c1,None,0
+mmossa,bb3e4e66-65de-4323-a217-dd7f9d97be4e,Musema Mossa,8
+od20,d590b028-540b-435f-9aa6-2edd9a35afee,None,199059
+opendata,0e379b10-57ae-41a8-a49c-c3923b21b194,Open Data,1
+benipas,22c05fe7-9123-4560-9277-36dd3f5804e6,Pascale Benicy,0
+pmcdermott,7be0feac-917d-4493-a3e8-4fd8ce754170,Pat McDermott,0
+plebrun,cc5a9e3b-331e-4411-ba02-c63f7087da46,Patrick Lebrun,0
+travelgc,de39a009-92de-4984-9477-35e33684a533,Paul Wisenberg,0
+pennlor,a4101642-370e-4fc4-94bd-dae48ba8dde6,None,0
+ross,41f8a9f3-b4c0-477b-9b3b-8910640f8566,None,0
+rtondevold,4d6de917-d958-452d-8d93-81fc938bcd22,Ryan Tondevold,17
+sjones,b4e1fa6d-9cf2-4e20-b237-ba6335517620,Sean Jones,0
+smitand,ae50e307-50af-4a7a-ae2b-579e1de07a4a,None,0
+sbwalker,4e02b867-ee21-4ae9-9d36-c78c1a095ebb,Stephen Walker,0
+ssmith,d5d03c7f-83fb-44f6-bbe0-58c10dcb63f5,Steven Smith,0
+syang,28cbec19-ea0f-44c5-95cf-641a6176a69a,Suhong Yang,16
+visitor,af88aeb7-e3c2-4300-b247-cbeb67367ef6,None,0
+wardian,7dd64f89-7f57-4136-9771-238264366251,None,0
+wharrison,1dfe6929-cc8d-49e8-b2f3-c62cfb585d0b,William Harrison,4
+williamso,67759be9-ab7e-4563-9e48-bf73948c5197,William So,0
