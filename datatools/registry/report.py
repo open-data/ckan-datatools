@@ -152,6 +152,8 @@ def new_in_registry_report():
     
     new_ids=set(altered_ids).difference(set(existing_but_changed_ids))
     print len(new_ids)
+    print len(set(new_ids))
+    sys.exit()
     
     departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
     # open the jl dump
@@ -164,8 +166,29 @@ def new_in_registry_report():
         
     for line in sorted(report):
         print line
+
+def changed_on_registry_report():
+    ''' Analyize how files have changed on the registry to see if and how they can be updated '''
     
+    changed_packs=[]
+    changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        if pack['id'] in changed_ids:
+            print pack['title']
+
+def check_for_duplicates():
+    ids=[]
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        ids.append(pack['id'])
+    
+    print len(ids)
+    print len(set(ids))
+     
 if __name__ == "__main__":
+    #check_for_duplicates()
+    #changed_on_registry_report()
     new_in_registry_report()
     #registry_records_not_in_load()
     
