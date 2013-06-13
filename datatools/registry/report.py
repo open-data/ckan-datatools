@@ -1,11 +1,15 @@
 import os
 import sys
+import json
 import pickle
 import ckanapi  
+import socket 
+import warnings
+import urllib2
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-from datatools.batch.tools import helpers
+#from datatools.batch.tools import helpers
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
     these must not be overwritten by a new load 
@@ -128,11 +132,34 @@ def registry_records_not_in_load():
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
             print file
+ 
+def download_changed_registry_packs():
+
+    # Note the name "new-in_registry" is a misnomer, it should be "changed_in_registry"
+    changed = pickle.load(open('new_in_registry.pkl','rb'))
+    opener = urllib2.build_opener()
+    linkfile ="/temp/changed-registry-files.jl"
+    file = open(os.path.normpath(linkfile), "a")
+    for id in changed:
+        url = "http://registry.statcan.gc.ca/api/rest/dataset/{}".format(id)
+        try:
         
+           req = urllib2.Request(url)
+           f = opener.open(req,timeout=500)
+        except HTTPError:
+            print "FORBIDDEN", url
+        except:
+            raise
+            
+        response = f.read()
+        package = json.loads(str(response),"utf-8")
+        print package['title']
+        # Write the package to a file
+        file.write(json.dumps(package) + "\n"); 
     
 if __name__ == "__main__":
-   
-    registry_records_not_in_load()
+    download_changed_registry_packs()
+    #registry_records_not_in_load()
     
     
 
