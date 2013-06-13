@@ -1,11 +1,12 @@
 import os
 import sys
+import json
 import pickle
 import ckanapi  
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-from datatools.batch.tools import helpers
+from datatools import helpers
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
     these must not be overwritten by a new load 
@@ -118,21 +119,55 @@ def new_registry_packages():
         new_ids.extend(ids)
         print len(new_ids)
     pickle.dump(new_ids, open('new_in_registry.pkl','wb'))
-    
-def registry_records_not_in_load():
-    ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
 
-    '''
+def all_load_ids():
     all=[]
     dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            print file
+            file
+            all.extend(helpers.jl_ids(path+"/"+file))
+    return all
+            
+def registry_records_not_in_load():
+    ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
+
+    '''
+    changed=[]
+    new=[]
+    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
+    all_ids = all_load_ids()
+    for id in all_ids:
+        if id in altered_ids:
+            changed.append(id)
+            
+    print "Existing IDS that have been changed", len(changed)
+    pickle.dump(changed, open('changed_after_load.pkl','wb'))
+    
+
+def new_in_registry_report():
+    ''' id and title of records that have been newly created on registry '''
+    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
+    existing_but_changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
+    
+    new_ids=set(altered_ids).difference(set(existing_but_changed_ids))
+    print len(new_ids)
+    
+    departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
+    # open the jl dump
+    report=[]
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        if pack['id'] in new_ids:
+            owner_org = departments[pack['owner_org']]['eng']
+            report.append("{},{},{}".format(owner_org,pack['id'],pack['title']))
         
+    for line in sorted(report):
+        print line
     
 if __name__ == "__main__":
-   
-    registry_records_not_in_load()
+    new_in_registry_report()
+    #registry_records_not_in_load()
     
     
 
