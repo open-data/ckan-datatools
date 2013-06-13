@@ -312,7 +312,7 @@ def size():
     try:
         s = doc.find('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:transferSize/gco:Real', nspace).text   
         # Convert MB fractions to bytes rounded  2**20 MegaBiByte binary megabyte
-        return round((eval(s) * (2**20)))
+        return int(round((eval(s) * (2**20))))
     except:
         return ''
     
@@ -482,11 +482,12 @@ def check_structure(dict):
     pprint(mandatory_fields)
             
 def process(dir,outfile): 
+    print "processing", dir
     global doc
     jlfile = open(os.path.normpath(outfile), "w")
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            #print file
+            
             f = open(os.path.join(path,file),"r")
             doc = etree.parse(f)
             data_identification()
@@ -495,15 +496,14 @@ def process(dir,outfile):
             resources()
             #check_structure(package_dict)
             #pprint(json.dumps(package_dict))
-            
             if (n % 100) == 0: print n 
             #print package_dict['id']
             jlfile.write(json.dumps(package_dict) + "\n")  
 
 
 if __name__ == "__main__":
-    dir="/Users/peder/dev/OpenData/nrcandump"
-    outfile='/Users/peder/dev/goc/LOAD/nrcan-full-%s.jl' % (date.today())
-
+    dir='/Users/peder/dev/OpenData/data_sources/nrcandump'
+    outfile='/Users/peder/dev/OpenData/combined_loads/%s/geogratis.jl' % (date.today())
+ 
     process(dir,outfile)
     #process()

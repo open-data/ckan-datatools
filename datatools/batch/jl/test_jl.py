@@ -7,14 +7,7 @@ from pprint import pprint
 import sys
 xml_records = pickle.load(open('xrecords.pkl','rb'))
 
-def jl_ids(file):
-    jl_records=[]
-    lines = [line.strip() for line in open(file)]
-    for  i,line in enumerate(lines):
-        p = json.loads(line)
-        jl_records.append(p['id'])
-    return jl_records
-        
+
 def jl_records(file):
     jl_records=[]
     lines = [line.strip() for line in open(file)]

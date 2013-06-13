@@ -1,10 +1,11 @@
+import os
 import sys
 import pickle
 import ckanapi  
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-
+from datatools.batch.tools import helpers
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
     these must not be overwritten by a new load 
@@ -99,8 +100,11 @@ def activities(endpoint,user):
     print "----------------", last_time
     get_data(last_time)
     # Etc. 
-    
-if __name__ == "__main__":
+
+def new_registry_packages():
+    ''' Count packages that have been created and / or updated by  account holders at registry 
+        and pickle it for later use
+    '''
     work_dir="/Users/peder/dev/goc/makus-report/"
     registry_ids=work_dir + "registry-june10"
 
@@ -113,7 +117,23 @@ if __name__ == "__main__":
         ids = activities_for_user(registry,user)
         new_ids.extend(ids)
         print len(new_ids)
-    # Dump the ids so it can be used for analysis on laptop
     pickle.dump(new_ids, open('new_in_registry.pkl','wb'))
+    
+def registry_records_not_in_load():
+    ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
+
+    '''
+    all=[]
+    dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
+    for (path, dirs, files) in os.walk(os.path.normpath(dir)):
+        for n,file in enumerate(files):
+            print file
+        
+    
+if __name__ == "__main__":
+   
+    registry_records_not_in_load()
+    
+    
 
     
