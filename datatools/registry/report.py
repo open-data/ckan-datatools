@@ -6,10 +6,11 @@ import ckanapi
 import socket 
 import warnings
 import urllib2
+from collections import Counter
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-#from datatools import helpers
+from datatools import helpers
 
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
@@ -129,20 +130,23 @@ def new_registry_packages():
     pickle.dump(set(new_ids), open('touched_in_registry.pkl','wb'))
 
 def all_load_ids():
+    print "Collect all ids from load files"
     all=[]
     dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            print file
+            all.extend(helpers.jl_ids(dir+file))
+    len(all)
+    return(all)
  
 def download_changed_registry_packs():
 
-    # Note the name "new-in_registry" is a misnomer, it should be "changed_in_registry"
-    changed = pickle.load(open('new_in_registry.pkl','rb'))
+    touched = pickle.load(open('touched_in_registry.pkl','rb'))
     opener = urllib2.build_opener()
     linkfile ="/temp/changed-registry-files.jl"
-    file = open(os.path.normpath(linkfile), "a")
-    for id in changed:
+    file = open(os.path.normpath(linkfile), "wb")
+    errors=open(os.path.normpath('api_load_errors.log'),"wb")
+    for id in touched:
         url = "http://registry.statcan.gc.ca/api/rest/dataset/{}".format(id)
         try:
         
@@ -154,28 +158,41 @@ def download_changed_registry_packs():
            # Write the package to a file
            file.write(json.dumps(package) + "\n"); 
         except urllib2.HTTPError:
-            print "FORBIDDEN", url
+            errors.write("FORBIDDEN", url)
         except ValueError:
-            print "No Json Object could thus be decoded", url
+            errors.write( "No Json Object could thus be decoded", url)
         except:
             print "ERROR ?", url
-            
-            all.extend(helpers.jl_ids(path+"/"+file))
-    return all
-            
+
+
+def touched_in_registry():
+    '''  Make sure there are no duplicates in the activity list record set  from registry '''
+    touched = pickle.load(open('touched_in_registry.pkl','rb'))
+    print "Touched records", len(touched)
+    print "Checking for duplicates"
+    cnt = Counter()
+    for t in touched:
+        cnt[t]+=1
+        print t
+        
+    print len(set(touched))
+    print cnt.most_common()
+    
+           
 def registry_records_not_in_load():
     ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
 
     '''
     changed=[]
     new=[]
-    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
+    altered_ids = pickle.load(open('touched_in_registry.pkl','rb'))
     all_ids = all_load_ids()
+    print len(all_ids)
     for id in all_ids:
         if id in altered_ids:
             changed.append(id)
             
-    print "Existing IDS that have been changed", len(changed)
+    print "Existing IDs that have been changed", len(changed)
     pickle.dump(changed, open('changed_after_load.pkl','wb'))
     
 
@@ -202,7 +219,7 @@ def new_in_registry_report():
         print line
 
 def changed_on_registry_report():
-    ''' Analyize how files have changed on the registry to see if and how they can be updated '''
+    ''' Analyze how files have changed on the registry to see if and how they can be updated '''
     
     changed_packs=[]
     changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
@@ -221,8 +238,9 @@ def check_for_duplicates():
     print len(set(ids))
      
 if __name__ == "__main__":
-    new_registry_packages()
-    #download_changed_registry_packs()
+    #touched_in_registry()
+    #new_registry_packages()
+    download_changed_registry_packs()
     #check_for_duplicates()
     #changed_on_registry_report()
     #new_in_registry_report()
