@@ -9,6 +9,7 @@ from ckanext.canada.metadata_schema import schema_description
 from pprint import pprint
 import logging
 
+
 ''' Namespaces required to query .nap files with XPath '''
 nap_namespaces = {'gmd': 'http://www.isotc211.org/2005/gmd','gco':'http://www.isotc211.org/2005/gco','gml':'http://www.opengis.net/gml','xsi':"http://www.w3.org/2001/XMLSchema-instance" }
 

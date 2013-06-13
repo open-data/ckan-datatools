@@ -9,7 +9,8 @@ import urllib2
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-#from datatools.batch.tools import helpers
+#from datatools import helpers
+
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
     these must not be overwritten by a new load 
@@ -32,19 +33,19 @@ def activities_for_user(endpoint,user):
 
     # makus user id is ac12cb42-117d-4d68-8098-66a942d1c17f
     activity_list =  endpoint.action.user_activity_list(id=user,limit=2000)
-    ids=[]
+    activities=[]
     for result in activity_list['result']:
         try:
             pack = result['data']['package']
 
-            ids.append(pack['id'])
+            activities.append(pack['id'])
         except KeyError:
             ''' No more packages left '''
             break
             pass
        
-    id_set=set(ids)
-    print user, "has", len(id_set), "packages"
+    id_set=set(activities)
+    print user, "has", len(activities), "activities in", len(id_set), "packages."
     return list(id_set)
     
 
@@ -121,12 +122,13 @@ def new_registry_packages():
         ids = activities_for_user(registry,user)
         new_ids.extend(ids)
         print len(new_ids)
-    pickle.dump(new_ids, open('new_in_registry.pkl','wb'))
-    
-def registry_records_not_in_load():
-    ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
+        # change to a set to avoid activity duplicates
+    # change to a set to avoid activity duplicates between people
+    print "-----------"
+    print len(new_ids), len(set(new_ids))
+    pickle.dump(set(new_ids), open('touched_in_registry.pkl','wb'))
 
-    '''
+def all_load_ids():
     all=[]
     dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
@@ -158,10 +160,72 @@ def download_changed_registry_packs():
         except:
             print "ERROR ?", url
             
-        
+            all.extend(helpers.jl_ids(path+"/"+file))
+    return all
+            
+def registry_records_not_in_load():
+    ''' Count records that are found by new_registry_packages() but are not in the ids of the load files.
+
+    '''
+    changed=[]
+    new=[]
+    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
+    all_ids = all_load_ids()
+    for id in all_ids:
+        if id in altered_ids:
+            changed.append(id)
+            
+    print "Existing IDS that have been changed", len(changed)
+    pickle.dump(changed, open('changed_after_load.pkl','wb'))
     
+
+def new_in_registry_report():
+    ''' id and title of records that have been newly created on registry '''
+    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
+    existing_but_changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
+    
+    new_ids=set(altered_ids).difference(set(existing_but_changed_ids))
+    print len(new_ids)
+    print len(set(new_ids))
+    sys.exit()
+    
+    departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
+    # open the jl dump
+    report=[]
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        if pack['id'] in new_ids:
+            owner_org = departments[pack['owner_org']]['eng']
+            report.append("{},{},{}".format(owner_org,pack['id'],pack['title']))
+        
+    for line in sorted(report):
+        print line
+
+def changed_on_registry_report():
+    ''' Analyize how files have changed on the registry to see if and how they can be updated '''
+    
+    changed_packs=[]
+    changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        if pack['id'] in changed_ids:
+            print pack['title']
+
+def check_for_duplicates():
+    ids=[]
+    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+        pack = json.loads(line)
+        ids.append(pack['id'])
+    
+    print len(ids)
+    print len(set(ids))
+     
 if __name__ == "__main__":
-    download_changed_registry_packs()
+    new_registry_packages()
+    #download_changed_registry_packs()
+    #check_for_duplicates()
+    #changed_on_registry_report()
+    #new_in_registry_report()
     #registry_records_not_in_load()
     
     
