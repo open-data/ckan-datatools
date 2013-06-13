@@ -146,16 +146,19 @@ def download_changed_registry_packs():
         
            req = urllib2.Request(url)
            f = opener.open(req,timeout=500)
-        except HTTPError:
+           response = f.read()
+           package = json.loads(str(response),"utf-8")
+           print package['title']
+           # Write the package to a file
+           file.write(json.dumps(package) + "\n"); 
+        except urllib2.HTTPError:
             print "FORBIDDEN", url
+        except ValueError:
+            print "No Json Object could thus be decoded", url
         except:
-            raise
+            print "ERROR ?", url
             
-        response = f.read()
-        package = json.loads(str(response),"utf-8")
-        print package['title']
-        # Write the package to a file
-        file.write(json.dumps(package) + "\n"); 
+        
     
 if __name__ == "__main__":
     download_changed_registry_packs()
