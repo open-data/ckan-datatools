@@ -10,7 +10,7 @@ from collections import Counter
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-from datatools import helpers
+#from datatools import helpers
 
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
@@ -113,8 +113,6 @@ def new_registry_packages():
     '''
     work_dir="/Users/peder/dev/goc/makus-report/"
     registry_ids=work_dir + "registry-june10"
-
-    
     registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca')
     new_ids=[]
     users=standard_users(registry)
@@ -142,11 +140,13 @@ def all_load_ids():
 def download_changed_registry_packs():
 
     touched = pickle.load(open('touched_in_registry.pkl','rb'))
+    print "downloading", len(touched)
     opener = urllib2.build_opener()
-    linkfile ="/temp/changed-registry-files.jl"
+    linkfile ="touched-registry-files.jl"
     file = open(os.path.normpath(linkfile), "wb")
     errors=open(os.path.normpath('api_load_errors.log'),"wb")
-    for id in touched:
+    # try this tomorrow registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca')
+    for i, id in enumerate(touched):
         url = "http://registry.statcan.gc.ca/api/rest/dataset/{}".format(id)
         try:
         
@@ -154,15 +154,19 @@ def download_changed_registry_packs():
            f = opener.open(req,timeout=500)
            response = f.read()
            package = json.loads(str(response),"utf-8")
-           print package['title']
+           print i, package['title']
            # Write the package to a file
            file.write(json.dumps(package) + "\n"); 
         except urllib2.HTTPError:
-            errors.write("FORBIDDEN", url)
+            print "HTTPError"
+            errors.write("{}, HTTPError - forbidden, {}\n".format(i,url))
         except ValueError:
-            errors.write( "No Json Object could thus be decoded", url)
+            errors.write("{}, ValueError - json can't decode, {}\n".format(i,url))
         except:
+            errors.write("{}, Unknow Error, {}\n".format(i,url))
             print "ERROR ?", url
+            
+    print "Finished, thanks for your patience"
 
 
 def touched_in_registry():
