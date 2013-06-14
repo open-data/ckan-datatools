@@ -10,7 +10,7 @@ from collections import Counter
 from datetime import datetime, date, time
 from pprint import pprint
 from ckanext.canada.metadata_schema import schema_description as schema
-#from datatools import helpers
+from datatools import helpers
 
 ''' 
     Report for Andrew Makus to determine what records have been amended on the registry; 
@@ -39,7 +39,7 @@ def new_registry_packages():
     # change to a set to avoid activity duplicates between people
     print "-----------"
     print len(new_ids), len(set(new_ids))
-    pickle.dump(set(new_ids), open('touched_in_registry.pkl','wb'))
+    pickle.dump(set(new_ids), open('new_in_registry.pkl','wb'))
 
 def all_load_ids():
     print "Collect all ids from load files"
@@ -47,6 +47,7 @@ def all_load_ids():
     dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
+            print file
             all.extend(helpers.jl_ids(dir+file))
     len(all)
     return(all)
@@ -73,42 +74,46 @@ def registry_records_not_in_load():
 
     '''
     changed=[]
-    new=[]
-    altered_ids = pickle.load(open('touched_in_registry.pkl','rb'))
+    touched_ids = pickle.load(open('touched_in_registry.pkl','rb'))
     all_ids = all_load_ids()
     print len(all_ids)
     for id in all_ids:
-        if id in altered_ids:
+        if id in touched_ids:
             changed.append(id)
             
     print "Existing IDs that have been changed", len(changed)
-    pickle.dump(changed, open('changed_after_load.pkl','wb'))
-    
+    new = set(touched_ids) - set(changed)
+    print new
+    pickle.dump(new, open('not_in_load.pkl','w'))
+    pickle.dump(changed, open('in_load_but_changed.pkl','w'))
 
 def new_in_registry_report():
     ''' id and title of records that have been newly created on registry '''
-    altered_ids = pickle.load(open('new_in_registry.pkl','rb'))
-    existing_but_changed_ids=pickle.load(open('changed_after_load.pkl','rb'))
-    
-    new_ids=set(altered_ids).difference(set(existing_but_changed_ids))
-    print len(new_ids)
-    print len(set(new_ids))    
+    not_in_load = pickle.load(open('not_in_load.pkl','rb'))
+    print "Checking for duplicate IDs"
+    print len(not_in_load)
+    print len(set(not_in_load))  	
+    #print not_in_load	  
     departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
     # open the jl dump
     report=[]
     for i,line in enumerate(open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')):
        
         pack = json.loads(line)
-
-        if pack['id'] in new_ids:
-            owner_org = departments[pack['owner_org']]['eng']
+        #print pack
+        if pack['id'] in not_in_load:
+            try:
+            	owner_org = departments[pack['owner_org'].upper()]['eng']
+            except:
+				owner_org = pack['owner_org']
+				
             report.append((pack['id'],owner_org,pack['title']))
     
     
     print len(report),len(set(report)), "No duplicates"
     
     for i,line in enumerate(sorted(report)):
-        print  line[0],line[1],line[2]
+        print  u"{}\t{}\t{}".format(line[0],line[1],line[2]).encode('utf-8')
 
        
 
@@ -124,7 +129,7 @@ def changed_on_registry_report():
 
 def check_for_duplicates():
     ids=[]
-    for line in open('/Users/peder/dev/OpenData/analysis/changed-registry-files.jl', 'r'):
+    for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r'):
         pack = json.loads(line)
         ids.append(pack['id'])
     
