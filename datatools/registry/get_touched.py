@@ -89,7 +89,27 @@ def activities(endpoint,user):
     print "----------------", last_time
     get_data(last_time)
     # Etc. 
-    
+def find_touched_registry_packages():
+    ''' Count packages that have been created and / or updated by  account holders at registry
+        and pickle it for later use
+    '''
+    work_dir="/Users/peder/dev/goc/makus-report/"
+    registry_ids=work_dir + "registry-june10"
+    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca')
+    new_ids=[]
+    users=standard_users(registry)
+
+    for user in users:
+        ids = activities_for_user(registry,user)
+        new_ids.extend(ids)
+        print len(new_ids)
+        # change to a set to avoid activity duplicates
+    # change to a set to avoid activity duplicates between people
+    print "-----------"
+    print len(new_ids), len(set(new_ids))
+    pickle.dump(set(new_ids), open('new_in_registry.pkl','wb'))    
+
+
 def download_changed_registry_packs():
 
     touched = pickle.load(open('touched_in_registry.pkl','rb'))
@@ -121,6 +141,6 @@ def download_changed_registry_packs():
             
     print "Finished, thanks for your patience"
 if __name__ == "__main__":
-    touched_in_registry()
+    find_touched_registry_packages()
     
     
