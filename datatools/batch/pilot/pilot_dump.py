@@ -66,7 +66,6 @@ class PilotRules:
             #print 'Invalid date!', date
             return ''
 
-        
     def region_fix(self):
         if package_dict['geographic_region'] == "Canada  Canada":package_dict['geographic_region']=''
         region = package_dict['geographic_region']
@@ -444,13 +443,14 @@ def process_bilingual(infile, outfile):
         if (i % 100) == 0: print i 
    
 if __name__ == "__main__":
-    matched_input =  "/Users/peder/dev/goc/LOAD/pilot-matched.xml"
-    bilingual_input =  "/Users/peder/dev/goc/LOAD/pilot-bilingual.xml"
+    inputdir="/Users/peder/dev/OpenData/data-sources/pilot/"
+    matched_input =  inputdir+"pilot-matched.xml"
+    bilingual_input = inputdir+"pilot-bilingual.xml"
     sample_input=   "/Users/peder/dev/goc/LOAD/sample.xml"
     
-    outputdir="/Users/peder/dev/goc/JL/"
-    output_file_bilingual =  "{}/pilot-bilingual-{}.jl".format(outputdir,date.today()) 
-    output_file_matched =  "{}/pilot-matched-{}.jl".format(outputdir,date.today()) 
+    outputdir="{}{}".format("/Users/peder/dev/OpenData/combined_load/",date.today())
+    output_file_bilingual =  "{}/pilot-bilingual.jl".format(outputdir) 
+    output_file_matched =  "{}/pilot-matched.jl".format(outputdir)
     sample_output_file_bilingual =  "{}/pilot-sample-bilingual.jl".format(outputdir,date.today()) 
     sample_output_file_matched =  "{}/pilot-sample-mathed.jl".format(outputdir,date.today()) 
     print "Running"

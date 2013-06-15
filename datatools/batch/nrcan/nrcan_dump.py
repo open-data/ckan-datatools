@@ -338,15 +338,16 @@ def resources():
             resource_dict['url'] = node.find('gmd:CI_OnlineResource/gmd:linkage/gmd:URL', nspace).text
             resource_dict['name']=node.find('gmd:CI_OnlineResource/gmd:description/gco:CharacterString', nspace).text
             resource_dict['language']=language()
-            en_langs=['English','english']
-            fr_langs=['French','french']
-            for e in en_langs:
-                if e in resource_dict['name']:
-                    resource_dict['language']='eng; CAN'
-            for f in fr_langs:
-                if e in resource_dict['name']:
-                    resource_dict['language']='fra; CAN'   
-            
+            if resource_dict['name']: 
+                en_langs=['English','english']
+                fr_langs=['French','french']
+                for e in en_langs:
+                    if e in resource_dict['name']:
+                        resource_dict['language']='eng; CAN'
+                for f in fr_langs:
+                    if e in resource_dict['name']:
+                        resource_dict['language']='fra; CAN'   
+                
             resource_dict['name_fra']=node.find('gmd:CI_OnlineResource/gmd:description/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString', nspace).text
             resource_dict['resource_type']='file'
             resource_dict['size']=size()
@@ -364,6 +365,10 @@ def resources():
             except AttributeError: 
                 resource_dict['format'] = formatTypes['Other']
             resources.append(resource_dict)
+        except AttributeError:
+            # probably just means there are no values for names
+            #raise
+            pass
         except:
             raise
 
@@ -413,7 +418,7 @@ def data_identification():
     f = charstring_path('fileIdentifier')
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
-    except IndexError:  
+    except AttributeError, IndexError:  
         fileid = charstring_path('fileIdentifier')
 
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
