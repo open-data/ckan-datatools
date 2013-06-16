@@ -140,7 +140,7 @@ def get_keywords(path):
         #replace forward slashes and semicolon so keywords will pass validation
         #Apostrophes in french words causes a proble; temporary fixx
         if x:
-            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ").replace("ETM+","ETM-Plus").replace(", "," ")
+            x = x.replace("/"," - ").replace("; ","-").replace("(","-").replace(")"," ").replace("ETM+","ETM-Plus")
             tag= x.split(">")[-1].strip()
             
             if not tagname_match.match(tag):
@@ -170,7 +170,7 @@ def get_presentation_code():
         pName = presentationCodes[int(pCode)]
         return pName
     except IndexError:
-        print "No presentation Form"
+        #print "No gmd:CI_PresentationFormCode"
         return presentationCodes[387]
     except KeyError:
         print "Presentation code not in Schema"
