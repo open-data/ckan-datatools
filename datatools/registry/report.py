@@ -113,6 +113,8 @@ def load_dict():
                 packs[pack['id']]=pack
             print len(load)
         return packs
+    
+    
 def changed_on_registry_report():
     ''' Analyze how files have changed on the registry to see if and how they can be updated '''
     records=load_dict()
@@ -163,20 +165,25 @@ def changed_on_registry_report():
         
 
 def check_for_duplicates():
-    ids=[]
-    for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r'):
-        pack = json.loads(line)
-        ids.append(pack['id'])
-    
-    print len(ids)
-    print len(set(ids))
+    ids = [json.loads(line)['id'] for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')]
 
+    print len(ids), len(set(ids))
+
+def records():
+    file = open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')
+    yield json.loads(file.next())['id']
+
+def registry_report():
+    print records.next()
+    print records.next()
+    
 if __name__ == "__main__":
+    registry_report()
     #touched_in_registry()
     #new_registry_packages()
     #download_changed_registry_packs()
     #check_for_duplicates()
-    changed_on_registry_report()
+    #changed_on_registry_report()
     #new_in_registry_report()
     #registry_records_not_in_load()
     
