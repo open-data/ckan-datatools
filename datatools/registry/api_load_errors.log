@@ -1,62 +1,11 @@
-15, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/9529119f-f60a-46c1-aaac-f8a5d6745e14
-51, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/3e784360-ca20-407c-b9bd-9d468f257eb5
-52, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/aa72a5d5-380e-4e38-8740-42c3ad840fca
-58, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a4aa77e3-b7ed-45ea-8e89-d42f50a291a3
-59, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/ffb9f4b4-f50e-47c3-b12a-66529cbaff12
-64, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/4b5d8535-5c42-4fba-a848-a2b623504ce6
-70, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/9d00ebdd-2f67-4ba9-af55-a18f67deb36b
-83, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/eb8087b4-2390-474e-a0bb-a17501f21e8d
-85, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/73c42ea8-5784-4e4a-80ce-acd8691dfb5d
-90, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/1e0ef582-0e77-47c9-83bc-ec31f404baf6
-91, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a47734af-deb0-4300-bc0e-f387c7d046a8
-96, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/ad8e0d89-dc17-4435-b34a-1b8c448cf80a
-103, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/caf8efad-1174-42f6-baa9-c4b753275ce5
-105, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a2d7073a-123e-45c5-a6d6-546d29ce14f3
-109, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/193f3b62-6cc3-4e25-af05-c0dddaa50bad
-129, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/9e4f8e40-e390-46ee-8f34-a2719ca65f67
-134, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/4827aa13-fbbb-4aa9-ad1f-ff0870a238c4
-145, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/729e1368-c24c-4377-8764-85ef494e1f5f
-149, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/e4a488df-d578-476c-9d3d-ad781556448f
-163, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/970e8958-2449-4abb-bc02-f78c6193d0fc
-165, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/74ec533a-7489-402b-ac79-5ce605129270
-171, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/800bbd15-7cf2-4017-8cd9-b0f7e82d82ba
-186, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/e8ce6c20-a190-4c7b-87b0-24ec70171a0e
-200, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/000e6c14-98d2-4460-bc38-3e02319f738e
-203, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/49a7edc7-318f-4d29-970e-1150b763a966
-204, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/db885de0-92b5-4c43-b307-13ecf9770f3e
-209, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/897e92f5-8b08-42bd-9766-0852be02e4ff
-211, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/fe911f08-26d2-4aa0-ab20-912ce6366a44
-219, Unknow Error, http://registry.statcan.gc.ca/api/rest/dataset/8d0f0896-218b-4191-bd0a-449e9a886762
-220, Unknow Error, http://registry.statcan.gc.ca/api/rest/dataset/0cb440d6-1f0e-469a-8128-5b83c12dab80
-221, Unknow Error, http://registry.statcan.gc.ca/api/rest/dataset/a0be21bb-647c-46c1-b032-647c0bd5e806
-222, Unknow Error, http://registry.statcan.gc.ca/api/rest/dataset/f5c8a5a0-354d-455a-99ab-8276aa38032e
-225, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/8195c4e4-caba-4002-8ebe-2b4ce8d2c0e2
-234, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/f7f5d60d-6fd8-4592-97e8-12f23299f0f1
-243, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/cec27503-0540-4321-974f-d2dd6b646593
-258, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/48c2bc61-72c8-401a-a8f7-207710f7b0cc
-264, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/0b136335-539c-4e32-b998-587a22e9746a
-277, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/782276a4-5034-428d-8a73-b5facc740b85
-280, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/86a0937a-a1c5-48ee-82f0-5444984c440c
-293, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/79a52180-6cae-4b7c-bec1-96f02144a1ec
-296, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/f1269e23-ecfd-4ba1-999b-56a6b3805c01
-315, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/3eac6c30-4e06-4441-a84b-8019786ae69c
-324, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/1f3ed147-443c-447b-99af-26a0bb4aa290
-333, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/6bac7d85-195c-4c82-9076-9d3cd00dafee
-336, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/abd67784-13e4-4349-b106-d0f9dc5ed855
-345, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/7d226eef-b7bc-4f44-8828-13b70e33dd1d
-354, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/e418841e-d9dc-4caf-9a19-09b3269a3e1e
-365, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/b8df23da-1925-4a9a-99bc-3f99da83b2c2
-367, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/737854d5-c5de-4428-9782-0f1e0bfd4067
-384, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/4e92dbcf-87de-4101-81a9-a935537d4974
-387, ValueError - json can't decode, http://registry.statcan.gc.ca/api/rest/dataset/781f8781-f03a-43c5-9075-300b9d31308f
-400, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a941f632-8d41-44e5-b34b-b48fe26b1db6
-401, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/c38247aa-d704-4a2b-bd31-fe8bc7600744
-420, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/f3b4bb67-e135-4f54-820b-c0494af73245
-422, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/e7e33038-bb49-4b09-b808-802bf734241a
-425, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/861002d1-7550-4a53-9c8d-2263a467b7e3
-428, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/47df994a-68c4-4c5a-9386-6b2b7603d376
-430, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a21efa5a-8edd-4468-b94a-a60168dfaba1
-431, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/4ec854b3-83ae-47f1-8cec-9bccf6a67f9b
-435, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/6212730a-035d-4d66-9538-0433aec48181
-444, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/a18ae796-8c1a-43a0-9201-c3b9b87edbb3
-446, HTTPError - forbidden, http://registry.statcan.gc.ca/api/rest/dataset/9527e43d-69ad-4cea-8730-09f3a088972d
+45, Error, d356c792-5cb0-46c1-be74-a86f804a0e93
+73, Error, b1fabdfd-72c5-42b0-a07e-a04e0148f7a4
+91, Error, fd140745-6fbb-4cb0-8513-b225d06cdd2e
+176, Error, 7831b35e-718e-4523-999a-1720f3f3c7b1
+256, Error, 5b2d2685-2fad-41a5-b0c0-eb8d0f92eda7
+292, Error, ae225efb-2787-4062-b18a-eeac9fa109da
+321, Error, b87a67ec-3f87-470a-a878-ebcf3baa239a
+326, Error, 36bb7a2d-b570-493e-ac5d-ad5a9eb9741c
+354, Error, 3d44e2da-3e36-45cf-ab2a-037801eaaa6b
+397, Error, beb8e845-6429-4285-8527-b9ad2b373481
+454, Error, d62cf7b7-c180-4115-b0a6-546a85d6419f

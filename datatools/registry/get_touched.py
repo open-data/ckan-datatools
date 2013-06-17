@@ -116,7 +116,7 @@ def find_touched_registry_packs():
     # change to a set to avoid activity duplicates between people
     print "-----------"
     print len(new_ids), len(set(new_ids))
-    pickle.dump(set(new_ids), open('new_in_registry.pkl','wb'))    
+    pickle.dump(set(new_ids), open('touched_in_registry.pkl','wb'))    
 
 
 
@@ -125,7 +125,7 @@ def download_touched_registry_packs():
 
     touched = pickle.load(open('touched_in_registry.pkl','rb'))
     print "downloading", len(touched)
-    opener = urllib2.build_opener()
+    
     linkfile ="touched-registry-files.jl"
     file = open(os.path.normpath(linkfile), "wb")
     errors=open(os.path.normpath('api_load_errors.log'),"wb")
@@ -134,19 +134,18 @@ def download_touched_registry_packs():
         
         try:
            package = registry.action.package_show(id=id)['result']
-           print i, package['title']
+           print i,package['id']
            # Write the package to a file
            file.write(json.dumps(package) + "\n"); 
 
         except:
-            raise
-            errors.write("{}, Error, {}\n".format(i,url))
-            print "ERROR ?", url
+            errors.write("{}, Error, {}\n".format(i,id))
+            print "ERROR ?"
             
     print "Finished, thanks for your patience"
 if __name__ == "__main__":
-
-    find_touched_registry_packs()
+    download_touched_registry_packs()
+    #find_touched_registry_packs()
 
 
     
