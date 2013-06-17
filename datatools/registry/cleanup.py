@@ -11,7 +11,8 @@ def delete_packs(file):
     ids = [line.strip() for line in open(file)]
 
     demo = ckanapi.RemoteCKAN(server, api_key=key)
-    for id in ids:
+    for i in ids:
+        id = i.lower()
         try:
             print id, demo.action.package_delete(id=id)['success']
         except ckanapi.NotFound:
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     key=sys.argv[1]
     
     ''' Delete 16,842 old Geogratis records that will have new package ids'''
-    delete_packs('old_geo_ids.delete')
+    delete_packs('pre-launch.delete')
 
     ''' Delete 146 old CANSIM records '''
     #delete_packs('cansim.delete')
