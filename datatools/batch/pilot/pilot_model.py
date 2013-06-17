@@ -20,10 +20,13 @@ class PilotResource():
     
     def _map(self):
         if 'dataset_link_en_' in self.type:
+   
             try:
                 self.fields['format']=schema_description.resource_field_by_id['format']['choices_by_pilot_uuid'][self.fields['format']]['key']
             except KeyError:
-                self.fields['format']=''
+                self.fields['format']='other'
+            except:
+                raise
 
             
         
@@ -93,33 +96,38 @@ class PilotRecord(object):
             
             
         ''' resources'''
-        for i in range(1,5):
-            url = node.xpath("FORM[NAME='dataset_link_en_%d']/A/text()" % i)
-            if url:
-                resource_dict = {}
-                resource_dict['url']=url[0]
-                # Force a language from parent
-                resource_dict['language'] = self.fields['language']
-                format = node.xpath("FORM[NAME='dataset_format_%d']/A/text()" % i)
-                size = node.xpath("FORM[NAME='dataset_size_%d']/A/text()" % i)
-              
-                if format:resource_dict['format']=format[0].split("|")[1]
-                self.resources.append(PilotResource(resource_dict,'dataset_link_en_'))
-            else:               
-                break
- 
-        extras=['supplementary_documentation_en',
-                'supplementary_documentation_fr',
-                'data_dictionary_fr',
-                'dictionary_list:_en']
-
-        
-        for extra in extras:
-            url= node.xpath("FORM[NAME='%s']/A/text()"% extra)
-            if url:
-                resource_dict = {}
-                resource_dict['url']=url[0]    
-                self.resources.append(PilotResource(resource_dict,extra))
+        try:
+            for i in range(1,5):
+                url = node.xpath("FORM[NAME='dataset_link_en_%d']/A/text()" % i)
+                if url:
+                    resource_dict = {}
+                    resource_dict['url']=url[0]
+                    if "http://data.gc.ca/commonwebsol/fileuploads/C/4/0/C4060F22-17EB-450D-9B5E-A1216E75DF47/Dictionnaire" in resource_dict['url']:
+                        print "STOP"
+                    # Force a language from parent
+                    resource_dict['language'] = self.fields['language']
+                    format = node.xpath("FORM[NAME='dataset_format_%d']/A/text()" % i)
+                    size = node.xpath("FORM[NAME='dataset_size_%d']/A/text()" % i)
+                  
+                    if format:resource_dict['format']=format[0].split("|")[1]
+                    self.resources.append(PilotResource(resource_dict,'dataset_link_en_'))
+                else:               
+                    break
+     
+            extras=['supplementary_documentation_en',
+                    'supplementary_documentation_fr',
+                    'data_dictionary_fr',
+                    'dictionary_list:_en']
+    
+            
+            for extra in extras:
+                url= node.xpath("FORM[NAME='%s']/A/text()"% extra)
+                if url:
+                    resource_dict = {}
+                    resource_dict['url']=url[0]    
+                    self.resources.append(PilotResource(resource_dict,extra))
+        except:
+            raise
 
     def display(self,raw=False):
         print "-----------  Pilot <RECORD> -----------"

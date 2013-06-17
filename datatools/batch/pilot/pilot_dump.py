@@ -192,14 +192,16 @@ class CkanResource:
         else: return "HTML"
         
     def __init__(self,pilot):
-
-        self.fields={}
-        url = pilot.fields['url'].strip()
-        if url.startswith('http://registry.data.gc.ca/commonwebsol'):
-            url = url.replace('registry.data.gc.ca', 'data.gc.ca')
-            url = url.split('|')[0]
-        self.fields['url'] = url
-        self._resource_type(pilot)
+        try:
+            self.fields={}
+            url = pilot.fields['url'].strip()
+            if url.startswith('http://registry.data.gc.ca/commonwebsol'):
+                url = url.replace('registry.data.gc.ca', 'data.gc.ca')
+                url = url.split('|')[0]
+            self.fields['url'] = url
+            self._resource_type(pilot)
+        except:
+            raise
     
     def _resource_type(self, pilot):
 
@@ -208,7 +210,8 @@ class CkanResource:
             self.fields['name']='Dataset'
             self.fields['name_fra']='Ensemble de données'
             self.fields['format']=pilot.fields['format']
-            self.fields['language']=self.langmap[pilot.fields['language']]       
+            self.fields['language']=self.langmap[pilot.fields['language']]   
+                
             
         elif 'dictionary_list:_en' in pilot.type:
             self.fields['resource_type']='doc'
@@ -223,7 +226,14 @@ class CkanResource:
             self.fields['name_fra']='Dictionaire de données'
             self.fields['format']=self.format_from_url(self.fields['url'])
             self.fields['language']="fra; CAN"
-                 
+            
+        #Some actually have this special case, just to make things even more confusing   
+        elif 'data_dictionary_fr' in pilot.type:
+            self.fields['resource_type']='doc'
+            self.fields['name']='Data Dictionary'
+            self.fields['name_fra']='Dictionaire de données'
+            self.fields['format']=self.format_from_url(self.fields['url'])
+            self.fields['language']="fra; CAN"          
         elif 'supplementary_documentation_en' in pilot.type:
             self.fields['resource_type']='doc'
             self.fields['name']='Supporting Documentation'
@@ -298,6 +308,8 @@ class CanadaRecord:
     def data_identification(self,pilot):
         #8 of 33
         self.package_dict['id']=self.id
+        if self.id =='4c968ec9-6fce-4c55-8ba2-01460ae85473':
+            print "STOP"
         self.package_dict['owner_org']=pilot['department'] 
         self.package_dict['topic_category']=self.rules.get_topic_category(pilot['category'])
         self.package_dict['subject']=''
@@ -313,7 +325,7 @@ class CanadaRecord:
         self.package_dict['date_modified']=self.rules.format_date(pilot['date_updated'])
         self.package_dict['maintenance_and_update_frequency']=self.rules.pilot_frequency_list[pilot['frequency']]
         self.package_dict['portal_release_date']='2013-06-10'
-        self.package_dict['ready_to_publish']=False #Used to be validation_override=True
+        self.package_dict['ready_to_publish']="" #Used to be validation_override=True
         t = common.time_coverage_fix(pilot['time_period_start'],pilot['time_period_end'])
         self.package_dict['time_period_coverage_start']=self.rules.format_date(t[0])
         self.package_dict['time_period_coverage_end']=self.rules.format_date(t[1])
@@ -342,7 +354,7 @@ class CanadaRecord:
     
         for resource in pilot_resources:
             self.package_dict['resources'].append(CkanResource(resource).fields)
-            
+        
     def check_structure(dict):
         fields =  [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['type'] not in [u'fixed',u'calculated']] 
         mandatory = [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['mandatory'] == u'all']  
@@ -414,6 +426,7 @@ def process_matched(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(en_record)
+            print "PUBLISH?", crecord.package_dict['ready_to_publish']
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
             
         if i > 0 and (i % 100) == 0: print i 
@@ -438,17 +451,18 @@ def process_bilingual(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(precord)
+            print "PUBLISH", crecord.package_dict['ready_to_publish']
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
         if (i % 100) == 0: print i 
    
 if __name__ == "__main__":
-    inputdir="/Users/peder/dev/OpenData/data-sources/pilot/"
+    inputdir="/Users/peder/dev/OpenData/data_sources/pilot/"
     matched_input =  inputdir+"pilot-matched.xml"
     bilingual_input = inputdir+"pilot-bilingual.xml"
     sample_input=   "/Users/peder/dev/goc/LOAD/sample.xml"
     
-    outputdir="{}{}".format("/Users/peder/dev/OpenData/combined_load/",date.today())
+    outputdir="{}{}".format("/Users/peder/dev/OpenData/combined_loads/",date.today())
     output_file_bilingual =  "{}/pilot-bilingual.jl".format(outputdir) 
     output_file_matched =  "{}/pilot-matched.jl".format(outputdir)
     sample_output_file_bilingual =  "{}/pilot-sample-bilingual.jl".format(outputdir,date.today()) 
