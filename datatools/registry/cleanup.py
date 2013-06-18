@@ -24,7 +24,7 @@ if __name__ == "__main__":
     key=sys.argv[1]
     
     ''' Delete 16,842 old Geogratis records that will have new package ids'''
-    delete_packs('pre-launch.delete')
+    delete_packs('june18-duplicates.delete')
 
     ''' Delete 146 old CANSIM records '''
     #delete_packs('cansim.delete')
