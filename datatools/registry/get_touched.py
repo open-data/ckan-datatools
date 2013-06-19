@@ -17,10 +17,11 @@ def standard_users(endpoint):
 
 
 def users_report(endpoint):
-    users = endpoint.action.user_list()
-    for user in users['result']:
+    def display(record):
         print "{},{},{},{}".format(user['name'],user['id'],user['fullname'],user['number_administered_packages'])
- 
+    
+    [display(user) for user in endpoint.action.user_list()['result']]
+        
 def activities_for_user(endpoint,user):
 
     # makus user id is ac12cb42-117d-4d68-8098-66a942d1c17f
