@@ -1,1 +1,0 @@
-python ../batch/nrcan/find_new_ids.py > old_geo_ids.delete

@@ -21,16 +21,19 @@ def delete_packs(file):
 
 if __name__ == "__main__":
     
+    # Ross will pass API key 
     key=sys.argv[1]
+    ''' Delete a few files that were duplicated on release data June 18, 2013 '''
+    delete_packs('../data/deletes/old_geo_ids.delete')
     
     ''' Delete 16,842 old Geogratis records that will have new package ids'''
-    delete_packs('june18-duplicates.delete')
+    #delete_packs('../data/deletes/old_geo_ids.delete')
 
     ''' Delete 146 old CANSIM records '''
-    #delete_packs('cansim.delete')
+    #delete_packs('../data/deletes/cansim.delete')
     
     ''' Delete 56 records with the french IDs that were mistakenly entered '''
-    #delete_packs('french_ids.delete')
+    #delete_packs('../data/deletes/french_ids.delete')
     
     
     

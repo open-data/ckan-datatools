@@ -19,15 +19,15 @@ from datatools import helpers
     
     Use an ID dump from the registry, produced June 10, 2013
 '''
-
+departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
 def all_load_ids():
     print "Collect all ids from load files"
     all=[]
-    dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
+    dir='/Users/peder/dev/OpenData/combined_loads/2013-06-16/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            print file
-            all.extend(helpers.jl_ids(dir+file))
+            if ".jl" in file:
+                all.extend(helpers.jl_ids(dir+file))
     len(all)
     return(all)
 
@@ -121,7 +121,7 @@ def changed_on_registry_report():
     print len(records)
     changed_ids=pickle.load(open('in_load_but_changed.pkl','rb'))
     diff_packs=[]
-    for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r'):
+    for line in open('touched-registry-files.jl', 'r'):
         pack = json.loads(line)
         id=pack['id']
         if id in changed_ids:
@@ -165,24 +165,48 @@ def changed_on_registry_report():
         
 
 def check_for_duplicates():
-    ids = [json.loads(line)['id'] for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')]
+    ids = [json.loads(line)['id'] for line in open('touched-registry-files.jl', 'r')]
 
     print len(ids), len(set(ids))
 
 def records():
-    file = open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')
-    yield json.loads(file.next())['id']
+    file = open('touched-registry-files.jl', 'r')
+
+    for line in file:
+        yield json.loads(line.strip())
+
 
 def registry_report():
-    print records.next()
-    print records.next()
+    cnt = Counter()
+    all = all_load_ids()
+    new =[]
+    changed=[]
+    for r in records():
+        #print r['id']
+        if r['id'] in all:
+            cnt['changed']+=1
+            changed.append(r)
+        else:
+            cnt['new']+=1
+            new.append(r)
+    
+    print cnt.items()
+    print len(all)
+    
+    for n in new:
+        try:
+            d = departments[n['owner_org'].upper()]['eng']
+        except:
+            d = 'Unknown department'
+        print u"{},{},{}".format(d,n['id'],n['title']).encode("utf-8")
+ 
     
 if __name__ == "__main__":
+    #check_for_duplicates()
     registry_report()
     #touched_in_registry()
     #new_registry_packages()
     #download_changed_registry_packs()
-    #check_for_duplicates()
     #changed_on_registry_report()
     #new_in_registry_report()
     #registry_records_not_in_load()
