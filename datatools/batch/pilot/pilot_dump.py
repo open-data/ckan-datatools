@@ -339,8 +339,8 @@ class CanadaRecord:
         self.package_dict['data_series_name_fra']=''
         self.package_dict['data_series_issue_identification']=''
         self.package_dict['data_series_issue_identification_fra']=''
-        #package_dict['endpoint_url']='http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/'
-        #package_dict['endpoint_url_fra']='http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/'
+        self.package_dict['endpoint_url']=''
+        self.package_dict['endpoint_url_fra']=''
         self.package_dict['url']=pilot['program_page_en']
         self.package_dict['url_fra']=pilot['program_url_fr']
         self.package_dict['keywords']=self.rules.clean_keywords(pilot['keywords_en'])
