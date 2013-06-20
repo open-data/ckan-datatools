@@ -19,17 +19,18 @@ from datatools import helpers
     
     Use an ID dump from the registry, produced June 10, 2013
 '''
+departments=schema.dataset_field_by_id['owner_org']['choices_by_pilot_uuid']
 
-def all_load_ids():
-    print "Collect all ids from load files"
-    all=[]
-    dir='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
+def pilot_records():
+    ''' A generator that provides access to all ids in .jl load files '''
+    dir='/Users/peder/dev/OpenData/combined_loads/2013-06-20/'
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for n,file in enumerate(files):
-            print file
-            all.extend(helpers.jl_ids(dir+file))
-    len(all)
-    return(all)
+            if ".jl" in file and "nrcan" not in file:
+                for line in open(path+"/"+file):  
+                    record=json.loads(line.strip())
+                    yield (record['id'],record)
+    
 
 def touched_in_registry():
     '''  Make sure there are no duplicates in the activity list record set  from registry '''
@@ -50,7 +51,7 @@ def registry_records_not_in_load():
     
     '''
     changed=[]
-    touched_ids = pickle.load(open('touched_in_registry.pkl','rb'))
+    touched_ids = pickle.load(open('../data/touched_in_registry.pkl','rb'))
     all_ids = all_load_ids()
     print len(all_ids)
     for id in all_ids:
@@ -60,8 +61,8 @@ def registry_records_not_in_load():
     print "Existing IDs that have been changed", len(changed)
     new = set(touched_ids) - set(changed)
     print new
-    pickle.dump(new, open('not_in_load.pkl','w'))
-    pickle.dump(changed, open('in_load_but_changed.pkl','w'))
+    pickle.dump(new, open('../data/not_in_load.pkl','w'))
+    pickle.dump(changed, open('../data/in_load_but_changed.pkl','w'))
 
 def new_in_registry_report():
     ''' id and title of records that have been newly created on registry '''
@@ -92,98 +93,132 @@ def new_in_registry_report():
         print  u"{}\t{}\t{}".format(line[0],line[1],line[2]).encode('utf-8')
        
 
-def search_load_files(id,include_geogratis=False):
-    loaddir ='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
-    search_files=['pilot-bilingual.jl','pilot-matched.jl']
-    for file in search_files:
-        
-        if id in helpers.jl_ids(loaddir+file):return file
 
 
-def load_dict():
-        
-        ''' Create dict of all packs with id as key '''
-        packs={}
-        print "Getting load files"
-        loaddir ='/Users/peder/dev/OpenData/combined_loads/2013-06-12/'
-        search_files=['pilot-bilingual.jl','pilot-matched.jl']
-        for file in search_files:
-            load = helpers.jl_packs(loaddir+file)
-            for pack in load:
-                packs[pack['id']]=pack
-            print len(load)
-        return packs
+    
+def what_fields_changed():
+    
+    loaded=dict(record for record in pilot_records())
+    print len(loaded)
+    load_ids=[id for id,value in loaded.iteritems()]
+    touched = dict((json.loads(line)['id'], json.loads(line)) for line in open('../../data/touched-registry-files.jl', 'r'))
+    touched_ids = [id for id,value in touched.iteritems()]
+    print len(touched_ids)
+    new_ids = set(touched_ids) - set(load_ids)
+    changed_ids=set(touched_ids)-new_ids
+    print "New IDs", len(new_ids)
+    print "Changed IDs", len(changed_ids)
     
     
-def changed_on_registry_report():
-    ''' Analyze how files have changed on the registry to see if and how they can be updated '''
-    records=load_dict()
-    print len(records)
-    changed_ids=pickle.load(open('in_load_but_changed.pkl','rb'))
-    diff_packs=[]
-    for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r'):
-        pack = json.loads(line)
-        id=pack['id']
-        if id in changed_ids:
+    
+    both=[(loaded[id],touched[id]) for id in list(changed_ids)]
+    # All field names
+    field_names=both[0][0].keys()
+
+    # Important fields that have changed during schema development
+    package_fields=['ready_to_publish',
+                    'portal_release_date',
+                    'resources',
+                    'owner_org',
+                    'keywords',
+                    'keywords_fra',
+                    'data_series_issue_identification',
+                    'geographic_region',
+                    'spatial',
+                    'browse_graphic_url',
+                    'endpoint_url',
+                    ]
+    
+    resources_fields=['format','name','name_fra','size','url','size','language']
+    
+
+    cnt= Counter()
+    for before, after in both:
+       
+        print "--- {} ---".format(before['title'])
+        #pprint(before)
+        for field in package_fields:
             try:
-                #print records[id]['title']
-                diff_packs.append((records[id],pack))
-            except KeyError:
-                print "NOT FOUND" , pack['title']
-    
-    
-    print(len(diff_packs))
-
-    for p in diff_packs:
-        print "----------{}----------".format(p[0]['id'])
-        for key in p[0].keys():
+                bef =before[field]
+            except KeyError as k:
+                print "Load file missing field,", field
+                cnt["load missing "+field]+=1
+                continue
+            try:
+                aft =after[field]
+            except KeyError as k:
+                print "Registry missing field," ,field
+                cnt["registry missing "+field]+=1
+                continue
             
-            try:
-                load=p[0][key]
-                registry=p[1][key]
                 
-                assert load==registry, 'They are not equal'
-                print "OK",key
-            except AssertionError:
-                print "LOAD RECORD ", key, " >", load 
-                print "REG RECORD ", key, " >", registry
+            if bef==aft: 
                 pass
-            except KeyError:
-                print "missing key", key
+            elif field == "resources":
+                #pprint(before['resources'])
+                #pprint(after['resources'])
+                for b in before['resources']:
+                    b['name']
+
+            else:
+               
+                print "Package:",field,"::", before[field], "<>", after[field] 
+
+        yield(cnt.items())
         
-        sys.exit()
-        '''
-        print "-------"
-        print p[0]['title'],"::::", p[1]['title']
-        d1=difflib.SequenceMatcher(None, " abcd", "abcd abcd")
-        print d1
-        d=difflib.Differ()
-        result = list(d.compare(str(p[0]['title']), str(p[1]['title'])))
-        pprint(result)
-        sys.exit()
-        '''
-        
-
-def check_for_duplicates():
-    ids = [json.loads(line)['id'] for line in open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')]
-
-    print len(ids), len(set(ids))
-
-def records():
-    file = open('/Users/peder/dev/OpenData/analysis/touched-registry-files.jl', 'r')
-    yield json.loads(file.next())['id']
-
 def registry_report():
-    print records.next()
-    print records.next()
+    cnt = Counter()
+    all = all_load_ids()
+    new =[]
+    changed=[]
+    for r in records():
+        #print r['id']
+        if r['id'] in all:
+            cnt['changed']+=1
+            changed.append(r)
+        else:
+            cnt['new']+=1
+            new.append(r)
+    
+    print cnt.items()
+    print len(all)
+    
+    for n in new:
+        try:
+            d = departments[n['owner_org'].upper()]['eng']
+        except:
+            d = 'Unknown department'
+        print u"{},{},{}".format(d,n['id'],n['title']).encode("utf-8")
+ 
     
 if __name__ == "__main__":
-    registry_report()
+    
+    #registry_records_not_in_load()
+    #what_fields_changed()
+    
+    ''' Allow user to view a) next record, b) random record,  or c) all records report.
+        This will save the script from having to do the heavy lifting of having to continously 
+        read the load files 
+        
+    '''
+    changed = what_fields_changed()
+
+    
+    while True:
+        r = raw_input("Next (n), Random (r), or Report All (a), Quit (q) > ")
+        if r == "n":
+            changed.next()
+        if r == "a":
+            print [c for c in changed]
+    
+    
+        
+        
+    #check_for_duplicates()
+    #registry_report()
     #touched_in_registry()
     #new_registry_packages()
-    #download_changed_registry_packs()
-    #check_for_duplicates()
-    #changed_on_registry_report()
+    #download_changed_registry_packs(
     #new_in_registry_report()
     #registry_records_not_in_load()
     
