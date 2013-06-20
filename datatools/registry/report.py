@@ -131,8 +131,10 @@ def what_fields_changed():
     
     resources_fields=['format','name','name_fra','size','url','size','language']
     
+
     cnt= Counter()
     for before, after in both:
+       
         print "--- {} ---".format(before['title'])
         #pprint(before)
         for field in package_fields:
@@ -157,20 +159,13 @@ def what_fields_changed():
                 #pprint(after['resources'])
                 for b in before['resources']:
                     b['name']
-                    '''
-                    a = after['resources']
-                    print len(b),len(a)
-                    for f in resources_fields:
-                        print "R:",f,"::", b[f], "<>", a[f] 
-                    '''
+
             else:
                
                 print "Package:",field,"::", before[field], "<>", after[field] 
-#        pprint(before)
-#        pprint(after)
-#        sys.exit()
+
+        yield(cnt.items())
         
-    pprint(cnt.items())
 def registry_report():
     cnt = Counter()
     all = all_load_ids()
@@ -199,13 +194,24 @@ def registry_report():
 if __name__ == "__main__":
     
     #registry_records_not_in_load()
-    what_fields_changed()
+    #what_fields_changed()
     
     ''' Allow user to view a) next record, b) random record,  or c) all records report.
         This will save the script from having to do the heavy lifting of having to continously 
         read the load files 
         
     '''
+    changed = what_fields_changed()
+
+    
+    while True:
+        r = raw_input("Next (n), Random (r), or Report All (a), Quit (q) > ")
+        if r == "n":
+            changed.next()
+        if r == "a":
+            print [c for c in changed]
+    
+    
         
         
     #check_for_duplicates()
