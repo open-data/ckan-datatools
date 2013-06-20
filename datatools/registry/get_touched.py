@@ -62,6 +62,7 @@ def all_activity_for_user(endpoint,user):
 
             if data['result']:
                 since_time = data['result'][-1]['timestamp']
+            
             #print package_ids, since_time
             return package_ids, since_time
         
@@ -140,12 +141,12 @@ def download_touched_registry_packs():
 
         except:
             errors.write("{}, Error, {}\n".format(i,id))
-            print "ERROR ?"
+            print "ERROR ?",id
             
     print "Finished, thanks for your patience"
 if __name__ == "__main__":
+    find_touched_registry_packs()
     download_touched_registry_packs()
-    #find_touched_registry_packs()
 
 
     
