@@ -120,8 +120,9 @@ def what_fields_changed():
     field_names=both[0][0].keys()
 
     # Important fields that have changed during schema development
-    package_fields=['ready_to_publish',
-                    'portal_release_date',
+    package_fields=[
+                    #'ready_to_publish',  
+                    #'portal_release_date',
                     'resources',
                     'owner_org',
                     'keywords',
@@ -135,11 +136,11 @@ def what_fields_changed():
     
     resources_fields=['format','name','name_fra','size','url','size','language']
     
-
     cnt= Counter()
-    for before, after in both:
+    new_jl = open("../../data/changed_registry_merge.jl","w")
+    for n,(before, after) in enumerate(both):
         
-        print bold(u"--- {} ---".format(before['title']))
+        print bold(u"{} {} --- {} ---".format(n,before['owner_org'],before['title']))
         #pprint(before)
         for field in package_fields:
             try:
@@ -166,33 +167,38 @@ def what_fields_changed():
 
             else:
 
-                print "Package:",field,"::", color(32,before[field]), color(31, after[field]) 
+                print field,"::", color(32," > "+before[field]), color(31, " > "+after[field]) 
+            
+            ##################   FIX REGISTRY FIELDS ##############
+            '''
+            1. Remove punctuation from keywords list
+            2. Add portal_release_date 
+            3. Write to new file, fixed_changed_registry.jl
+            
+            '''
+            package_dict=before
 
-        yield(cnt.items())
+            
+            for key in before.keys():
+                print key
+                if key == 'resources':
+                    pass
+                try:
+                    new_value=after[key]
+                    package_dict[key]=new_value
+                except KeyError as e:
+                    print key, "does not exist in after", e
+                    raise
+
+            package_dict['ready_to_publish']=False
+            package_dict['portal_release_date']='2013-06-18'
+            pprint(package_dict)
+            
+            #new_jl.write(json.dumps(package_dict)+"\n")    
+            
+            
+            yield(cnt.items())
         
-def registry_report():
-    cnt = Counter()
-    all = all_load_ids()
-    new =[]
-    changed=[]
-    for r in records():
-        #print r['id']
-        if r['id'] in all:
-            cnt['changed']+=1
-            changed.append(r)
-        else:
-            cnt['new']+=1
-            new.append(r)
-    
-    print cnt.items()
-    print len(all)
-    
-    for n in new:
-        try:
-            d = departments[n['owner_org'].upper()]['eng']
-        except:
-            d = 'Unknown department'
-        print u"{},{},{}".format(d,n['id'],n['title']).encode("utf-8")
  
     
 if __name__ == "__main__":
