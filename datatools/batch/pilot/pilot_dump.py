@@ -130,8 +130,11 @@ class PilotRules:
         return title
         
     def geo_region(self,region):
-        if region == "Canada  Canada": 
-            return  ""
+        print "Region", region
+        if not region:
+            return []
+        elif region == "Canada  Canada": 
+            return  []
         else:
             return region
         
@@ -324,8 +327,8 @@ class CanadaRecord:
         self.package_dict['date_published']=self.rules.format_date(pilot['date_released'])
         self.package_dict['date_modified']=self.rules.format_date(pilot['date_updated'])
         self.package_dict['maintenance_and_update_frequency']=self.rules.pilot_frequency_list[pilot['frequency']]
-        self.package_dict['portal_release_date']='2013-06-10'
-        self.package_dict['ready_to_publish']="" #Used to be validation_override=True
+        self.package_dict['portal_release_date']='2013-06-18'
+        self.package_dict['ready_to_publish']=False #Used to be validation_override=True
         t = common.time_coverage_fix(pilot['time_period_start'],pilot['time_period_end'])
         self.package_dict['time_period_coverage_start']=self.rules.format_date(t[0])
         self.package_dict['time_period_coverage_end']=self.rules.format_date(t[1])
@@ -426,7 +429,7 @@ def process_matched(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(en_record)
-            print "PUBLISH?", crecord.package_dict['ready_to_publish']
+            #print "PUBLISH?", crecord.package_dict['ready_to_publish']
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
             
         if i > 0 and (i % 100) == 0: print i 
@@ -451,7 +454,7 @@ def process_bilingual(infile, outfile):
         # Create CkanRecord
         if include_record:
             crecord = CanadaRecord(precord)
-            print "PUBLISH", crecord.package_dict['ready_to_publish']
+            #print "PUBLISH", crecord.package_dict['ready_to_publish']
             jlfile.write(json.dumps(crecord.package_dict) + "\n")  
 
         if (i % 100) == 0: print i 

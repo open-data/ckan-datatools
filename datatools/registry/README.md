@@ -1,3 +1,9 @@
+Rules for publishing workflow
+==========
+
+If a record is pending, it should have ready_to_publish=True and no portal_release_date=null
+The default portal_release_date should be June 18, date of launc
+
 cleanup.py
 ==========
 
@@ -13,6 +19,13 @@ old_geo_ids
 pre_launch
 
 2: Additions:
+
+3. h. 
+
+
+
+>>>>>>>>>> Library of Pariament record in day 2013-06-?
+
 
 
 
@@ -38,3 +51,5 @@ The portal_release_data should be added to all new files and set to some date in
 
 Solution:  create a new .jl load file with the 152 changed records, and add these files. 
 Also, create a .jl file for new records that should be transferred from registry to public, or will Ian's script handle this?
+
+Add data_series_identification to AAFC-AIMIS-RP-2614 for all records from aafc-aac
