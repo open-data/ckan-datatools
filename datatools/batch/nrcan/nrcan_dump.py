@@ -445,7 +445,7 @@ def time_and_space():
     package_dict['date_modified']=''
     package_dict['maintenance_and_update_frequency']=get_update_frequency()
     package_dict['portal_release_date']='2013-06-18'
-    package_dict['ready_to_publish']=True #Used to be validation_override=True
+    package_dict['ready_to_publish']=False #Used to be validation_override=True
     start,end = get_time()
     package_dict['time_period_coverage_start']=start
     package_dict['time_period_coverage_end']=end
@@ -473,8 +473,7 @@ def bilingual():
 def check_structure(dict):
     fields =  [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['type'] not in [u'fixed',u'calculated']] 
     mandatory = [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['mandatory'] == u'all']  
-    fields.append('resources')  
-    fields.append('validation_override')     
+    fields.append('resources')    
     missing_fields = set(dict.iterkeys()).symmetric_difference(set(fields)) 
     
     mandatory_fields = set(mandatory).intersection(set(fields))
