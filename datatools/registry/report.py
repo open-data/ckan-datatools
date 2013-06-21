@@ -93,7 +93,11 @@ def new_in_registry_report():
         print  u"{}\t{}\t{}".format(line[0],line[1],line[2]).encode('utf-8')
        
 
+def bold(msg):
+    return u'\033[1m{}\033[0m'.format(msg).encode('utf-8')
 
+def color(color, msg):
+    return u"\033[{}m{}\033[0m".format(color,msg).encode('utf-8')
 
     
 def what_fields_changed():
@@ -134,8 +138,8 @@ def what_fields_changed():
 
     cnt= Counter()
     for before, after in both:
-       
-        print "--- {} ---".format(before['title'])
+        
+        print bold(u"--- {} ---".format(before['title']))
         #pprint(before)
         for field in package_fields:
             try:
@@ -161,8 +165,8 @@ def what_fields_changed():
                     b['name']
 
             else:
-               
-                print "Package:",field,"::", before[field], "<>", after[field] 
+
+                print "Package:",field,"::", color(32,before[field]), color(31, after[field]) 
 
         yield(cnt.items())
         
@@ -201,15 +205,15 @@ if __name__ == "__main__":
         read the load files 
         
     '''
+    ''' Better than using main is to use the python prompt and create an object '''
     changed = what_fields_changed()
 
     
     while True:
         r = raw_input("Next (n), Random (r), or Report All (a), Quit (q) > ")
-        if r == "n":
-            changed.next()
-        if r == "a":
-            print [c for c in changed]
+        if r == "n": changed.next()
+        if r == "a":print [c for c in changed]
+        if r == 'q': sys.exit()
     
     
         
