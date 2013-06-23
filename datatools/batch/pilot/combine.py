@@ -22,8 +22,8 @@ if __name__ == "__main__":
     
     records=[r for r in pilot if r['owner_org'] != "ec"]
     #records.extend(jlrecords("ec.jl"))
-    
-    
+    Need to combine more record types and document before I can tag this
+    Also, figure if there are more files like : file:///temp/d13c729f-1ff0-41b5-9546-17b62593c2b8.xml
     load_file=open(helpers.load_dir(0)+"pilot.jl","w")  
     
     [load_file.write(json.dumps(r)+"\n") for r in records]
