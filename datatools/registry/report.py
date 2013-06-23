@@ -14,7 +14,7 @@ from ckanext.canada.metadata_schema import schema_description as schema
 from datatools import helpers
 
 '''
-    Report for Andrew Makus to determine what records have been amended on the registry;
+    Report what records have been amended on the registry;
     these must not be overwritten by a new load
     
     Use an ID dump from the registry, produced June 10, 2013
@@ -116,8 +116,7 @@ def what_fields_changed():
     
     
     both=[(loaded[id],touched[id]) for id in list(changed_ids)]
-    # All field names
-    field_names=both[0][0].keys()
+
 
     # Important fields that have changed during schema development
     package_fields=[
@@ -134,10 +133,18 @@ def what_fields_changed():
                     'endpoint_url',
                     ]
     
-    resources_fields=['format','name','name_fra','size','url','size','language']
+    resource_fields=[
+                         'url',
+                         'format',
+                         'size',
+                         'name',
+                         'name_fra',
+                         'language',
+                         'resource_type'
+                         ]
     
     cnt= Counter()
-    new_jl = open("../../data/changed_registry_merge.jl","w")
+    new_jl = open("../../data/changed_registry_merge.jl","wb")
     for n,(before, after) in enumerate(both):
         
         print bold(u"{} {} --- {} ---".format(n,before['owner_org'],before['title']))
@@ -148,56 +155,64 @@ def what_fields_changed():
             except KeyError as k:
                 print "Load file missing field,", field
                 cnt["load missing "+field]+=1
-                continue
+                #continue
             try:
                 aft =after[field]
             except KeyError as k:
                 print "Registry missing field," ,field
                 cnt["registry missing "+field]+=1
-                continue
-            
+                #continue
                 
             if bef==aft: 
                 pass
             elif field == "resources":
-                #pprint(before['resources'])
-                #pprint(after['resources'])
-                for b in before['resources']:
-                    b['name']
+                pass
 
             else:
-
-                print field,"::", color(32," > "+before[field]), color(31, " > "+after[field]) 
+                print before[field],after[field]
+                #print field,"::", color(32," > "+before[field]), color(31, " > "+after[field])  
             
-            ##################   FIX REGISTRY FIELDS ##############
-            '''
-            1. Remove punctuation from keywords list
-            2. Add portal_release_date 
-            3. Write to new file, fixed_changed_registry.jl
-            
-            '''
-            package_dict=before
-
-            
-            for key in before.keys():
-                print key
-                if key == 'resources':
-                    pass
+        ##################   DONE CHECKING FIELDS. FIX REGISTRY FIELDS ##############
+        '''
+        1. Remove punctuation from keywords list
+        2. Add portal_release_date 
+        3. Write to new file, fixed_changed_registry.jl
+        
+        '''
+        package_dict=before
+        print package_dict['id']
+       
+       
+        for key in before.keys():
+            if key == 'resources':
+               package_dict['resources']=[]
+               for resource in after['resources']:
+                   print "------------    RESOURCE"
+                   
+                   new_resource_dict={}
+                   for rkey in resource_fields:
+                       try:
+                           new_resource_dict[rkey]=resource[rkey]
+                       except:
+                           print "Resource field n/a", rkey
+                   package_dict['resources'].append(new_resource_dict) 
+            #-- End Resources --
+            else:
                 try:
                     new_value=after[key]
                     package_dict[key]=new_value
                 except KeyError as e:
                     print key, "does not exist in after", e
-                    raise
 
             package_dict['ready_to_publish']=False
             package_dict['portal_release_date']='2013-06-18'
-            pprint(package_dict)
-            
-            #new_jl.write(json.dumps(package_dict)+"\n")    
-            
-            
-            yield(cnt.items())
+            package_dict['keywords']=package_dict['keywords'].rstrip(".")
+            package_dict['keywords_fra']=package_dict['keywords_fra'].rstrip(".")
+        pprint(package_dict)
+  
+        new_jl.write(json.dumps(package_dict)+"\n")    
+                
+        #yield(cnt.items())
         
  
     
@@ -211,16 +226,17 @@ if __name__ == "__main__":
         read the load files 
         
     '''
+    what_fields_changed()
     ''' Better than using main is to use the python prompt and create an object '''
-    changed = what_fields_changed()
+    #changed = what_fields_changed()
 
-    
+    '''
     while True:
         r = raw_input("Next (n), Random (r), or Report All (a), Quit (q) > ")
         if r == "n": changed.next()
         if r == "a":print [c for c in changed]
         if r == 'q': sys.exit()
-    
+    '''
     
         
         
