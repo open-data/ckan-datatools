@@ -83,7 +83,7 @@ def all_activity_for_user(endpoint,user):
 def activities(endpoint,user):
 
     date_object = datetime(2013,1,6,0,0)
-    last_time=date_object
+    last_time=datetime(2013,25,6,0,0)
     def get_data(last_time):
         data = endpoint.action.changed_packages_activity_list_since(since_time=last_time.isoformat())
     
