@@ -227,7 +227,6 @@ def get_subject_from_topic_category():
     subjects=[]
     topic_name_en = camel_to_label(topic_category_code)
 
-   
     try:
          topic = topicKeys[topic_name_en]
     except KeyError:
@@ -271,7 +270,12 @@ def full_path(path):
         return ''
 
 def charstring_path(key):
-    return doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
+
+    try:
+        value = doc.xpath(('//gmd:%s/gco:CharacterString' % key),namespaces=nspace)[0].text
+        return value
+    except IndexError:
+        raise  
                 
 def keywords_by_code(doc,code_value,nspace):
     ''' pass xml and code value, get back a list of keywords  '''
@@ -414,11 +418,10 @@ def resources():
     package_dict['resources']=resources      
 
 def data_identification():
-    #8 of 33
-    f = charstring_path('fileIdentifier')
+    #8 of 33fileIdentifier
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
-    except AttributeError, IndexError:  
+    except IndexError:  
         fileid = charstring_path('fileIdentifier')
 
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
@@ -441,7 +444,7 @@ def time_and_space():
     package_dict['date_published']=full_path('//gmd:CI_Date/gmd:date/gco:Date')
     package_dict['date_modified']=''
     package_dict['maintenance_and_update_frequency']=get_update_frequency()
-    package_dict['portal_release_date']='2013-06-10'
+    package_dict['portal_release_date']='2013-06-18'
     package_dict['ready_to_publish']=False #Used to be validation_override=True
     start,end = get_time()
     package_dict['time_period_coverage_start']=start
@@ -470,8 +473,7 @@ def bilingual():
 def check_structure(dict):
     fields =  [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['type'] not in [u'fixed',u'calculated']] 
     mandatory = [ckan for ckan,pilot,field in schema.dataset_all_fields() if field['mandatory'] == u'all']  
-    fields.append('resources')  
-    fields.append('validation_override')     
+    fields.append('resources')    
     missing_fields = set(dict.iterkeys()).symmetric_difference(set(fields)) 
     
     mandatory_fields = set(mandatory).intersection(set(fields))
