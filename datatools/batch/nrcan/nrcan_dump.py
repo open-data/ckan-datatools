@@ -78,6 +78,12 @@ formatTypes['gzip (GNU zip)']="ZIP"
 formatTypes['ZIP']="ZIP"
 formatTypes['ESRI Shapefile']="SHAPE"
 formatTypes['JPEG']="jpg"
+formatTypes['Jpeg 2000']="jpeg 2000"
+
+
+pprint(formatTypes)
+sys.exit()
+
 
 #Hierarchical Data Format (HDF)
 #CorelDraw
@@ -511,6 +517,5 @@ def process(dir,outfile):
 if __name__ == "__main__":
     dir='/Users/peder/dev/OpenData/data_sources/nrcandump'
     outfile='/Users/peder/dev/OpenData/combined_loads/%s/geogratis.jl' % (date.today())
- 
     process(dir,outfile)
     #process()
