@@ -80,11 +80,6 @@ formatTypes['ESRI Shapefile']="SHAPE"
 formatTypes['JPEG']="jpg"
 formatTypes['Jpeg 2000']="jpeg 2000"
 
-
-pprint(formatTypes)
-sys.exit()
-
-
 #Hierarchical Data Format (HDF)
 #CorelDraw
 
