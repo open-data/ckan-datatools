@@ -422,7 +422,7 @@ def data_identification():
     #8 of 33fileIdentifier
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
-    except IndexError:  
+    except (AttributeError, IndexError):  
         fileid = charstring_path('fileIdentifier')
 
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
