@@ -1,0 +1,1 @@
+./xslt2.sh ~/dev/OpenData/data_sources/ec/export-full-1370459620522/01f628bd-344c-438a-922b-43bd10c6da5e/metadata/metadata.iso19139.xml iso19139-2.xsl ckan.xml

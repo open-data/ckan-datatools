@@ -16,7 +16,7 @@ def nap_reduce(file,transform):
     transform = etree.XSLT(xslt_root)
     result = transform(xml_input)
     
-    print dir(result)
+    #print dir(result)
     print str(result)
     #
     #print str()
@@ -25,5 +25,8 @@ def nap_reduce(file,transform):
 if __name__ == '__main__':
    file = "/Users/peder/dev/OpenData/data_sources/ec/export-full-1370459620522/01f628bd-344c-438a-922b-43bd10c6da5e/metadata/metadata.iso19139.xml"
    transform = 'iso19139.xsl'
+   #transform='json.xsl'
    nap_reduce(file,transform)
+
+   
    # main()

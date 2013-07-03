@@ -1,0 +1,1 @@
+java -jar jython.jar transform.py iso19139-2.xsl iso19139.xml test.xml
