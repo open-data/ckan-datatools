@@ -7,6 +7,7 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink" 
 	xmlns:gco="http://www.isotc211.org/2005/gco"
 	xmlns:gml="http://www.opengis.net/gml"
+	xmlns:pj="http://www.jakobsen.ca/myfunctions"
 	exclude-result-prefixes="gmd xlink gco gml"
 	>
 
@@ -57,6 +58,7 @@
 <endpoint_url_fra></endpoint_url_fra>
 <ready_to_publish>True</ready_to_publish>
 <portal_release_date>2013-06-18</portal_release_date>
+<hello><xsl:value-of select="pj:polygon('1 2 3 4')"/></hello> 
 <!-- RESOURCES -->
 <resources>
 <xsl:for-each select="//gmd:onLine">
