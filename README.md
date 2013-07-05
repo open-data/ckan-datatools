@@ -11,7 +11,7 @@ A command line interface that provides access to a number of tools and services 
 * Facilities for working with JSON data using test proxies such as Charles
 
 Example Use
-========
+===========
 
 Nested command structure is as follows:
 
@@ -39,4 +39,11 @@ Reporting
 Find out how many packages are in various CKAN servers:
 
 $python datatools.py ckan report pack -s=http://data.gov.uk
+
+Sometimes the most effective way to find data is to interact directly with the .jl load files using grep. 
+
+For example, if you wish to ask "How many pilot files are from statcan?":
+
+grep -c  '"owner_org": "statcan"'  pilot.jl
+
 
