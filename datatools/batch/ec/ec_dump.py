@@ -78,6 +78,7 @@ def process(dir,outfile):
                 counter+=1
                 f = open(os.path.join(path,file),"r")
                 doc = etree.parse(f)
+                print f, doc
                 nrcan_dump.doc = doc
                 nrcan_dump.data_identification()
                 
@@ -89,15 +90,15 @@ def process(dir,outfile):
                 print counter, nrcan_dump.package_dict['id']
                 #nrcan_dump.check_structure(nrcan_dump.package_dict)
                 nrcan_dump.package_dict['owner_org']='ec'
-                nrcan_dump.package_dict['browse_graphic_url']= "NPRI_s.png"             
-                nrcan_dump.package_dict['endpoint_url_fra']= "http:"
-                nrcan_dump.package_dict['endpoint_url']= ""
+#                nrcan_dump.package_dict['browse_graphic_url']= "NPRI_s.png"             
+#                nrcan_dump.package_dict['endpoint_url_fra']= "http:"
+#                nrcan_dump.package_dict['endpoint_url']= ""
                 nrcan_dump.package_dict['url']= "http://www.ec.gc.ca/default.asp?lang=En"
                 nrcan_dump.package_dict['url_fra']= "http://www.ec.gc.ca/default.asp?lang=Fr"
                 
+                pprint(nrcan_dump.package_dict)
+                
                 #jlfile.write(json.dumps(nrcan_dump.package_dict) + "\n")  
-            
-
 
 if __name__ == "__main__":
     

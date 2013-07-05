@@ -78,6 +78,7 @@ formatTypes['gzip (GNU zip)']="ZIP"
 formatTypes['ZIP']="ZIP"
 formatTypes['ESRI Shapefile']="SHAPE"
 formatTypes['JPEG']="jpg"
+formatTypes['Jpeg 2000']="jpeg 2000"
 
 #Hierarchical Data Format (HDF)
 #CorelDraw
@@ -421,7 +422,7 @@ def data_identification():
     #8 of 33fileIdentifier
     try:
         fileid=charstring_path('dataSetURI').replace("http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/","")  
-    except IndexError:  
+    except (AttributeError, IndexError):  
         fileid = charstring_path('fileIdentifier')
 
     package_dict['id'] =fileid #charstring_path('fileIdentifier')
@@ -511,6 +512,5 @@ def process(dir,outfile):
 if __name__ == "__main__":
     dir='/Users/peder/dev/OpenData/data_sources/nrcandump'
     outfile='/Users/peder/dev/OpenData/combined_loads/%s/geogratis.jl' % (date.today())
- 
     process(dir,outfile)
     #process()

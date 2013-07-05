@@ -63,6 +63,7 @@ def all_activity_for_user(endpoint,user):
 
             if data['result']:
                 since_time = data['result'][-1]['timestamp']
+            
             #print package_ids, since_time
             return package_ids, since_time
         
@@ -82,7 +83,7 @@ def all_activity_for_user(endpoint,user):
 def activities(endpoint,user):
 
     date_object = datetime(2013,1,6,0,0)
-    last_time=date_object
+    last_time=datetime(2013,25,6,0,0)
     def get_data(last_time):
         data = endpoint.action.changed_packages_activity_list_since(since_time=last_time.isoformat())
     
@@ -141,12 +142,12 @@ def download_touched_registry_packs():
 
         except:
             errors.write("{}, Error, {}\n".format(i,id))
-            print "ERROR ?"
+            print "ERROR ?",id
             
     print "Finished, thanks for your patience"
 if __name__ == "__main__":
+    find_touched_registry_packs()
     download_touched_registry_packs()
-    #find_touched_registry_packs()
 
 
     
