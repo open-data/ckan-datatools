@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # Ross will pass API key 
     key=sys.argv[1]
     ''' Delete a few files that were duplicated on release data June 18, 2013 '''
-    delete_packs('../data/deletes/old_geo_ids.delete')
+    delete_packs('../data/deletes/ec_old.delete')
     
     ''' Delete 16,842 old Geogratis records that will have new package ids'''
     #delete_packs('../data/deletes/old_geo_ids.delete')
