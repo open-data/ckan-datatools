@@ -37,14 +37,15 @@ if __name__ == "__main__":
 
     for child in root:
        try:
+          
            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
            # WARNING CKAN SUBJECT = Category in Pilot
            sub = child.xpath("FORM[NAME='category']/A/text()")[0]
            subject = sub.split('|')[-1]
-           subjects[formid]= subject_types[subject][key]
+           subjects[formid]= subject_types[subject]['key']
            
        except:
-
+           
            print "bad record"
     
     # Now with a list of subjects we can check to see if the ID is on the registry, 
@@ -55,16 +56,14 @@ if __name__ == "__main__":
     2. Change the package
     3. Update the package
     '''
+    print "---------------------"
     for id,subject in subjects.iteritems():
         print id.lower()
         pack = registry.action.package_show(name_or_id=id.lower())
         print pack['subject']
-        pack['subject'] = [subject]
-        pprint(pack)
-        sys.exit()
-        
-        
-
-    
-    
-        
+        if not pack['subject']: pack['subject'] = [subject]
+       
+        result = registry.action.package_update(**pack)
+        pack = registry.action.package_show(name_or_id=id.lower())
+        print pack['subject']
+                        
