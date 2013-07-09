@@ -6,8 +6,8 @@
 	xmlns:xlink="http://www.w3.org/1999/xlink" 
 	xmlns:gco="http://www.isotc211.org/2005/gco"
 	xmlns:gml="http://www.opengis.net/gml"
-	xmlns:pj="http://www.jakobsen.ca/myfunctions"
-	exclude-result-prefixes="gmd xlink gco gml pj"
+	xmlns:od="http://data.gc.ca/functions"
+	exclude-result-prefixes="gmd xlink gco gml od"
 	>
 
 <xsl:template match="/" xml:space="preserve">   
@@ -17,7 +17,7 @@
 <title><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString"></xsl:value-of></title>
 <title_fra><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString"/></title_fra>
 <notes>
-	<xsl:value-of select="//gmd:abstract/gco:CharacterString" />\n\n
+	<xsl:value-of select="//gmd:abstract/gco:CharacterString" />
 	<xsl:value-of select="//gmd:supplementalInformation/gco:CharacterString" />
 </notes>
 <notes_fra>
@@ -44,9 +44,11 @@
 <data_series_name_fra><xsl:call-template name="extract-data-series-name">
 		<xsl:with-param name='fullstring' select="//gmd:supplementalInformation/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString[@locale='#FRE']" />
 	</xsl:call-template></data_series_name_fra>
+	
 <data_series_issue_identification></data_series_issue_identification>
 <data_series_issue_identification_fra></data_series_issue_identification_fra>
 <digital_object_identifier></digital_object_identifier>
+
 <time_period_coverage_start><xsl:value-of select="//gml:TimePeriod/gml:beginPosition"/></time_period_coverage_start>
 <time_period_coverage_end><xsl:value-of select="//gml:TimePeriod/gml:endPosition" /></time_period_coverage_end>
 <url><xsl:apply-templates select="//gmd:supplementalInformation/gco:CharacterString" /></url>
@@ -60,13 +62,24 @@
 <resources>
 <xsl:for-each select="//gmd:onLine">
 	<resource>
-        <name>Dataset</name>
-        <name_fra>Données</name_fra>
-        <resource_type>file</resource_type>
+
+        <name><xsl:value-of select="od:resource_name_from_name('eng',gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text())"/></name>
+        <name_fra><xsl:value-of select="od:resource_name_from_name('fra',gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text())"/></name_fra>
+        <resource_type><xsl:value-of select="od:resource_type_from_name(gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text())"/></resource_type>
         <url><xsl:value-of select="gmd:CI_OnlineResource/gmd:linkage/gmd:URL"/></url>
-        <size><xsl:value-of select="/gmd:name/gco:CharacterString"/></size>
-        <format><xsl:value-of select="//gmd:MD_Format/gmd:name/gco:CharacterString"/></format>
+        <size><xsl:value-of select="od:size_from_name(gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text())"/></size>
+        <format><xsl:value-of select="od:format_from_url(gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text())"/></format>
+        <language><xsl:value-of select="od:language_from_name(@xlink:role)"/></language>
+
+		<!--
+        <name><xsl:value-of select="gmd:CI_OnlineResource/gmd:name/gco:CharacterString"/></name>
+        <name_fra><xsl:value-of select="gmd:CI_OnlineResource/gmd:name/gco:CharacterString"/></name_fra>
+        <resource_type><xsl:value-of select="gmd:name/gco:CharacterString"/></resource_type>
+        <url><xsl:value-of select="gmd:CI_OnlineResource/gmd:linkage/gmd:URL"/></url>
+        <size><xsl:value-of select="gmd:CI_OnlineResource/gmd:name/gco:CharacterString"/></size>
+        <format><xsl:value-of select="gmd:CI_OnlineResource/gmd:name/gco:CharacterString"/></format>
         <language><xsl:value-of select="@xlink:role"/></language>
+		-->
 	</resource>
 </xsl:for-each>
 </resources>
@@ -82,7 +95,7 @@
 </xsl:template>
 <xsl:template name="polygon">
 	<xsl:param name="points"/>
-	<xsl:value-of select="pj:polygon($points)"/>
+	<xsl:value-of select="od:polygon($points)"/>
 </xsl:template>
 <!-- Extract URLs from Freeform text  -->
 <xsl:template match="gmd:supplementalInformation/gco:CharacterString">
