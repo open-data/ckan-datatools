@@ -1,8 +1,9 @@
+﻿#-*- coding:UTF-8 -*-
 import sys
 from lxml import etree
 import ckanapi
 import helpers
-import resource
+#import resource
 from pprint import pprint
 from datatools.batch.common import language
 from ckanext.canada.metadata_schema import schema_description
@@ -25,7 +26,7 @@ from ckanext.canada.metadata_schema import schema_description
 
 
 if __name__ == "__main__":
-    pilot_xml = '/Users/peder/dev/OpenData/data_sources/pilot/final.xml'
+    pilot_xml = '/Users/jakoped/Documents/OpenData/final.xml'
     tree = etree.parse(pilot_xml)
     root = tree.getroot()
     ''' NOTE - Searching the XML Tree directly is very slow: eg
@@ -37,34 +38,40 @@ if __name__ == "__main__":
 
     for child in root:
        try:
+          
            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
            # WARNING CKAN SUBJECT = Category in Pilot
            sub = child.xpath("FORM[NAME='category']/A/text()")[0]
            subject = sub.split('|')[-1]
-           subjects[formid]= subject_types[subject][key]
+           subjects[formid]= subject_types[subject]['key']
            
        except:
-
+           
            print "bad record"
     
     # Now with a list of subjects we can check to see if the ID is on the registry, 
     # and then update the field 
-    registry = ckanapi.RemoteCKAN('http://localhost:5000', apikey='tester')
+    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca',apikey='4c57004e-fe2a-496d-8bef-8dbe98ba91e4')
+   
     '''
     1.  Get the package 
     2. Change the package
     3. Update the package
     '''
+    print "---------------------"
     for id,subject in subjects.iteritems():
         print id.lower()
-        pack = registry.action.package_show(name_or_id=id.lower())
-        print pack['subject']
-        pack['subject'] = [subject]
-        pprint(pack)
-        sys.exit()
-        
-        
+        try:
+            pack = registry.action.package_show(name_or_id=id.lower())
+            
+            if not pack['subject']: 
+                pack['subject'] = [subject]
+                pack['catalog_type'] = u"Data | Données"
+                result = registry.action.package_update(**pack)
+                pack = registry.action.package_show(name_or_id=id.lower())
+                print pack['subject']
+                print pack['catalog_type']
+        except:
+            print ("No record:  http://registry.statcan.gc.ca/en/dataset/%s" % id.lower())
 
-    
-    
-        
+                        
