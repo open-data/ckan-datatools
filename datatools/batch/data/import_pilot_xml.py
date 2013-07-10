@@ -5,6 +5,7 @@ Created on 2013-01-10
 
 This module is used for converting various items from in the pilot XML
 '''
+x
 #from ckanext.canada.metadata_schema import schema_description
 from lxml import etree
 from pprint import pprint

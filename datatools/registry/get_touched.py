@@ -13,7 +13,7 @@ import warnings
 
 def standard_users(endpoint):
     admins=['64c919b6-a26e-414e-b5f8-12a167a6e863','d590b028-540b-435f-9aa6-2edd9a35afee']
-    return [user['name'] for user in endpoint.action.user_list()['result'] if user['id'] not in admins]
+    return [user['name'] for user in endpoint.action.user_list() if user['id'] not in admins]
 
 
 def users_report(endpoint):
@@ -27,7 +27,7 @@ def activities_for_user(endpoint,user):
     # makus user id is ac12cb42-117d-4d68-8098-66a942d1c17f
     activity_list =  endpoint.action.user_activity_list(id=user,limit=2000)
     activities=[]
-    for result in activity_list['result']:
+    for result in activity_list:
         try:
             pack = result['data']['package']
 
@@ -118,10 +118,7 @@ def find_touched_registry_packs():
     # change to a set to avoid activity duplicates between people
     print "-----------"
     print len(new_ids), len(set(new_ids))
-    pickle.dump(set(new_ids), open('touched_in_registry.pkl','wb'))    
-
-
-
+    pickle.dump(set(new_ids), open('touched_in_registry-july5.pkl','wb'))    
     
 def download_touched_registry_packs():
 
@@ -131,7 +128,7 @@ def download_touched_registry_packs():
     linkfile ="touched-registry-files.jl"
     file = open(os.path.normpath(linkfile), "wb")
     errors=open(os.path.normpath('api_load_errors.log'),"wb")
-    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca',api_key='4c57004e-fe2a-496d-8bef-8dbe98ba91e4')
+    registry = ckanapi.RemoteCKAN('http://registry.statcan.gc.ca',apikey='4c57004e-fe2a-496d-8bef-8dbe98ba91e4')
     for i, id in enumerate(touched):
         
         try:

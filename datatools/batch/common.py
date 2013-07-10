@@ -1,4 +1,4 @@
-# coding=utf-8
+#-*- coding:UTF-8 -*-
 from lxml import etree
 import os
 import csv
@@ -58,7 +58,7 @@ def get_valid_input(input_string, valid_options):
         response = input(input_string)
     return response  
 
-logging.basicConfig(filename="/Users/peder/dev/goc/ckan-logs/xpath.log", level=logging.ERROR)
+logging.basicConfig(filename="/temp/xpath.log", level=logging.ERROR)
 
 def xml_generator(filedir):
         """
