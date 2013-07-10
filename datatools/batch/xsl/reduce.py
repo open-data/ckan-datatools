@@ -106,6 +106,13 @@ def polygon(context, points):
                                 maxy = points[3]
 
                                 )
+def make_notes(context,c1,c2):
+    print c1[0]
+    new = "\n".join([n.lstrip(":").replace("\n","").replace(":htt",": htt") for n in c2[0].split("\n:")])
+    print new
+    sys.exit()
+    return c1+c2
+    
 
 def clean_keywords(s): 
     return ",".join(set([n.strip() for n in s.split(",") if n.strip()]))
@@ -125,6 +132,7 @@ def nap_reduce(file,transform):
     ns['language_from_name'] = language_from_name
     ns['resource_name_from_name']=resource_name_from_name
     ns['resource_type_from_name']=resource_type_from_name
+    ns['make_notes']=make_notes
     ns.prefix = 'od'
     parser.resolvers.add(FileResolver())
     xml_input = etree.parse(open(file,'r'), parser)
@@ -152,7 +160,8 @@ def nap_reduce(file,transform):
     pack['resources']=res
     pack['keywords'] = clean_keywords(pack['keywords'])
     pack['keywords_fra'] =   clean_keywords(pack['keywords_fra'])
-    print json.dumps(pack['resources'],sort_keys=True,indent=4, separators=(',', ': '))
+    print json.dumps(pack,sort_keys=True,indent=4, separators=(',', ': '))
+    sys.exit()
 
     
 def process(dir,outfile): 

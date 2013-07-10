@@ -17,12 +17,10 @@
 <title><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString"></xsl:value-of></title>
 <title_fra><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString"/></title_fra>
 <notes>
-	<xsl:value-of select="//gmd:abstract/gco:CharacterString" />
-	<xsl:value-of select="//gmd:supplementalInformation/gco:CharacterString" />
+	<xsl:value-of select="od:make_notes(//gmd:abstract/gco:CharacterString/text(),//gmd:supplementalInformation/gco:CharacterString/text())" />
 </notes>
 <notes_fra>
-	<xsl:value-of select="//gmd:abstract/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString"/>
-	<xsl:value-of select="//gmd:supplementalInformation/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString" />
+	<xsl:value-of select="od:make_notes(//gmd:abstract/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString/text(),//gmd:supplementalInformation/gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString/text())"/>
 </notes_fra>
 <catalog_type>Geo Data | G\xe9o</catalog_type>
 <subject><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode"/></subject>
