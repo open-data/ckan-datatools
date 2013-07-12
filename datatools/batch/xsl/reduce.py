@@ -107,9 +107,10 @@ def polygon(context, points):
 
                                 )
 def make_notes(context,c1,c2):
-    print c1[0]
-    new = "\n".join([n.lstrip(":").replace("\n","").replace(":htt",": htt") for n in c2[0].split("\n:")])
-    return c1 + new
+    return "foood"
+#    print c1[0]
+#    new = "\n".join([n.lstrip(":").replace("\n","").replace(":htt",": htt") for n in c2[0].split("\n:")])
+#    return c1 + new
     
 def clean_keywords(s): 
     return ",".join(set([n.strip() for n in s.split(",") if n.strip()]))
