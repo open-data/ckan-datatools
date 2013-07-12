@@ -23,9 +23,22 @@ url_patterns={'.csv':'CSV',
               'www.ec.gc.ca/indicateurs-indicators/default.asp?':'HTML',
               'http://www.ec.gc.ca/data_donnees/SSB-OSM_BioHab/':'CSV',
               'http://maps-cartes.ec.gc.ca/ArcGIS/rest/services/CESI_AirEmissions_NOx/MapServer':"api",
-              'TableView.aspx?':'html'
+              'TableView.aspx?':'HTML'
               
               }
+
+frequency_mappings={"annually":"Annually | Annuel",
+                       "asNeeded":"As Needed | Au besoin",
+                       "continual":"Continual | Continue",
+                       "quarterly":"Quarterly | Trimestriel",
+                       "unknown":"Unknown | Inconnu",
+                       "weekly":"Weekly | Hebdomadaire"}
+
+def update_frequency(context, codename):
+    try:
+        return frequency_mappings[codename[0]]
+    except:
+        return "Unknown | Inconnu"
 
 def format_from_url(context, u):
     
@@ -41,16 +54,20 @@ def format_from_url(context, u):
     return "other"
 
 def size_from_name(context, name):
-    print name
+
+    try:
+        name = name[0]
+    except:
+        return ""
+    
     try:
         size=''
-        name = name[0]
-        print name
-
         if  " Kb)" in name:
             size = name.split(' Kb)')[0].split(" - ")[1].strip()
+            size = int(size)*1000
         elif " Ko)" in name:
             size =name.split(' Ko)')[0].split(" - ")[1].strip()
+            size = int(size)*1000
         elif " B)" in name:
            size =name.split(' B)')[0].split(" - ")[1].strip()
         elif " O)" in name:
@@ -59,8 +76,7 @@ def size_from_name(context, name):
             return ""
         return size
     except:
-        raise
-        return "888"
+        return ""
     
 def resource_name_from_name(context,lang,name):
     try:
@@ -82,7 +98,7 @@ def resource_type_from_name(context,name):
         else: 
             return "file"
     except:
-        return ""
+        return "file"
 
 def language_from_name(context,s):
     return s[0].split(":")[-1].replace("-","; ")
@@ -107,14 +123,17 @@ def polygon(context, points):
 
                                 )
 def make_notes(context,c1,c2):
-    return "foood"
-#    print c1[0]
-#    new = "\n".join([n.lstrip(":").replace("\n","").replace(":htt",": htt") for n in c2[0].split("\n:")])
-#    return c1 + new
+    try:
+        # check for existance
+        foo = (c1[0],c2[0])
+    except:
+        return c1[0]
+    new = " ".join([n.lstrip(":").replace("\n","").replace(":htt",": htt") for n in c2[0].split("\n:")])
+    return c1[0] + "\n"+ new
     
 def clean_keywords(s): 
-    return ",".join(set([n.strip() for n in s.split(",") if n.strip()]))
-     
+    return ",".join(set([n.strip().replace("/"," ") for n in s.split(",") if n.strip()]))
+   
 def nap_reduce(file,transform):
     print file
     class FileResolver(etree.Resolver):
@@ -130,6 +149,7 @@ def nap_reduce(file,transform):
     ns['language_from_name'] = language_from_name
     ns['resource_name_from_name']=resource_name_from_name
     ns['resource_type_from_name']=resource_type_from_name
+    ns['update_frequency']=update_frequency
     ns['make_notes']=make_notes
     ns.prefix = 'od'
     parser.resolvers.add(FileResolver())
@@ -158,20 +178,21 @@ def nap_reduce(file,transform):
     pack['resources']=res
     pack['keywords'] = clean_keywords(pack['keywords'])
     pack['keywords_fra'] =   clean_keywords(pack['keywords_fra'])
-    print json.dumps(pack,sort_keys=True,indent=4, separators=(',', ': '))
-    sys.exit()
+    pack['ready_to_publish']=True
+    #print json.dumps(pack,sort_keys=True,indent=4, separators=(',', ': '))
+    return json.dumps(pack)
 
     
 def process(dir,outfile): 
     transform = 'iso19139.xsl'
     counter=0
-    #jlfile = open(os.path.normpath(outfile), "w")
+    jlfile = open(os.path.normpath(outfile), "w")
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for file in files:
             if file =='metadata.iso19139.xml':
                 counter+=1
-                nap_reduce(os.path.join(path,file),transform)
-                
+                jlfile.write(nap_reduce(os.path.join(path,file),transform)+"\n")
+    jlfile.close()
 if __name__ == '__main__':
    file = "iso19139.xml"
    outfile =helpers.load_dir()+"ec.jl"
