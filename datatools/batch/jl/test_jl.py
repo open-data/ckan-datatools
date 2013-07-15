@@ -1,3 +1,4 @@
+#-*- coding:UTF-8 -*-
 from datetime import date
 import json
 from collections import Counter
