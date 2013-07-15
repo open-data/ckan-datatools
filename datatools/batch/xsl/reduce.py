@@ -22,9 +22,9 @@ url_patterns={'.csv':'CSV',
               'FORMAT=image/png':'png',
               'www.ec.gc.ca/indicateurs-indicators/default.asp?':'HTML',
               'http://www.ec.gc.ca/data_donnees/SSB-OSM_BioHab/':'CSV',
-              'http://maps-cartes.ec.gc.ca/ArcGIS/rest/services/CESI_AirEmissions_NOx/MapServer':"api",
+              'http://maps-cartes.ec.gc.ca/ArcGIS/rest/services/CESI_AirEmissions_NOx/MapServer':"JSON",
               'TableView.aspx?':'HTML'
-              
+ 
               }
 
 frequency_mappings={"annually":"Annually | Annuel",
@@ -74,8 +74,32 @@ def size_from_name(context, name):
             size =name.split(' O)')[0].split(" - ")[1].strip()
         else:
             return ""
-        return size
+        if size=="7,29":
+            return "7290"
+        elif size=="6.41":
+            return "6410"
+        return size.round()
     except:
+        return ""
+
+def check_date(context, date):  
+   
+    try:
+        if  "ngoing" in date[0]:
+            return ""
+        elif date[0]=="2009-12-32":
+            return "2009-12-31"
+        elif date[0] == "01-01-2011":
+            return "2011-01-01"
+        elif date[0] == "2009-23-2010":
+            return ""
+        elif date[0]=="09-23-2010":
+            return "2010-09-23"
+        elif len(date[0])==4:
+            return date[0]+"-01-01"
+        else:
+            return date[0]
+    except IndexError:
         return ""
     
 def resource_name_from_name(context,lang,name):
@@ -92,13 +116,22 @@ def resource_name_from_name(context,lang,name):
         elif lang=="fra": return "Données"
 
 def resource_type_from_name(context,name):
+
     try:
         if " HTML " in name[0]: 
             return "doc"
+        elif name[0] == "ArcGIS Services":
+            return "api"
         else: 
             return "file"
     except:
         return "file"
+
+def clean_keyword(context, keyword):
+    try:
+        return keyword[0].replace("(", " ").replace(")"," ").replace(u"\u2013"," ").replace(u"\u2019","'")
+    except IndexError:
+        return ""
 
 def language_from_name(context,s):
     return s[0].split(":")[-1].replace("-","; ")
@@ -135,7 +168,6 @@ def clean_keywords(s):
     return ",".join(set([n.strip().replace("/"," ") for n in s.split(",") if n.strip()]))
    
 def nap_reduce(file,transform):
-    print file
     class FileResolver(etree.Resolver):
         def resolve(self, url, pubid, context):
             return self.resolve_filename(url, context)
@@ -151,6 +183,8 @@ def nap_reduce(file,transform):
     ns['resource_type_from_name']=resource_type_from_name
     ns['update_frequency']=update_frequency
     ns['make_notes']=make_notes
+    ns['check_date']=check_date
+    ns['clean_keyword']=clean_keyword
     ns.prefix = 'od'
     parser.resolvers.add(FileResolver())
     xml_input = etree.parse(open(file,'r'), parser)
@@ -163,7 +197,7 @@ def nap_reduce(file,transform):
     pack={}
     for f in package.getchildren():
         if f.tag!='resources':
-            pack[f.tag]=f.text.strip() if f.text else ""
+            pack[f.tag]=f.text.strip()if f.text else ""
         
     #print str(result)
     resources =  result.find('resources')
@@ -178,19 +212,18 @@ def nap_reduce(file,transform):
     pack['resources']=res
     pack['keywords'] = clean_keywords(pack['keywords'])
     pack['keywords_fra'] =   clean_keywords(pack['keywords_fra'])
-    pack['ready_to_publish']=True
+    pack['ready_to_publish']=False
+    print pack['date_published']
     #print json.dumps(pack,sort_keys=True,indent=4, separators=(',', ': '))
     return json.dumps(pack)
 
     
 def process(dir,outfile): 
     transform = 'iso19139.xsl'
-    counter=0
     jlfile = open(os.path.normpath(outfile), "w")
     for (path, dirs, files) in os.walk(os.path.normpath(dir)):
         for file in files:
             if file =='metadata.iso19139.xml':
-                counter+=1
                 jlfile.write(nap_reduce(os.path.join(path,file),transform)+"\n")
     jlfile.close()
 if __name__ == '__main__':

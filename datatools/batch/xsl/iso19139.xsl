@@ -24,11 +24,11 @@
 </notes_fra>
 <catalog_type>Geo Data | Géo</catalog_type>
 <subject>9E3985CD-58EC-4DBA-AF73-5711AF379DE4</subject>
-<topic_category><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode"/></topic_category>
-<keywords><xsl:for-each select="//gmd:keyword"><xsl:value-of select="gco:CharacterString"/>, </xsl:for-each></keywords>
-<keywords_fra><xsl:for-each select="//gmd:keyword"><xsl:value-of select="gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString"/>, </xsl:for-each></keywords_fra>
+<!--  topic_category><xsl:value-of select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:topicCategory/gmd:MD_TopicCategoryCode"/></topic_category -->
+<topic_category>Environment  Environnement</topic_category>
+<keywords><xsl:for-each select="//gmd:keyword"><xsl:value-of select="od:clean_keyword(gco:CharacterString/text())"/>, </xsl:for-each></keywords>
+<keywords_fra><xsl:for-each select="//gmd:keyword"><xsl:value-of select="od:clean_keyword(gmd:PT_FreeText/gmd:textGroup/gmd:LocalisedCharacterString/text())"/>, </xsl:for-each></keywords_fra>
 <license_id>ca-ogl-lgo</license_id>
-
 <!--  xsl:value-of select="//gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:type/gmd:MD_KeywordTypeCode[@codeListValue='place']/../../gmd:keyword/gco:CharacterString"/>
 -->
 <geographic_region></geographic_region>
@@ -36,7 +36,7 @@
 <spatial_representation_type>Text Table | Texte table</spatial_representation_type>
 <presentation_form>Document Digital | Document numérique</presentation_form>
 <browse_graphic_url><xsl:value-of select="//gmd:MD_BrowseGraphic/gmd:fileName/gco:CharacterString"/></browse_graphic_url>
-<date_published><xsl:value-of select="//gmd:CI_Date/gmd:date/gco:Date"/></date_published>
+<date_published><xsl:value-of select="od:check_date(//gmd:CI_Date/gmd:date/gco:Date/text())"/></date_published>
 <date_modified></date_modified>
 <maintenance_and_update_frequency><xsl:value-of select="od:update_frequency(//gmd:MD_MaintenanceFrequencyCode/@codeListValue)"/></maintenance_and_update_frequency>
 <data_series_name><xsl:call-template name="extract-data-series-name"><xsl:with-param name='fullstring' select="//gmd:supplementalInformation/gco:CharacterString" />
@@ -51,8 +51,8 @@
 <data_series_issue_identification_fra></data_series_issue_identification_fra>
 <digital_object_identifier></digital_object_identifier>
 
-<time_period_coverage_start><xsl:value-of select="//gml:TimePeriod/gml:beginPosition"/></time_period_coverage_start>
-<time_period_coverage_end><xsl:value-of select="//gml:TimePeriod/gml:endPosition" /></time_period_coverage_end>
+<time_period_coverage_start><xsl:value-of select="od:check_date(//gml:TimePeriod/gml:beginPosition/text())"/></time_period_coverage_start>
+<time_period_coverage_end><xsl:value-of select="od:check_date(//gml:TimePeriod/gml:endPosition/text())" /></time_period_coverage_end>
 <url><xsl:apply-templates select="//gmd:supplementalInformation/gco:CharacterString" /></url>
 <url_fra><xsl:apply-templates select='//gmd:supplementalInformation/gmd:PT_FreeText/gmd:textGroup'/></url_fra>
 <endpoint_url></endpoint_url>
