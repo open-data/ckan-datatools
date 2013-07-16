@@ -20,7 +20,6 @@ from ckanext.canada.metadata_schema import schema_description
         i. Get package in registry
         ii.Check to see if the two fields are empty, if so, update them
         iii. Write the package back.
-        
     
 '''
 
@@ -35,15 +34,20 @@ if __name__ == "__main__":
     subject_types=schema_description.dataset_field_by_id['subject']['choices_by_pilot_uuid']
     print subject_types
     subjects={}
-
+    resume_flag=True
     for child in root:
        try:
           
+           
            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
+           if formid.lower()=='f80bbec0-0a48-4fe6-8efd-fa1b7bfbe6cb': resume_flag=True
            # WARNING CKAN SUBJECT = Category in Pilot
            sub = child.xpath("FORM[NAME='category']/A/text()")[0]
            subject = sub.split('|')[-1]
-           subjects[formid]= subject_types[subject]['key']
+           if resume_flag:
+               subjects[formid]= subject_types[subject]['key']
+           else:
+               print "Skip", formid.lower()
            
        except:
            
@@ -58,13 +62,14 @@ if __name__ == "__main__":
     2. Change the package
     3. Update the package
     '''
-    print "---------------------"
+    print "---------- Updating -----------", len(subjects)
     for id,subject in subjects.iteritems():
         print id.lower()
         try:
             pack = registry.action.package_show(name_or_id=id.lower())
-            
-            if not pack['subject']: 
+            print ">>> ", pack['subject'], pack['catalog_type']
+            if not pack['subject'] or not pack['catalog_type']: 
+                
                 pack['subject'] = [subject]
                 pack['catalog_type'] = u"Data | Données"
                 result = registry.action.package_update(**pack)
