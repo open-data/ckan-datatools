@@ -1,5 +1,14 @@
+===============
 CKAN Data Tools
-=========
+===============
+
+Author: Peder Jakobsen
+:Date: July 16, 2013
+
+.. contents::
+
+Summary
+=======
 
 A command line interface that provides access to a number of tools and services related to the Government of Canada Open Data project:
 
@@ -34,7 +43,7 @@ File must contain valid ckan 2.0 packages.
 (my_virtual_env) $python datatools.py ckan load pack -s=http://data.statcan.gc.ca/data -k=yourkey -p=http://proxyuser:proxypass@stcweb.statcan.ca:80 -j=c:\temp\pilot-complete.jl
 
 Reporting
-=======
+=========
 
 Find out how many packages are in various CKAN servers:
 
