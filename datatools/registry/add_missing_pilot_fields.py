@@ -3,6 +3,7 @@ import sys
 from lxml import etree
 import ckanapi
 import helpers
+import json
 #import resource
 from pprint import pprint
 from datatools.batch.common import language
@@ -25,29 +26,37 @@ from ckanext.canada.metadata_schema import schema_description
 
 
 if __name__ == "__main__":
-    pilot_xml = '/Users/jakoped/Documents/OpenData/final.xml'
+    pilot_xml = '/Users/jakoped/Documents/OpenData/july2013/final.xml'
+    pilot_jl = '/Users/jakoped/Documents/OpenData/july2013/pilot.jl'
+    
+    ids=[]
+    for i, line in enumerate(open(pilot_jl)):
+        #print i, json.loads(line)['id']
+        ids.append(json.loads(line)['id'])
+     
+     
+        
+    
+    
     tree = etree.parse(pilot_xml)
     root = tree.getroot()
     ''' NOTE - Searching the XML Tree directly is very slow: eg
     print root.xpath('//FORMID[text()="%s"]/../CATEGORY/text()'% id)[0].split('|')[-1]
     '''
     subject_types=schema_description.dataset_field_by_id['subject']['choices_by_pilot_uuid']
-    print subject_types
+    
     subjects={}
     resume_flag=True
     for child in root:
        try:
-          
            
            formid = child.xpath("FORM[NAME='thisformid']/A/text()")[0]
-           if formid.lower()=='f80bbec0-0a48-4fe6-8efd-fa1b7bfbe6cb': resume_flag=True
-           # WARNING CKAN SUBJECT = Category in Pilot
-           sub = child.xpath("FORM[NAME='category']/A/text()")[0]
-           subject = sub.split('|')[-1]
-           if resume_flag:
+           if formid.lower() in ids:
+               sub = child.xpath("FORM[NAME='category']/A/text()")[0]
+               subject = sub.split('|')[-1]
                subjects[formid]= subject_types[subject]['key']
-           else:
-               print "Skip", formid.lower()
+            
+
            
        except:
            
@@ -62,21 +71,26 @@ if __name__ == "__main__":
     2. Change the package
     3. Update the package
     '''
+    
     print "---------- Updating -----------", len(subjects)
+    n=0
     for id,subject in subjects.iteritems():
-        print id.lower()
+        n+=1
         try:
             pack = registry.action.package_show(name_or_id=id.lower())
-            print ">>> ", pack['subject'], pack['catalog_type']
+            print "Try", n, id.lower()#, ",",  str(pack['subject']).encode("utf-8"), str(pack['catalog_type']).encode("utf-8")
             if not pack['subject'] or not pack['catalog_type']: 
-                
                 pack['subject'] = [subject]
                 pack['catalog_type'] = u"Data | Données"
                 result = registry.action.package_update(**pack)
                 pack = registry.action.package_show(name_or_id=id.lower())
-                print pack['subject']
-                print pack['catalog_type']
+              
+                print n, id.lower(), ", Updated", id# str(pack['subject']).encode("utf-8"), str(pack['catalog_type']).encode("utf-8")
+        except ckanapi.NotFound:
+            print "Not found ", id.lower()
+            pass
         except:
-            print ("No record:  http://registry.statcan.gc.ca/en/dataset/%s" % id.lower())
+            raise
+            #print ("No record:  http://registry.statcan.gc.ca/en/dataset/%s" % id.lower())
 
                         
