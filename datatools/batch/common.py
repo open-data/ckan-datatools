@@ -58,7 +58,7 @@ def get_valid_input(input_string, valid_options):
         response = input(input_string)
     return response  
 
-logging.basicConfig(filename="/temp/xpath.log", level=logging.ERROR)
+logging.basicConfig(filename="/tmp/xpath.log", level=logging.ERROR)
 
 def xml_generator(filedir):
         """
