@@ -379,7 +379,7 @@ def resources():
 
     #add 2 resource for Geogratis HTML pages
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{}.html".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{0}.html".format(fileid)
     resource_dict['language']="eng; CAN"
     #resource_dict['size']  Size is not required
     resource_dict['name']="GeoGratis Dataset Record"
@@ -389,7 +389,7 @@ def resources():
     resources.append(resource_dict)
 
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{}.html".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{0}.html".format(fileid)
     resource_dict['language']="fra; CAN"
     resource_dict['name']="GeoGratis Dataset Record"
     resource_dict['name_fra']="Record de jeu de données GeoGratis"
@@ -399,7 +399,7 @@ def resources():
      
     # Add 2 files for the NAP resources
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{}.nap".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{0}.nap".format(fileid)
     resource_dict['language']="eng; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
@@ -408,7 +408,7 @@ def resources():
     resources.append(resource_dict)
     
     resource_dict={}
-    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{}.nap".format(fileid)
+    resource_dict['url'] = "http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{0}.nap".format(fileid)
     resource_dict['language']="fra; CAN"
     resource_dict['name']=u"ISO 19115 Metadata File"
     resource_dict['name_fra']=u"Fichiers de métadonnées ISO 19115 "
